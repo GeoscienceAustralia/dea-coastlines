@@ -24,10 +24,16 @@
 *.qgs
 
 # Ignore directories
-dask-worker-space/*
 output_data/*
 packages/*
 PBS/*
 validation/input_data/*
 validation/output_data/*
 validation/figures/*
+
+# Others
+dask-worker-space/*
+*.ipynb_checkpoints/
+*__pycache__
+.gitignore~
+

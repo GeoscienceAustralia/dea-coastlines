@@ -17,7 +17,7 @@ do
     #PBS -l ncpus=1\n\
     #PBS -l wd\n\
     module use /g/data/v10/public/modules/modulefiles\n\
-    module load dea/unstable\n\
+    module load dea\n\
     module load otps\n\
     python3 /g/data/r78/rt1527/dea-notebooks/MAHTS/deacoastlines_summary.py $output_name"
 
