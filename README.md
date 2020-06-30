@@ -2,10 +2,12 @@
 
 # Digital Earth Australia CoastLines
 
-**DEA CoastLines** is a continental dataset providing annual shorelines and rates of change along the entire Australian coastline from 1988 to the present. 
-The product combines satellite data from the Digital Earth Australia archive with tidal modelling to map the typical location of the coastline at approximately mean sea level tide (0 m AHD). 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Change log
+**DEA CoastLines** is a continental dataset providing annual shorelines and rates of change along the entire Australian coastline from 1988 to the present. 
+The product combines satellite data from the [Digital Earth Australia](http://www.ga.gov.au/dea) archive with tidal modelling to map the typical location of the coastline at approximately mean sea level tide (0 m AHD). 
+
+## Changelog
 
 ### v0.3.0 (upcoming)
 
