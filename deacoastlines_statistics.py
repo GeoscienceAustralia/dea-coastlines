@@ -305,6 +305,7 @@ def change_regress(row,
                    slope_var='slope', 
                    interc_var='intercept',
                    pvalue_var='pvalue', 
+                   stderr_var='stderr',
                    outliers_var='outliers'):
     
     # Extract x (time) and y (distance) values
@@ -334,6 +335,7 @@ def change_regress(row,
     return pd.Series({slope_var: np.round(lin_reg.slope, 3), 
                       interc_var: np.round(lin_reg.intercept, 3),
                       pvalue_var: np.round(lin_reg.pvalue, 3),
+                      stderr_var: np.round(lin_reg.stderr, 3),
                       outliers_var: ' '.join(map(str, valid_labels[~outlier_bool]))})
 
 
@@ -746,7 +748,7 @@ def calculate_regressions(yearly_ds,
                 .apply(lambda x: change_regress(row=x,
                                                 x_vals=x_years,
                                                 x_labels=x_years), axis=1))
-    points_gdf[['rate_time', 'incpt_time', 'sig_time', 'outl_time']] = rate_out
+    points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
 
 #     # Compute whether coastal change estimates are influenced by tide by linearly
 #     # regressing residual tide heights against annual movements. A significant 
@@ -789,8 +791,8 @@ def calculate_regressions(yearly_ds,
 
     # Custom sorting
     column_order = [
-        'rate_time', 'sig_time', 'outl_time', *x_years.astype(str).tolist(),
-        'geometry'
+        'rate_time', 'sig_time', 'se_time', 'outl_time', 
+        *x_years.astype(str).tolist(), 'geometry'
     ]
 
     return points_gdf.loc[:, column_order]
