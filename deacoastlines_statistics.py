@@ -959,26 +959,22 @@ def main(argv=None):
                                            points_gdf, 
                                            tide_points_gdf, 
                                            climate_df)
+        
+        # Add in erosion/progradation helper columns (used for web services)
+        points_gdf['eroded'] = points_gdf.rate_time < 0 
+        points_gdf['prograded'] = points_gdf.rate_time > 0
 
         ################
         # Export stats #
         ################
 
-        try:
+        if points_gdf is not None:
             
-            col_schema = [('rate_time', 'float:8.2'), ('rate_SOI', 'float:8.2'),
-                          ('rate_IOD', 'float:8.2'), ('rate_SAM', 'float:8.2'),
-                          ('rate_IPO', 'float:8.2'), ('rate_PDO', 'float:8.2'),
-                          ('rate_tide', 'float:8.2'), ('sig_time', 'float:8.3'),
-                          ('sig_SOI', 'float:8.3'), ('sig_IOD', 'float:8.3'),
-                          ('sig_SAM', 'float:8.3'), ('sig_IPO', 'float:8.3'),
-                          ('sig_PDO', 'float:8.3'), ('sig_tide', 'float:8.3'),
-                          ('outl_time', 'str:80'), ('outl_SOI', 'str:80'),
-                          ('outl_IOD', 'str:80'), ('outl_SAM', 'str:80'),
-                          ('outl_IPO', 'str:80'), ('outl_PDO', 'str:80'),
-                          ('outl_tide', 'str:80'), ('1988', 'float:8.2'),
-                          ('1989', 'float:8.2'), ('1990', 'float:8.2'),
-                          ('1991', 'float:8.2'), ('1992', 'float:8.2'),
+            col_schema = [('eroded', 'bool'), ('prograded', 'bool'),
+                          ('rate_time', 'float:8.2'), ('sig_time', 'float:8.3'),
+                          ('se_time', 'float:8.2'), ('outl_time', 'str:80'),
+                          ('1988', 'float:8.2'), ('1989', 'float:8.2'),
+                          ('1990', 'float:8.2'), ('1991', 'float:8.2'),                    ('1992', 'float:8.2'),
                           ('1993', 'float:8.2'), ('1994', 'float:8.2'),
                           ('1995', 'float:8.2'), ('1996', 'float:8.2'),
                           ('1997', 'float:8.2'), ('1998', 'float:8.2'),
@@ -991,7 +987,8 @@ def main(argv=None):
                           ('2011', 'float:8.2'), ('2012', 'float:8.2'),
                           ('2013', 'float:8.2'), ('2014', 'float:8.2'),
                           ('2015', 'float:8.2'), ('2016', 'float:8.2'),
-                          ('2017', 'float:8.2'), ('2018', 'float:8.2')]
+                          ('2017', 'float:8.2'), ('2018', 'float:8.2'),
+                          ('2019', 'float:8.2')]
             
             # Clip stats to study area extent, remove rocky shores
             stats_path = f'{output_dir}/stats_{study_area}_{output_name}_' \
@@ -1007,18 +1004,15 @@ def main(argv=None):
             points_gdf.to_file(f'{stats_path}.shp',
                                schema={'properties': col_schema,
                                        'geometry': 'Point'})
-            
-        except:
-            print('No points file to write')
-
     
     ###################
     # Export contours #
     ###################    
     
     # Assign certainty to contours based on underlying masks
-    contours_gdf = contour_certainty(contours_gdf, 
-                                     output_path=f'output_data/{study_area}_{output_name}')
+    contours_gdf = contour_certainty(
+        contours_gdf=contours_gdf, 
+        output_path=f'output_data/{study_area}_{output_name}')
 
     # Clip annual shoreline contours to study area extent
     contour_path = f'{output_dir}/contours_{study_area}_{output_name}_' \
