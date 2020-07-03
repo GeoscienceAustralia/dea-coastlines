@@ -960,9 +960,9 @@ def main(argv=None):
                                            tide_points_gdf, 
                                            climate_df)
         
-        # Add in erosion/progradation helper columns (used for web services)
-        points_gdf['eroded'] = points_gdf.rate_time < 0 
-        points_gdf['prograded'] = points_gdf.rate_time > 0
+        # Add in retreat/growth helper columns (used for web services)
+        points_gdf['retreat'] = points_gdf.rate_time < 0 
+        points_gdf['growth'] = points_gdf.rate_time > 0
 
         ################
         # Export stats #
@@ -970,7 +970,7 @@ def main(argv=None):
 
         if points_gdf is not None:
             
-            col_schema = [('eroded', 'bool'), ('prograded', 'bool'),
+            col_schema = [('retreat', 'bool'), ('growth', 'bool'),
                           ('rate_time', 'float:8.2'), ('sig_time', 'float:8.3'),
                           ('se_time', 'float:8.2'), ('outl_time', 'str:80'),
                           ('1988', 'float:8.2'), ('1989', 'float:8.2'),
