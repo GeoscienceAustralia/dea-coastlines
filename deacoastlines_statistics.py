@@ -684,9 +684,8 @@ def annual_movements(yearly_ds,
 
 #         Compute distance between baseline and comparison year points and add
 #         this distance as a new field named by the current year being analysed
-        points_gdf[f'{comp_year}'] = points_gdf.apply(lambda x: 
-                                                      x.geometry.distance(x[f'p_{comp_year}']), 
-                                                      axis=1)
+        points_gdf[f'dist_{comp_year}'] = points_gdf.apply(
+            lambda x: x.geometry.distance(x[f'p_{comp_year}']), axis=1)
         
 #         # Angle test
 #         points_gdf[f'{comp_year}'] = points_gdf.apply(lambda x: 
@@ -716,17 +715,19 @@ def annual_movements(yearly_ds,
         # Compute change directionality (negative = erosion, positive = accretion)    
         points_gdf['loss_gain'] = np.where(points_gdf.index_baseline_p2 > 
                                            points_gdf.index_comp_p1, 1, -1)
-        points_gdf[f'{comp_year}'] = (points_gdf[f'{comp_year}'] * 
-                                      points_gdf.loss_gain)
+        points_gdf[f'dist_{comp_year}'] = (points_gdf[f'dist_{comp_year}'] * 
+                                           points_gdf.loss_gain)
 
         # Add tide data
         tide_array = yearly_ds['tide_m'].sel(year=int(comp_year))
-        tide_points_gdf[f'{comp_year}'] = tide_array.interp(x=baseline_x_vals, 
+        tide_points_gdf[f'dist_{comp_year}'] = tide_array.interp(x=baseline_x_vals, 
                                                             y=baseline_y_vals)
-
+  
     # Keep required columns
-    points_gdf = points_gdf[['geometry'] + years.tolist()]
+    to_keep = points_gdf.columns.str.contains('dist|geometry')
+    points_gdf = points_gdf.loc[:, to_keep]
     points_gdf = points_gdf.round(2)
+    points_gdf[f'dist_{baseline_year}'] = 0.0
     
     return points_gdf, tide_points_gdf
 
@@ -738,7 +739,8 @@ def calculate_regressions(yearly_ds,
 
     # Restrict climate and points data to years in datasets
     x_years = yearly_ds.year.values
-    points_subset = points_gdf[x_years.astype(str)]
+    dist_years = [f'dist_{i}' for i in yearly_ds.year.values]
+    points_subset = points_gdf[dist_years]
 #     tide_subset = tide_points_gdf[x_years.astype(str)]
 #     climate_subset = climate_df.loc[x_years, :]
 
@@ -780,19 +782,10 @@ def calculate_regressions(yearly_ds,
     # Set CRS
     points_gdf.crs = yearly_ds.crs
 
-#     # Custom sorting
-#     column_order = [
-#         'rate_time', 'rate_SOI', 'rate_IOD', 'rate_SAM', 'rate_IPO', 'rate_PDO',
-#         'rate_tide', 'sig_time', 'sig_SOI', 'sig_IOD', 'sig_SAM', 'sig_IPO',
-#         'sig_PDO', 'sig_tide', 'outl_time', 'outl_SOI', 'outl_IOD', 'outl_SAM',
-#         'outl_IPO', 'outl_PDO', 'outl_tide', *x_years.astype(str).tolist(),
-#         'geometry'
-#     ]
-
     # Custom sorting
     column_order = [
         'rate_time', 'sig_time', 'se_time', 'outl_time', 
-        *x_years.astype(str).tolist(), 'geometry'
+        *dist_years, 'geometry'
     ]
 
     return points_gdf.loc[:, column_order]
@@ -973,22 +966,23 @@ def main(argv=None):
             col_schema = [('retreat', 'bool'), ('growth', 'bool'),
                           ('rate_time', 'float:8.2'), ('sig_time', 'float:8.3'),
                           ('se_time', 'float:8.2'), ('outl_time', 'str:80'),
-                          ('1988', 'float:8.2'), ('1989', 'float:8.2'),
-                          ('1990', 'float:8.2'), ('1991', 'float:8.2'),                    ('1992', 'float:8.2'),
-                          ('1993', 'float:8.2'), ('1994', 'float:8.2'),
-                          ('1995', 'float:8.2'), ('1996', 'float:8.2'),
-                          ('1997', 'float:8.2'), ('1998', 'float:8.2'),
-                          ('1999', 'float:8.2'), ('2000', 'float:8.2'),
-                          ('2001', 'float:8.2'), ('2002', 'float:8.2'),
-                          ('2003', 'float:8.2'), ('2004', 'float:8.2'),
-                          ('2005', 'float:8.2'), ('2006', 'float:8.2'),
-                          ('2007', 'float:8.2'), ('2008', 'float:8.2'),
-                          ('2009', 'float:8.2'), ('2010', 'float:8.2'),
-                          ('2011', 'float:8.2'), ('2012', 'float:8.2'),
-                          ('2013', 'float:8.2'), ('2014', 'float:8.2'),
-                          ('2015', 'float:8.2'), ('2016', 'float:8.2'),
-                          ('2017', 'float:8.2'), ('2018', 'float:8.2'),
-                          ('2019', 'float:8.2')]
+                          ('dist_1988', 'float:8.2'), ('dist_1989', 'float:8.2'),
+                          ('dist_1990', 'float:8.2'), ('dist_1991', 'float:8.2'), 
+                          ('dist_1991', 'float:8.2'), ('dist_1992', 'float:8.2'),
+                          ('dist_1993', 'float:8.2'), ('dist_1994', 'float:8.2'),
+                          ('dist_1995', 'float:8.2'), ('dist_1996', 'float:8.2'),
+                          ('dist_1997', 'float:8.2'), ('dist_1998', 'float:8.2'),
+                          ('dist_1999', 'float:8.2'), ('dist_2000', 'float:8.2'),
+                          ('dist_2001', 'float:8.2'), ('dist_2002', 'float:8.2'),
+                          ('dist_2003', 'float:8.2'), ('dist_2004', 'float:8.2'),
+                          ('dist_2005', 'float:8.2'), ('dist_2006', 'float:8.2'),
+                          ('dist_2007', 'float:8.2'), ('dist_2008', 'float:8.2'),
+                          ('dist_2009', 'float:8.2'), ('dist_2010', 'float:8.2'),
+                          ('dist_2011', 'float:8.2'), ('dist_2012', 'float:8.2'),
+                          ('dist_2013', 'float:8.2'), ('dist_2014', 'float:8.2'),
+                          ('dist_2015', 'float:8.2'), ('dist_2016', 'float:8.2'),
+                          ('dist_2017', 'float:8.2'), ('dist_2018', 'float:8.2'),
+                          ('dist_2019', 'float:8.2')]
             
             # Clip stats to study area extent, remove rocky shores
             stats_path = f'{output_dir}/stats_{study_area}_{output_name}_' \

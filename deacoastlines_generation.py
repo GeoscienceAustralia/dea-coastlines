@@ -27,8 +27,6 @@ import odc.algo
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# sys.path.append('../Scripts')
-# from dea_datahandling import mostcommon_crs
 
 start_time = datetime.datetime.now()
 
@@ -1337,7 +1335,7 @@ def main(argv=None):
     # Create query
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {'geopolygon': geopoly.buffer(0.05),
-             'time': ('1987', '2019'),
+             'time': ('1987', '2020'),
              'cloud_cover': [0, 90],
              'dask_chunks': {'time': 1, 'x': 2000, 'y': 2000}}
 
@@ -1399,7 +1397,7 @@ def main(argv=None):
     ##################
     
     # Once all rasters have been generated, compute contours and statistics
-    os.system(f'python /g/data/r78/rt1527/dea-notebooks/DEACoastLines/deacoastlines_statistics.py {study_area} {output_name}')
+    os.system(f'python /g/data/r78/DEACoastLines/deacoastlines_statistics.py {study_area} {output_name}')
     
         
 if __name__ == "__main__":
