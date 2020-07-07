@@ -726,8 +726,8 @@ def annual_movements(yearly_ds,
     # Keep required columns
     to_keep = points_gdf.columns.str.contains('dist|geometry')
     points_gdf = points_gdf.loc[:, to_keep]
-    points_gdf = points_gdf.round(2)
     points_gdf[f'dist_{baseline_year}'] = 0.0
+    points_gdf = points_gdf.round(2)    
     
     return points_gdf, tide_points_gdf
 
@@ -853,7 +853,7 @@ def main(argv=None):
     # Set params
     water_index = 'mndwi'
     index_threshold = 0.00
-    baseline_year = '2018'
+    baseline_year = '2019'
 
     ###############################
     # Load DEA CoastLines rasters #
