@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import sys
 import geopandas as gpd
 import pandas as pd
 from rtree import index
 from tqdm.auto import tqdm
 
-import deacoastlines_statistics as dcl_stats
+import deacoastlines_statistics as deacl_stats
 
 
 def points_in_poly(points, polygons):
@@ -23,12 +24,6 @@ def points_in_poly(points, polygons):
         poly_ids = [j for j in idx.intersection((point.coords[0]))
                     if point.within(polygons[j])]
         out_dict[i] = poly_ids
-
-#     # Re-order output dictionary
-#     poly_points_dict = {}
-#     for point_id, poly_ids in out_dict.items():
-#         for poly_id in poly_ids:
-#             poly_points_dict.setdefault(poly_id, []).append(point_id)
     
     return out_dict
 
@@ -69,25 +64,32 @@ def main(argv=None):
         
     # Set study area and name for analysis
     output_name = str(argv[1])
-        
+    
+    #################
+    # Merge vectors #
+    #################
+    
+    os.system(f'ogrmerge.py -o DEACoastLines_coastlines_{output_name}.shp '
+              f'output_data/*/vectors/shapefiles/contours_*_{output_name}_'
+              f'mndwi_0.00.shp -single -overwrite_ds -t_srs EPSG:3577')
+    os.system(f'ogrmerge.py -o DEACoastLines_statistics_{output_name}.shp '
+              f'output_data/*/vectors/shapefiles/stats_*_{output_name}_'
+              f'mndwi_0.00.shp -single -overwrite_ds -t_srs EPSG:3577')
 
     ###############################
     # Load DEA CoastLines vectors #
     ###############################
     
-    stats_gdf = gpd.read_file(f'DEACoastLines_statistics_{output_name}.shp').to_crs('EPSG:3577')
+    stats_gdf = gpd.read_file(f'DEACoastLines_statistics_{output_name}.shp')
     contours_gdf = gpd.read_file(f'DEACoastLines_coastlines_{output_name}.shp')
-    # stats_gdf = gpd.read_file(f'output_data/1193_v0.2.0/vectors/shapefiles/stats_1193_v0.2.0_mndwi_0.00.shp').to_crs('EPSG:3577')
-    # contours_gdf = gpd.read_file(f'output_data/1193_v0.2.0/vectors/shapefiles/contours_1193_v0.2.0_mndwi_0.00.shp')
 
     contours_gdf = (contours_gdf
                     .loc[contours_gdf.geometry.is_valid]
-                    .to_crs('EPSG:3577')
                     .set_index('year'))
 
-    summary_gdf = dcl_stats.stats_points(contours_gdf, 
-                                         baseline_year='2018', 
-                                         distance=3000)
+    summary_gdf = deacl_stats.stats_points(contours_gdf, 
+                                           baseline_year='2019', 
+                                           distance=2500)
     
     ####################
     # Generate summary #
@@ -95,7 +97,7 @@ def main(argv=None):
 
     # Generate dictionary of polygon IDs and corresponding points
     poly_points_dict = points_in_poly(points=summary_gdf.geometry, 
-                                      polygons=stats_gdf.buffer(6000))
+                                      polygons=stats_gdf.buffer(5000))
 
     # Compute mean and number of obs for each polygon
     summary_gdf[['rate_time', 'n']] = summary_gdf.apply(

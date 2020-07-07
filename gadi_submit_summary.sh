@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for output_name in v0.2.0
+for output_name in v0.3.0
 
 do
 
@@ -19,7 +19,7 @@ do
     module use /g/data/v10/public/modules/modulefiles\n\
     module load dea\n\
     module load otps\n\
-    python3 /g/data/r78/rt1527/dea-notebooks/MAHTS/deacoastlines_summary.py $output_name"
+    python3 /g/data/r78/DEACoastLines/deacoastlines_summary.py $output_name"
 
     echo -e ${PBS} | qsub || echo "${output_name} failed" >> log.txt
     sleep 0.2
