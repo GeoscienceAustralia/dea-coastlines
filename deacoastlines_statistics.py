@@ -28,7 +28,6 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 sys.path.append('/g/data/r78/rt1527/dea-notebooks/Scripts')
-from dea_spatialtools import subpixel_contours
 from dea_spatialtools import xr_vectorize
 
 
@@ -132,6 +131,7 @@ def subpixel_contours(da,
         
         # Extracts contours from array, and converts each discrete
         # contour into a Shapely LineString feature
+
         try:
             line_features = [LineString(i[:,[1, 0]]) 
                              for i in find_contours(da_i.data, z_value) 
@@ -726,21 +726,22 @@ def annual_movements(yearly_ds,
     # Keep required columns
     to_keep = points_gdf.columns.str.contains('dist|geometry')
     points_gdf = points_gdf.loc[:, to_keep]
-    points_gdf[f'dist_{baseline_year}'] = 0.0
+    points_gdf = points_gdf.assign(**{f'dist_{baseline_year}': 0.0})
     points_gdf = points_gdf.round(2)    
     
     return points_gdf, tide_points_gdf
 
 
-def calculate_regressions(yearly_ds, 
+def calculate_regressions(contours_gdf, 
                           points_gdf, 
                           tide_points_gdf, 
                           climate_df):
 
     # Restrict climate and points data to years in datasets
-    x_years = yearly_ds.year.values
-    dist_years = [f'dist_{i}' for i in yearly_ds.year.values]
+    x_years = contours_gdf.index.unique().astype(int).values
+    dist_years = [f'dist_{i}' for i in x_years]  
     points_subset = points_gdf[dist_years]
+
 #     tide_subset = tide_points_gdf[x_years.astype(str)]
 #     climate_subset = climate_df.loc[x_years, :]
 
@@ -780,7 +781,7 @@ def calculate_regressions(yearly_ds,
 #         points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', f'outl_{ci}']] = ci_out
 
     # Set CRS
-    points_gdf.crs = yearly_ds.crs
+    points_gdf.crs = contours_gdf.crs
 
     # Custom sorting
     column_order = [
@@ -812,7 +813,7 @@ def contour_certainty(contours_gdf,
         contours_good = gpd.overlay(contours_gdf, vector_mask, how='difference')
         contours_good['certainty'] = 'good'
         contours_uncertain = gpd.clip(contours_gdf, vector_mask)
-        contours_uncertain['certainty'] = 'uncertain'   
+        contours_uncertain['certainty'] = 'uncertain'  
 
         # Combine both datasets and filter to line features
         contours_gdf = pd.concat([contours_good, contours_uncertain])
@@ -823,7 +824,13 @@ def contour_certainty(contours_gdf,
         contours_gdf.index.name = 'year'
 
     else:
-        contours_gdf['certainty'] = 'good'
+        contours_gdf['certainty'] = 'good'   
+        
+    # Finally, set all 1991 and 1992 coastlines north of -23 degrees 
+    # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
+    pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) & 
+                    (contours_gdf.index.isin(['1991', '1992'])))
+    contours_gdf.loc[pinatubo_lat, 'certainty'] = 'uncertain'
     
     return contours_gdf
 
@@ -948,7 +955,7 @@ def main(argv=None):
                                                        water_index)
 
         # Calculate regressions
-        points_gdf = calculate_regressions(yearly_ds, 
+        points_gdf = calculate_regressions(contours_gdf, 
                                            points_gdf, 
                                            tide_points_gdf, 
                                            climate_df)
@@ -963,26 +970,14 @@ def main(argv=None):
 
         if points_gdf is not None:
             
-            col_schema = [('retreat', 'bool'), ('growth', 'bool'),
-                          ('rate_time', 'float:8.2'), ('sig_time', 'float:8.3'),
-                          ('se_time', 'float:8.2'), ('outl_time', 'str:80'),
-                          ('dist_1988', 'float:8.2'), ('dist_1989', 'float:8.2'),
-                          ('dist_1990', 'float:8.2'), ('dist_1991', 'float:8.2'), 
-                          ('dist_1991', 'float:8.2'), ('dist_1992', 'float:8.2'),
-                          ('dist_1993', 'float:8.2'), ('dist_1994', 'float:8.2'),
-                          ('dist_1995', 'float:8.2'), ('dist_1996', 'float:8.2'),
-                          ('dist_1997', 'float:8.2'), ('dist_1998', 'float:8.2'),
-                          ('dist_1999', 'float:8.2'), ('dist_2000', 'float:8.2'),
-                          ('dist_2001', 'float:8.2'), ('dist_2002', 'float:8.2'),
-                          ('dist_2003', 'float:8.2'), ('dist_2004', 'float:8.2'),
-                          ('dist_2005', 'float:8.2'), ('dist_2006', 'float:8.2'),
-                          ('dist_2007', 'float:8.2'), ('dist_2008', 'float:8.2'),
-                          ('dist_2009', 'float:8.2'), ('dist_2010', 'float:8.2'),
-                          ('dist_2011', 'float:8.2'), ('dist_2012', 'float:8.2'),
-                          ('dist_2013', 'float:8.2'), ('dist_2014', 'float:8.2'),
-                          ('dist_2015', 'float:8.2'), ('dist_2016', 'float:8.2'),
-                          ('dist_2017', 'float:8.2'), ('dist_2018', 'float:8.2'),
-                          ('dist_2019', 'float:8.2')]
+            # Set up scheme to optimise file size
+            schema_dict = {key: 'float:8.2' for key in points_gdf.columns
+                           if key != 'geometry'}
+            schema_dict.update({'retreat': 'bool', 
+                                'growth': 'bool',
+                                'sig_time': 'float:8.3',
+                                'outl_time': 'str:80'})
+            col_schema = schema_dict.items()
             
             # Clip stats to study area extent, remove rocky shores
             stats_path = f'{output_dir}/stats_{study_area}_{output_name}_' \
