@@ -834,6 +834,21 @@ def contour_certainty(contours_gdf,
     
     return contours_gdf
 
+
+def sce(x, col='dist_'):
+
+    # Select date columns only
+    to_keep = x.index.str.contains(col)
+    
+    # Identify outlier years to drop from calculation
+    to_drop = [f'{col}{i}' for i in x.outl_time.split(" ") if len(i) > 0]
+    
+    # Return matching subset of data
+    subset = x.loc[to_keep].drop(to_drop)
+
+    # Calculate range
+    return subset.max() - subset.min()
+
     
 def main(argv=None):
     
@@ -963,6 +978,9 @@ def main(argv=None):
         # Add in retreat/growth helper columns (used for web services)
         points_gdf['retreat'] = points_gdf.rate_time < 0 
         points_gdf['growth'] = points_gdf.rate_time > 0
+        
+        # Add Shoreline Change Envelope (SCE)
+        points_gdf['sce'] = points_gdf.apply(lambda x: sce(x), axis=1)
 
         ################
         # Export stats #
