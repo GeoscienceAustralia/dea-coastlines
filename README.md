@@ -7,41 +7,23 @@
 **DEA CoastLines** is a continental dataset providing annual shorelines and rates of change along the entire Australian coastline from 1988 to the present. 
 The product combines satellite data from the [Digital Earth Australia](http://www.ga.gov.au/dea) archive with tidal modelling to map the typical location of the coastline at approximately mean sea level tide (0 m AHD). 
 
-## Changelog
+## Data structure and features
+The **DEA CoastLines** product contains three layers:
 
-### v0.3.0 (upcoming)
+* **Coastlines**: Annual coastline vectors from 1988 to 2019 that represent median or ‘typical’ coastline positions at approximately mean sea level tide (0 m AHD). 
+   * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, or poor tidal modelling performance.
 
-**Outstanding issues**
-* Missing oldest contours on eastern side of Fraser Island, QLD (caused by missing path/row 890770)
+* **Statistics**: A point dataset providing robust coastal change statistics for every 30 m along Australia’s clastic coastlines (using the most recent 2019 coastline as a baseline). By default, points are shown for significant rates of change only (p-value < 0.01, see sig_time below). The dataset contains the following attribute column types:
+   * `dist_1990`, `dist_1991` etc: Annual coastline positions/distances (in metres) relative to the 2019 baseline coastline. Negative values indicate that an annual coastline was located inland of the 2019 baseline coastline. 
+   * `rate_time`: Annual rates of change (in metres per year) calculated by linearly regressing all annual coastline distances against time. Negative values indicate erosion, while positive values indicate progradation.
+   * `sig_time`: Significance (p-value) of any linear relationship between coastline distances and time. Small values (e.g. < 0.05 or < 0.01) may indicate a coastline is undergoing consistent coastal change through time.
+   * `outl_time`: Individual annual coastlines are noisy estimators of coastline position that can be influenced by environmental conditions (e.g. clouds, breaking waves, sea spray) or modelling issues (e.g. poor tidal modelling results or limited clear satellite observations). To obtain robust rates of change, outlying years are excluded using a robust outlier detection algorithm, and recorded in this column.
 
-**Bug fixes**
-* In `deacoastlines_statistics.py`: Restored missing contours on western end of Rottnest Island, WA
-* In `deacoastlines_statistics.py`: Removed Papua New Guinea territory from data
+* **Summary**: A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change.
 
-### v0.2.0 (May 5, 2020)
-
-**Features**
-* Add 'uncertainty' column to contour data for pixels with either less than 5 observations or > 0.25 MNDWI standard deviation in more than 50% of years
-* Add new `DEACoastLines_utilities.ipynb` notebook containing additional functions for using DEA CoastLines data
-* Add `rates_hist` utility function for plotting DEACoastLine statistics data as a histogram based on an interactive selection
-* Add ability to modify waterbody mask by providing a vector files of features to add or remove from the mask
-* Add new `deacoastlines_summary.py` script for generating continental summary of point statistics based on average values within a buffer of X km of a subset of points. This allows hotspots to be visualised at full zoom out
-
-**Bug fixes**
-* In `deacoastlines_generation.py`: Fixed missing grid cell areas by buffering both the input grid cell extent and tide modelling extent by 0.05 degrees (i.e. a total of 0.10 degrees). This ensures that enough tidal modelling points are available for interpolation, and improves tidal modelling consistency between neighbouring grid cells 
-* In `deacoastlines_generation.py`: Break script early if grid cell correspondes to 1 or less tidal modelling points, as this makes tidal interpolation impossible
-* In `deacoastlines_generation.py`: Increase `dask_chunks` to `{'time': 1, 'x': 2000, 'y': 2000}` for improved data load performance
-* In `deacoastlines_statistics.py`: Fixed missing shorelines caused by the waterbody mask by limiting mask to specific waterbody features (`'Aquaculture Area', 'Estuary', 'Watercourse Area', 'Salt Evaporator', 'Settling Pond'` and perennial `'Lakes'`)
-* In `deacoastlines_statistics.py`: Fix CRS of exported GeoJSON contours and statistics files by converting to `EPSG:4326`
-* In `deacoastlines_statistics.py`: Remove previous zeroing of yearly distance values to 1988. Yearly distances are now relative to the 2018 baseline (e.g. 0 for the 2018 contour), which should be simpler easier to interpret
-* In `deacoastlines_statistics.py`: Increase `min_vertices` for contour extraction to 30 to reduce noise
-* In `deacoastlines_statistics.py`: Move vector directory creation until after data load, so no directory is created if rasters do not exist
-
-### v0.1.0 (April 1, 2020)
-
-**Features**
-* First continental run of DEACoastLines
-* Outlier detection now uses a more robust Median Absolute Deviation method
-
-**Bug fixes**
-* In `deacoastlines_statistics.py`: Remove mask applied to contour generation due to excessive missing data
+## Key limitations and caveats
+* Rates of change statistics are likely to be inaccurate or invalid in complex mouthbars, or other coastal environments undergoing rapid non-linear change through time. In these regions, it is advisable to visually assess the underlying annual coastline data when interpreting rates of change to ensure these values are fit-for-purpose. 
+* Annual coastlines may be less accurate in regions with complex tidal dynamics or large tidal ranges, and low lying intertidal flats where small tidal modelling errors can lead to large horizontal offsets in coastline positions. 
+* Annual coastline accuracy in intertidal environments may also be reduced by the influence of wet muddy substrate or intertidal vegetation, which can make it difficult to extract a single unambiguous coastline.
+* In urban locations, the spectra of bright white buildings located near the coastline may be inadvertently confused with water, causing a land-ward offset from true coastline positions. 
+* 1991 and 1992 coastlines are currently affected by aerosol-related issues caused by the 1991 Mount Pinatubo eruption. These coastlines should be interpreted with care, particularly across northern Australia.
