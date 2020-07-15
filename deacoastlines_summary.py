@@ -56,7 +56,7 @@ def main(argv=None):
         print(sys.argv)
 
     # If no user arguments provided
-    if len(argv) < 2:
+    if len(argv) < 3:
 
         str_usage = "You must specify an analysis name"
         print(str_usage)
@@ -64,6 +64,7 @@ def main(argv=None):
         
     # Set study area and name for analysis
     output_name = str(argv[1])
+    summary = bool(argv[2])
     
     #################
     # Merge vectors #
@@ -75,39 +76,41 @@ def main(argv=None):
     os.system(f'ogrmerge.py -o DEACoastLines_statistics_{output_name}.shp '
               f'output_data/*/vectors/shapefiles/stats_*_{output_name}_'
               f'mndwi_0.00.shp -single -overwrite_ds -t_srs EPSG:3577')
-
-    ###############################
-    # Load DEA CoastLines vectors #
-    ###############################
     
-    stats_gdf = gpd.read_file(f'DEACoastLines_statistics_{output_name}.shp')
-    contours_gdf = gpd.read_file(f'DEACoastLines_coastlines_{output_name}.shp')
+    if summary:
 
-    contours_gdf = (contours_gdf
-                    .loc[contours_gdf.geometry.is_valid]
-                    .set_index('year'))
+        ###############################
+        # Load DEA CoastLines vectors #
+        ###############################
 
-    summary_gdf = deacl_stats.stats_points(contours_gdf, 
-                                           baseline_year='2019', 
-                                           distance=2500)
-    
-    ####################
-    # Generate summary #
-    ####################
+        stats_gdf = gpd.read_file(f'DEACoastLines_statistics_{output_name}.shp')
+        contours_gdf = gpd.read_file(f'DEACoastLines_coastlines_{output_name}.shp')
 
-    # Generate dictionary of polygon IDs and corresponding points
-    poly_points_dict = points_in_poly(points=summary_gdf.geometry, 
-                                      polygons=stats_gdf.buffer(5000))
+        contours_gdf = (contours_gdf
+                        .loc[contours_gdf.geometry.is_valid]
+                        .set_index('year'))
 
-    # Compute mean and number of obs for each polygon
-    summary_gdf[['rate_time', 'n']] = summary_gdf.apply(
-        lambda row: get_matching_data(row.name, 
-                                      stats_gdf,
-                                      poly_points_dict,
-                                      min_n=100), axis=1)
+        summary_gdf = deacl_stats.stats_points(contours_gdf, 
+                                               baseline_year='2019', 
+                                               distance=2500)
 
-    # Export to file
-    summary_gdf.to_file(f'DEACoastLines_summary_{output_name}.shp')
+        ####################
+        # Generate summary #
+        ####################
+
+        # Generate dictionary of polygon IDs and corresponding points
+        poly_points_dict = points_in_poly(points=summary_gdf.geometry, 
+                                          polygons=stats_gdf.buffer(5000))
+
+        # Compute mean and number of obs for each polygon
+        summary_gdf[['rate_time', 'n']] = summary_gdf.apply(
+            lambda row: get_matching_data(row.name, 
+                                          stats_gdf,
+                                          poly_points_dict,
+                                          min_n=100), axis=1)
+
+        # Export to file
+        summary_gdf.to_file(f'DEACoastLines_summary_{output_name}.shp')
 
 
 if __name__ == "__main__":
