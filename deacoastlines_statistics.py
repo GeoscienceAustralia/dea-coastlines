@@ -835,7 +835,7 @@ def contour_certainty(contours_gdf,
     return contours_gdf
 
 
-def sce(x, col='dist_'):
+def all_time_stats(x, col='dist_'):
 
     # Select date columns only
     to_keep = x.index.str.contains(col)
@@ -844,10 +844,14 @@ def sce(x, col='dist_'):
     to_drop = [f'{col}{i}' for i in x.outl_time.split(" ") if len(i) > 0]
     
     # Return matching subset of data
-    subset = x.loc[to_keep].drop(to_drop)
+    subset = x.loc[to_keep].drop(to_drop).astype(float)
 
-    # Calculate range
-    return subset.max() - subset.min()
+    # Calculate SCE range and max/min year
+    return pd.Series({'sce': subset.max() - subset.min(),
+                      'nsm': (subset.loc[subset.last_valid_index()] -
+                              subset.loc[subset.first_valid_index()]),
+                      'max_year': int(subset.idxmax()[-4:]),
+                      'min_year': int(subset.idxmin()[-4:])})
 
     
 def main(argv=None):
@@ -979,9 +983,11 @@ def main(argv=None):
         points_gdf['retreat'] = points_gdf.rate_time < 0 
         points_gdf['growth'] = points_gdf.rate_time > 0
         
-        # Add Shoreline Change Envelope (SCE)
-        points_gdf['sce'] = points_gdf.apply(lambda x: sce(x), axis=1)
-
+        # Add Shoreline Change Envelope (SCE), Net Shoreline Movement 
+        # (NSM) and Max/Min years
+        points_gdf[['sce', 'nsm', 'max_year', 'min_year']] = points_gdf.apply(
+            lambda x: deacl_stats.all_time_stats(x), axis=1)
+        
         ################
         # Export stats #
         ################
@@ -991,10 +997,12 @@ def main(argv=None):
             # Set up scheme to optimise file size
             schema_dict = {key: 'float:8.2' for key in points_gdf.columns
                            if key != 'geometry'}
-            schema_dict.update({'retreat': 'bool', 
+            schema_dict.update({'sig_time': 'float:8.3',
+                                'outl_time': 'str:80',
+                                'retreat': 'bool', 
                                 'growth': 'bool',
-                                'sig_time': 'float:8.3',
-                                'outl_time': 'str:80'})
+                                'max_year': 'int',
+                                'min_year': 'int'})
             col_schema = schema_dict.items()
             
             # Clip stats to study area extent, remove rocky shores
