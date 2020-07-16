@@ -64,7 +64,8 @@ def main(argv=None):
         
     # Set study area and name for analysis
     output_name = str(argv[1])
-    summary = bool(argv[2])
+    threshold = str(argv[2])
+    summary = bool(argv[3])
     
     #################
     # Merge vectors #
@@ -72,10 +73,10 @@ def main(argv=None):
     
     os.system(f'ogrmerge.py -o DEACoastLines_coastlines_{output_name}.shp '
               f'output_data/*/vectors/shapefiles/contours_*_{output_name}_'
-              f'mndwi_0.00.shp -single -overwrite_ds -t_srs EPSG:3577')
+              f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
     os.system(f'ogrmerge.py -o DEACoastLines_statistics_{output_name}.shp '
               f'output_data/*/vectors/shapefiles/stats_*_{output_name}_'
-              f'mndwi_0.00.shp -single -overwrite_ds -t_srs EPSG:3577')
+              f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
     
     if summary:
 

@@ -986,7 +986,7 @@ def main(argv=None):
         # Add Shoreline Change Envelope (SCE), Net Shoreline Movement 
         # (NSM) and Max/Min years
         points_gdf[['sce', 'nsm', 'max_year', 'min_year']] = points_gdf.apply(
-            lambda x: deacl_stats.all_time_stats(x), axis=1)
+            lambda x: all_time_stats(x), axis=1)
         
         ################
         # Export stats #
@@ -1001,8 +1001,8 @@ def main(argv=None):
                                 'outl_time': 'str:80',
                                 'retreat': 'bool', 
                                 'growth': 'bool',
-                                'max_year': 'int',
-                                'min_year': 'int'})
+                                'max_year': 'int:4',
+                                'min_year': 'int:4'})
             col_schema = schema_dict.items()
             
             # Clip stats to study area extent, remove rocky shores
