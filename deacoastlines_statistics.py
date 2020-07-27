@@ -524,7 +524,7 @@ def contours_preprocess(yearly_ds,
     # as water in at least 90% of the entire stack of thresholded data.
     # Apply a binary opening step to clean noisy pixels
     all_time = thresholded_ds.mean(dim='year') > 0.9
-    all_time_cleaned = xr.apply_ufunc(binary_opening, all_time, disk(3))
+    all_time_cleaned = xr.apply_ufunc(binary_opening, all_time, square(3))
     all_time_ocean = mask_ocean(all_time_cleaned, points_gdf)   
     
     # Generate coastal buffer (30m * `buffer_pixels`) from ocean-land boundary
@@ -682,10 +682,13 @@ def annual_movements(yearly_ds,
                                                                        comp_contour)[1], 
                                                         axis=1)
 
-#         Compute distance between baseline and comparison year points and add
-#         this distance as a new field named by the current year being analysed
-        points_gdf[f'dist_{comp_year}'] = points_gdf.apply(
+        # Compute distance between baseline and comparison year points and add
+        # this distance as a new field named by the current year being analysed
+        distances = points_gdf.apply(
             lambda x: x.geometry.distance(x[f'p_{comp_year}']), axis=1)
+        
+        # Set any value over 1000 m to NaN
+        points_gdf[f'dist_{comp_year}'] = distances.where(distances < 1000)
         
 #         # Angle test
 #         points_gdf[f'{comp_year}'] = points_gdf.apply(lambda x: 

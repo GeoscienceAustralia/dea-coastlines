@@ -21,7 +21,7 @@ do
     #PBS -P r78\n\
     #PBS -q hugemem\n\
     #PBS -l walltime=04:59:00\n\
-    #PBS -l mem=128GB\n\
+    #PBS -l mem=96GB\n\
     #PBS -l jobfs=2GB\n\
     #PBS -l ncpus=1\n\
     #PBS -l wd\n\
