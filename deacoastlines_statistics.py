@@ -260,13 +260,14 @@ def subpixel_contours(da,
 
 def outlier_mad(points, thresh=3.5):
     """
-    Returns a boolean array with True if points are outliers and False 
-    otherwise.
+    Use robust Median Absolute Deviation (MAD) outlier detection 
+    algorithm to detect outliers. Returns a boolean array with True if 
+    points are outliers and False otherwise.
 
     Parameters:
     -----------
     points : 
-        An numobservations by numdimensions array of observations
+        An n-observations by n-dimensions array of observations
     thresh : 
         The modified z-score to use as a threshold. Observations with a 
         modified z-score (based on the median absolute deviation) greater
@@ -275,7 +276,7 @@ def outlier_mad(points, thresh=3.5):
     Returns:
     --------
     mask : 
-        A numobservations-length boolean array.
+        A n-observations-length boolean array.
 
     References:
     ----------
@@ -307,6 +308,48 @@ def change_regress(row,
                    pvalue_var='pvalue', 
                    stderr_var='stderr',
                    outliers_var='outliers'):
+    """
+    For a given row in a `pandas.DataFrame`, apply linear regression to
+    data values (as y-values) and a corresponding sequence of x-values, 
+    and return 'slope', 'intercept', 'pvalue', and 'stderr' regression
+    parameters.
+    
+    Before computing the regression, outliers are identified using a
+    robust Median Absolute Deviation (MAD) outlier detection algorithm,
+    and excluded from the regression. A list of these outliers will be
+    recorded in the output 'outliers' variable.
+
+    Parameters:
+    -----------
+    row : 
+        A `pandas.DataFrame` row
+    x_vals : list of numeric values, or nd.array
+        A sequence of values to use as the x/independent variable
+    x_labels : list
+        A sequence of strings corresponding to each value in `x_vals`.
+        This is used to label any observations that are flagged as 
+        outliers (often, this can simply be set to the same list 
+        provided to `x_vals`).
+    threshold : float, optional    
+        The modified z-score to use as a threshold for detecting 
+        outliers using the MAD algorithm. Observations with a modified 
+        z-score (based on the median absolute deviation) greater
+        than this value will be classified as outliers.
+    detrend_params : optional
+        Not currently used
+    slope, interc_var, pvalue_var, stderr_var : strings, optional
+        Strings giving the names to use for each of the output 
+        regression variables.    
+    outliers_var : string, optional
+        String giving the name to use for the output outlier variable.        
+
+    Returns:
+    --------
+    mask : 
+        A `pandas.Series` containing regression parameters and lists
+        of outliers.
+    
+    """
     
     # Extract x (time) and y (distance) values
     x = x_vals
@@ -356,6 +399,39 @@ def breakpoints(x, labels, model='rbf', pen=10, min_size=2, jump=1):
 def load_rasters(output_name, 
                  study_area, 
                  water_index='mndwi'):
+    
+    """
+    Loads DEA CoastLines water index (e.g. 'MNDWI'), 'tide_m', 'count',
+    and 'stdev' rasters for both annual and three-year gapfill data
+    into a consistent `xarray.Dataset` format for further analysis.
+    
+    Parameters:
+    -----------
+    output_name : string
+        A string giving the unique DEA Coastlines analysis output name
+        (e.g. 'v0.3.0') used to name raster files.
+    study_area : string or int
+        A string giving the study area used to name raster files 
+        (e.g. Albers tile `6931`).
+    water_index : string, optional
+        A string giving the name of the water index to load. Defaults
+        to 'mndwi', which will load raster files produced using the
+        Modified Normalised Difference Water Index.
+
+    Returns:
+    --------
+    yearly_ds : xarray.Dataset
+        An `xarray.Dataset` containing annual DEA CoastLines rasters.
+        The dataset contains water index (e.g. 'MNDWI'), 'tide_m', 
+        'count', and 'stdev' arrays for each year from 1988 onward.
+    gapfill_ds : xarray.Dataset
+        An `xarray.Dataset` containing three-year gapfill DEA CoastLines
+        rasters. The dataset contains water index (e.g. 'MNDWI'), 
+        'tide_m', 'count', and 'stdev' arrays for each year from 1988 
+        onward.
+        
+    """
+    
 
     # List to hold output Datasets
     ds_list = []
@@ -417,6 +493,31 @@ def waterbody_mask(input_data,
     Evaporator', and 'Settling Pond' features. Features of 
     type 'add' from the modification data file are added to the
     mask, while features of type 'remove' are removed.
+    
+    Parameters:
+    -----------
+    input_data : string
+        A string giving the path to the file containing surface water
+        polygons (e.g. SurfaceHydrologyPolygonsRegional.gdb)
+    modification_data : string
+        A string giving the path to a vector file containing 
+        modifications to the waterbody file. This vector file should
+        contain polygon features with an attribute field 'type'
+        indicating whether the function should 'add' or 'remove' the 
+        feature from the waterbody mask.
+    bbox : geopandas.GeoSeries
+        A `geopandas.GeoSeries` giving the spatial extent to load data 
+        for. This object should include a CRS.
+    yearly_ds : xr.Dataset
+        The annual DEA CoastLines `xarray.Dataset`, used to extract the
+        shape and geotransform so that waterbody features can be 
+        rasterised into the data's extents.
+        
+    Returns:
+    --------
+    waterbody_mask : nd.array
+        An array containing the rasterised surface water features.
+    
     """
 
     # Import SurfaceHydrologyPolygonsRegional data
@@ -463,8 +564,30 @@ def waterbody_mask(input_data,
 def mask_ocean(bool_array, points_gdf, connectivity=1):
     """
     Identifies ocean by selecting the largest connected area of water
-    pixels, then dilating this region to ensure sub-pixel algorithm has
-    pixels on either side of the water index threshold
+    pixels that contain tidal modelling points, then dilating this 
+    region to ensure sub-pixel algorithm has pixels on either side of 
+    the water index threshold.
+    
+    Parameters:
+    -----------
+    bool_array : xarray.DataArray
+        An array containing True for water pixels, and False for non-
+        water. This can be obtained by thresholding a water index
+        array (e.g. MNDWI > 0).
+    points_gdf : geopandas.GeoDataFrame
+        Spatial points located within the ocean. These points are used
+        to ensure that all coastlines are directly connected to the 
+        ocean.
+    connectivity : integer, optional
+        An integer passed to the 'connectivity' parameter of the
+        `skimage.measure.label` function.
+        
+    Returns:
+    --------
+    ocean_mask : nd.array
+        An array containing the a mask consisting of identified ocean 
+        pixels.
+    
     """
     
     # First, break boolean array into unique, discrete regions/blobs
@@ -494,6 +617,63 @@ def contours_preprocess(yearly_ds,
                         points_gdf,
                         output_path,
                         buffer_pixels=33):  
+    """
+    Prepares and preprocesses DEA CoastLines raster data to restrict the
+    analysis to coastal shorelines, and extract data that is used to
+    assess the certainty of extracted shorelines.
+    
+    This function:
+    
+    1) Identifies areas affected by either tidal issues, or low data
+    2) Fills low data areas in annual layers with three-year gapfill
+    3) Masks data to focus on ocean and coastal pixels only by removing
+       any pixels not directly connected to ocean or included in an
+       array of surface water (e.g. estuaries or inland waterbodies)
+    4) Generate an overall coastal buffer using the entire timeseries,
+       and clip each annual layer to this buffer
+    5) Generate an all time mask raster containing data on tidal issues, 
+       low data and coastal buffer to assist in interpreting results.
+    
+    Parameters:
+    -----------
+    yearly_ds : xarray.Dataset
+        An `xarray.Dataset` containing annual DEA CoastLines rasters.
+    gapfill_ds : xarray.Dataset
+        An `xarray.Dataset` containing three-year gapfill DEA CoastLines
+        rasters. 
+    water_index : string
+        A string giving the name of the water index included in the 
+        annual and gapfill datasets (e.g. 'mndwi').
+    index_threshold : float
+        A float giving the water index threshold used to separate land
+        and water (e.g. 0.00).
+    waterbody_array : nd.array
+        An array containing rasterised surface water features to exclude
+        from the data, used by the `mask_ocean` function.
+    points_gdf : geopandas.GeoDataFrame
+        Spatial points located within the ocean. These points are used
+        by the `mask_ocean` to ensure that all coastlines are directly 
+        connected to the ocean. These may be obtained from the tidal 
+        modelling points used in the raster generation part of the DEA 
+        CoastLines analysis, as these are guaranteed to be located in 
+        coastal or marine waters.
+    output_path : string
+        A string giving the directory into which output all time mask 
+        raster will be written.
+    buffer_pixels : int, optional
+        The number of pixels by which to buffer the all time shoreline
+        detected by this function to produce an overall coastal buffer.
+        The default is 33 pixels, which at 30 m Landsat resolution 
+        produces a coastal buffer with a radius of approximately 1000 m.
+        
+    Returns:
+    --------
+    masked_ds : xarray.Dataset
+        A dataset containing water index data for each annual timestep
+        that has been masked to the coastal zone. This can then be used
+        as an input to subpixel waterline extraction.
+    
+    """
     
     # Flag nodata pixels
     nodata = yearly_ds[water_index].isnull()
@@ -503,8 +683,8 @@ def contours_preprocess(yearly_ds,
     # erosion to isolate large connected areas of problematic pixels
     mean_stdev = (yearly_ds['stdev'] > 0.25).where(~nodata).mean(dim='year')
     mean_count = (yearly_ds['count'] < 5).where(~nodata).mean(dim='year')
-    persistent_stdev = binary_erosion(mean_stdev > 0.5, selem = disk(2))
-    persistent_lowobs = binary_erosion(mean_count > 0.5, selem = disk(2))
+    persistent_stdev = binary_erosion(mean_stdev > 0.5, selem=disk(2))
+    persistent_lowobs = binary_erosion(mean_count > 0.5, selem=disk(2))
 
     # Remove low obs pixels and replace with 3-year gapfill
     yearly_ds = yearly_ds.where(yearly_ds['count'] > 5, gapfill_ds)
@@ -563,21 +743,45 @@ def contours_preprocess(yearly_ds,
     return masked_ds
 
 
-def stats_points(contours_gdf, baseline_year, distance=30):
+def points_on_line(gdf, index, distance=30):
     
-    # Set annual shoreline to use as a baseline
-    baseline_contour = contours_gdf.loc[[baseline_year]].geometry
+    """
+    Generates evenly-spaced point features along a specific line feature
+    in a `geopandas.GeoDataFrame`.
+    
+    Parameters:
+    -----------
+    gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing line features with an 
+        index and CRS.
+    index : string or int
+        An value giving the index of the line to generate points along
+    distance : integer or float, optional
+        A number giving the interval at which to generate points along 
+        the line feature. Defaults to 30, which will generate a point
+        at every 30 metres along the line.
+        
+    Returns:
+    --------
+    points_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing point features at every
+        `distance` along the selected line.
+    
+    """
+    
+    # Select individual line to generate points along
+    line_feature = gdf.loc[[index]].geometry    
     
     # If multiple features are returned, take unary union
-    if baseline_contour.shape[0] > 0:
-        baseline_contour = baseline_contour.unary_union
+    if line_feature.shape[0] > 0:
+        line_feature = line_feature.unary_union
     else:
-        baseline_contour = baseline_contour.iloc[0]
+        line_feature = line_feature.iloc[0]
 
     # Generate points along line and convert to geopandas.GeoDataFrame
-    points_line = [baseline_contour.interpolate(i) 
-                   for i in range(0, int(baseline_contour.length), distance)]
-    points_gdf = gpd.GeoDataFrame(geometry=points_line, crs=contours_gdf.crs)
+    points_line = [line_feature.interpolate(i) 
+                   for i in range(0, int(line_feature.length), distance)]
+    points_gdf = gpd.GeoDataFrame(geometry=points_line, crs=gdf.crs)
     
     return points_gdf
 
@@ -885,8 +1089,10 @@ def main(argv=None):
     # Load DEA CoastLines rasters #
     ###############################
     
-    yearly_ds = load_rasters(output_name, study_area, water_index)
-    
+    # Load yearly and gapfill data
+    yearly_ds, gapfill_ds = load_rasters(output_name, 
+                                         study_area, 
+                                         water_index)
     # Create output vector folder
     output_dir = f'output_data/{study_area}_{output_name}/vectors'
     os.makedirs(f'{output_dir}/shapefiles', exist_ok=True)
@@ -935,7 +1141,9 @@ def main(argv=None):
         yearly_ds=yearly_ds)
 
     # Mask dataset to focus on coastal zone only
-    masked_ds = contours_preprocess(yearly_ds, 
+    masked_ds = contours_preprocess(
+        yearly_ds,
+        gapfill_ds,
         water_index, 
         index_threshold, 
         waterbody_array, 
@@ -943,7 +1151,8 @@ def main(argv=None):
         output_path=f'output_data/{study_area}_{output_name}')
 
     # Extract contours
-    contours_gdf = subpixel_contours(da=masked_ds,
+    contours_gdf = subpixel_contours(
+        da=masked_ds,
         z_values=index_threshold,
         min_vertices=30,
         dim='year').set_index('year')
@@ -951,10 +1160,10 @@ def main(argv=None):
     ######################
     # Compute statistics #
     ######################    
-    
+
     # Extract statistics modelling points along baseline contour
-    points_gdf = stats_points(contours_gdf, baseline_year, distance=30)
-    
+    points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
+
     # Clip to remove rocky shoreline points
     points_gdf = rocky_shores_clip(points_gdf, smartline_gdf, buffer=50)
     

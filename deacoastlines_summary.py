@@ -91,9 +91,9 @@ def main(argv=None):
                         .loc[contours_gdf.geometry.is_valid]
                         .set_index('year'))
 
-        summary_gdf = deacl_stats.stats_points(contours_gdf, 
-                                               baseline_year='2019', 
-                                               distance=2500)
+        summary_gdf = deacl_stats.points_on_line(contours_gdf, 
+                                                 index='2019', 
+                                                 distance=2500)
 
         ####################
         # Generate summary #
