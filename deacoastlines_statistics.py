@@ -340,10 +340,10 @@ def change_regress(row,
 
 
 def breakpoints(x, labels, model='rbf', pen=10, min_size=2, jump=1):
-    '''
+    """
     Takes an array of erosion values, and returns a list of 
     breakpoint years
-    '''
+    """
     signal = x.values
     algo = rpt.Pelt(model=model, min_size=min_size, jump=jump).fit(signal)
     result = algo.predict(pen=pen)
@@ -353,79 +353,53 @@ def breakpoints(x, labels, model='rbf', pen=10, min_size=2, jump=1):
         return None
 
     
-def mask_ocean(bool_array, points_gdf, connectivity=1):
-    '''
-    Identifies ocean by selecting the largest connected area of water
-    pixels, then dilating this region by 1 pixel to include mixed pixels
-    '''
-    
-    # First, break boolean array into unique, discrete regions/blobs
-    blobs_labels = xr.apply_ufunc(label, bool_array, None, 0, False, connectivity)
-    
-    # Get blob ID for each tidal modelling point
-    x = xr.DataArray(points_gdf.geometry.x, dims='z')
-    y = xr.DataArray(points_gdf.geometry.y, dims='z')   
-    ocean_blobs = np.unique(blobs_labels.interp(x=x, y=y, method='nearest'))
-
-    # Return only blobs that contained tide modelling point
-    ocean_mask = blobs_labels.isin(ocean_blobs[ocean_blobs != 0])
-    
-    # Dilate mask so that we include land pixels on the inland side
-    # of each shoreline to ensure contour extraction accurately
-    # seperates land and water spectra
-    ocean_mask = binary_dilation(ocean_mask, selem=square(3))
-
-    return ocean_mask
-
-
 def load_rasters(output_name, 
                  study_area, 
                  water_index='mndwi'):
+
+    # List to hold output Datasets
+    ds_list = []
+
+    for layer_type in ['.tif', '_gapfill.tif']:
+
+        # List to hold output DataArrays
+        da_list = []
+
+        for layer_name in [f'{water_index}', 'tide_m', 'count', 'stdev']:
+
+            # Get paths of files that match pattern
+            paths = glob.glob(f'output_data/{study_area}_{output_name}/' \
+                              f'*_{layer_name}{layer_type}')
+
+            # Test if data was returned
+            if len(paths) == 0:
+                raise ValueError(f"No rasters found for grid cell {study_area} "
+                                 f"(analysis name '{output_name}'). Verify that "
+                                 f"`deacoastlines_generation.py` has been run "
+                                 "for this grid cell.")
+
+            # Create variable used for time axis
+            time_var = xr.Variable('year', 
+                                   [int(i.split('/')[2][0:4]) for i in paths])
+
+            # Import data
+            layer_da = xr.concat([xr.open_rasterio(i) for i in paths], 
+                                  dim=time_var)
+            layer_da.name = f'{layer_name}'
+
+            # Append to file
+            da_list.append(layer_da)
+
+        # Combine into a single dataset and set CRS
+        layer_ds = xr.merge(da_list).squeeze('band', drop=True)
+        layer_ds = layer_ds.assign_attrs(layer_da.attrs)
+        layer_ds.attrs['transform'] = Affine(*layer_ds.transform)
+        layer_ds = layer_ds.sel(year=slice(1988, None))
+
+        # Append to list
+        ds_list.append(layer_ds)
     
-    # Get file paths
-    gapfill_index_files = sorted(glob.glob(f'output_data/{study_area}_{output_name}/*_{water_index}_gapfill.tif'))
-    gapfill_tide_files = sorted(glob.glob(f'output_data/{study_area}_{output_name}/*_tide_m_gapfill.tif'))
-    gapfill_count_files = sorted(glob.glob(f'output_data/{study_area}_{output_name}/*_count_gapfill.tif'))
-    index_files = sorted(glob.glob(f'output_data/{study_area}_{output_name}/*_{water_index}.tif'))[1:len(gapfill_index_files)+1]
-    stdev_files = sorted(glob.glob(f'output_data/{study_area}_{output_name}/*_stdev.tif'))[1:len(gapfill_index_files)+1]
-    tidem_files = sorted(glob.glob(f'output_data/{study_area}_{output_name}/*_tide_m.tif'))[1:len(gapfill_index_files)+1]
-    count_files = sorted(glob.glob(f'output_data/{study_area}_{output_name}/*_count.tif'))[1:len(gapfill_index_files)+1]
-
-    # Test if data was returned
-    if len(index_files) == 0:
-        raise ValueError(f"No rasters found for grid cell {study_area} "
-                         f"(analysis name '{output_name}'). Verify that "
-                         f"`deacoastlines_generation.py` has been run "
-                         "for this grid cell.")
-    
-    # Create variable used for time axis
-    time_var = xr.Variable('year', [int(i.split('/')[2][0:4]) for i in index_files])
-
-    # Import data
-    index_da = xr.concat([xr.open_rasterio(i) for i in index_files], dim=time_var)
-    gapfill_index_da = xr.concat([xr.open_rasterio(i) for i in gapfill_index_files], dim=time_var)
-    gapfill_tide_da = xr.concat([xr.open_rasterio(i) for i in gapfill_tide_files], dim=time_var)
-    gapfill_count_da = xr.concat([xr.open_rasterio(i) for i in gapfill_count_files], dim=time_var)
-    stdev_da = xr.concat([xr.open_rasterio(i) for i in stdev_files], dim=time_var)
-    tidem_da = xr.concat([xr.open_rasterio(i) for i in tidem_files], dim=time_var)
-    count_da = xr.concat([xr.open_rasterio(i) for i in count_files], dim=time_var)
-
-    # Assign names to allow merge
-    index_da.name = water_index
-    gapfill_index_da.name = 'gapfill_index'
-    gapfill_tide_da.name = 'gapfill_tide_m'
-    gapfill_count_da.name = 'gapfill_count'
-    stdev_da.name = 'stdev'
-    tidem_da.name = 'tide_m'
-    count_da.name = 'count'
-
-    # Combine into a single dataset and set CRS
-    yearly_ds = xr.merge([index_da, gapfill_index_da, gapfill_tide_da, 
-                          gapfill_count_da, stdev_da, tidem_da, count_da]).squeeze('band', drop=True)
-    yearly_ds.attrs['crs'] = index_da.crs
-    yearly_ds.attrs['transform'] = Affine(*index_da.transform)
-
-    return yearly_ds
+    return ds_list
 
 
 def waterbody_mask(input_data,
@@ -486,7 +460,34 @@ def waterbody_mask(input_data,
     return waterbody_mask
 
 
+def mask_ocean(bool_array, points_gdf, connectivity=1):
+    """
+    Identifies ocean by selecting the largest connected area of water
+    pixels, then dilating this region to ensure sub-pixel algorithm has
+    pixels on either side of the water index threshold
+    """
+    
+    # First, break boolean array into unique, discrete regions/blobs
+    blobs_labels = xr.apply_ufunc(label, bool_array, None, 0, False, connectivity)
+    
+    # Get blob ID for each tidal modelling point
+    x = xr.DataArray(points_gdf.geometry.x, dims='z')
+    y = xr.DataArray(points_gdf.geometry.y, dims='z')   
+    ocean_blobs = np.unique(blobs_labels.interp(x=x, y=y, method='nearest'))
+
+    # Return only blobs that contained tide modelling point
+    ocean_mask = blobs_labels.isin(ocean_blobs[ocean_blobs != 0])
+    
+    # Dilate mask so that we include land pixels on the inland side
+    # of each shoreline to ensure contour extraction accurately
+    # seperates land and water spectra
+    ocean_mask = binary_dilation(ocean_mask, selem=square(4))
+
+    return ocean_mask
+
+
 def contours_preprocess(yearly_ds, 
+                        gapfill_ds,
                         water_index, 
                         index_threshold, 
                         waterbody_array, 
@@ -506,15 +507,11 @@ def contours_preprocess(yearly_ds,
     persistent_lowobs = binary_erosion(mean_count > 0.5, selem = disk(2))
 
     # Remove low obs pixels and replace with 3-year gapfill
-    # TODO: simplify by substituting entire identical gapfill array
-    gapfill_mask = yearly_ds['count'] > 5
-    yearly_ds[water_index] = (yearly_ds[water_index]
-                              .where(gapfill_mask, 
-                                     other=yearly_ds.gapfill_index))
-    yearly_ds['tide_m'] = (yearly_ds['tide_m']
-                           .where(gapfill_mask, 
-                                  other=yearly_ds.gapfill_tide_m))
-
+    yearly_ds = yearly_ds.where(yearly_ds['count'] > 5, gapfill_ds)
+    
+    # Update nodata layer based on gap-filled data
+    nodata = yearly_ds[water_index].isnull()
+    
     # Apply water index threshold, restore nodata values back to NaN, 
     # and assign pixels within waterbody mask to 0 so they are excluded
     thresholded_ds = ((yearly_ds[water_index] > index_threshold)
@@ -524,7 +521,7 @@ def contours_preprocess(yearly_ds,
     # as water in at least 90% of the entire stack of thresholded data.
     # Apply a binary opening step to clean noisy pixels
     all_time = thresholded_ds.mean(dim='year') > 0.9
-    all_time_cleaned = xr.apply_ufunc(binary_opening, all_time, square(3))
+    all_time_cleaned = xr.apply_ufunc(binary_opening, all_time, disk(3))
     all_time_ocean = mask_ocean(all_time_cleaned, points_gdf)   
     
     # Generate coastal buffer (30m * `buffer_pixels`) from ocean-land boundary
@@ -536,7 +533,7 @@ def contours_preprocess(yearly_ds,
     # directly connected to the ocean in each yearly timestep
     annual_masks = (thresholded_ds.groupby('year')
                     .apply(lambda x: mask_ocean(x, points_gdf)))
-    
+
     # Keep pixels within both all time coastal buffer and annual mask
     masked_ds = yearly_ds[water_index].where(annual_masks & coastal_buffer)
     
