@@ -4,8 +4,14 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-**DEA CoastLines** is a continental dataset providing annual shorelines and rates of change along the entire Australian coastline from 1988 to the present. 
-The product combines satellite data from the [Digital Earth Australia](http://www.ga.gov.au/dea) archive with tidal modelling to map the typical location of the coastline at approximately mean sea level tide (0 m AHD). 
+**Digital Earth Australia CoastLines** is a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present.  
+ 
+The product combines satellite data from Geoscience Australia's [Digital Earth Australia program](https://www.ga.gov.au/dea) with tidal modelling to map the typical location of the coastline at mean sea level for each year. 
+The product enables trends of coastal erosion and growth to be examined annually at both a continental and local scale, and for patterns of coastal change to be mapped historically and updated regularly as data continues to be acquired. 
+This allows current rates of coastal erosion and growth to be compared with that observed in previous years or decades.  
+ 
+The ability to map shoreline positions for each year provides valuable insights into whether the changes to our coastline are the result of particular events or actions, or a process of more gradual change over time.
+This information can enable scientists, managers and policy makers to assess impacts from the range of drivers impacting our coastlines and potentially assist planning and forecasting for future scenarios.
 
 ## Data structure and features
 The **DEA CoastLines** product contains three layers:
