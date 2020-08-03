@@ -1000,67 +1000,109 @@ def calculate_regressions(contours_gdf,
     return points_gdf.loc[:, column_order]
 
 
+# def contour_certainty(contours_gdf, 
+#                       output_path, 
+#                       uncertain_classes=[4, 5]):
+    
+#     def _extract_multiline(row):
+
+#         if row.geometry.type == 'GeometryCollection':
+#             lines = [g for g in row.geometry.geoms if g.type == 'LineString']
+#             return MultiLineString(lines)
+#         else:
+#             return row.geometry
+
+#     # Read data and restrict to uncertain vs certain classes
+#     all_time_mask = xr.open_rasterio(f'{output_path}/all_time_mask.tif')
+#     uncertain_array = all_time_mask.squeeze().drop('band').data.astype(np.int32)
+#     uncertain_array[~np.isin(uncertain_array, uncertain_classes)] = 0
+
+#     # Remove isolated pixels and vectorise data
+#     uncertain_array = sieve(uncertain_array, size=3)
+#     vectors = shapes(source=uncertain_array,
+#                      transform=all_time_mask.geobox.transform)
+
+#     # Extract the polygon coordinates and values from the list
+#     vectors = list(vectors)
+#     polygons = [shape(polygon) for polygon, value in vectors]
+#     values = [int(value) for polygon, value in vectors]
+
+#     # Create a geopandas dataframe populated with the polygon shapes
+#     vector_mask = gpd.GeoDataFrame(data={'certainty': values},
+#                                    geometry=polygons,
+#                                    crs=all_time_mask.geobox.crs)
+
+#     # Dissolve by class and simplify features to remove hard pixel edges
+#     topo = tp.Topology(vector_mask, prequantize=False)
+#     vector_mask = topo.toposimplify(30).to_gdf()
+#     vector_mask = vector_mask.dissolve('certainty')
+
+#     # Rename classes
+#     vector_mask = vector_mask.rename({0: 'good', 
+#                                       4: 'tidal issues', 
+#                                       5: 'insufficient data'})
+
+#     # Output class list
+#     class_list = []
+
+#     # Iterate through each certainty class in the polygon, clip contours
+#     # to the extent of this class, and assign descriptive class name
+#     for i in vector_mask.index:
+
+#         # Clip to extent and fix invalid GeometryCollections
+#         vector_class = gpd.clip(contours_gdf, vector_mask.loc[i].geometry)
+#         vector_class['geometry'] = gpd.GeoSeries(
+#             vector_class.apply(_extract_multiline, axis=1))
+
+#         # Give name and append to list
+#         vector_class['certainty'] = i
+#         class_list.append(vector_class)
+
+#     # Combine into a single dataframe
+#     contours_gdf = pd.concat(class_list)
+
+#     # Finally, set all 1991 and 1992 coastlines north of -23 degrees 
+#     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
+#     pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) & 
+#                     (contours_gdf.index.isin(['1991', '1992'])))
+#     contours_gdf.loc[pinatubo_lat, 'certainty'] = 'uncertain'
+    
+#     return contours_gdf
+
 def contour_certainty(contours_gdf, 
                       output_path, 
                       uncertain_classes=[4, 5]):
-    
-    def _extract_multiline(row):
 
-        if row.geometry.type == 'GeometryCollection':
-            lines = [g for g in row.geometry.geoms if g.type == 'LineString']
-            return MultiLineString(lines)
-        else:
-            return row.geometry
-
-    # Read data and restrict to uncertain vs certain classes
+    # Load in mask data and identify uncertain classes
     all_time_mask = xr.open_rasterio(f'{output_path}/all_time_mask.tif')
-    uncertain_array = all_time_mask.squeeze().drop('band').data.astype(np.int32)
-    uncertain_array[~np.isin(uncertain_array, uncertain_classes)] = 0
+    raster_mask = all_time_mask.isin(uncertain_classes) 
+    
+    # Vectorise mask data and fix any invalid geometries
+    vector_mask = xr_vectorize(da=raster_mask,
+                               crs=all_time_mask.geobox.crs,
+                               transform=all_time_mask.geobox.transform,
+                               mask=raster_mask.values)
+    vector_mask.geometry = vector_mask.buffer(0).simplify(30)
+    
+    if len(vector_mask.index) > 0:
 
-    # Remove isolated pixels and vectorise data
-    uncertain_array = sieve(uncertain_array, size=3)
-    vectors = shapes(source=uncertain_array,
-                     transform=all_time_mask.geobox.transform)
+        # Clip and overlay to seperate into uncertain and certain classes
+        contours_good = gpd.overlay(contours_gdf, vector_mask, how='difference')
+        contours_good['certainty'] = 'good'
+        contours_uncertain = gpd.clip(contours_gdf, vector_mask)
+        contours_uncertain['certainty'] = 'uncertain'  
 
-    # Extract the polygon coordinates and values from the list
-    vectors = list(vectors)
-    polygons = [shape(polygon) for polygon, value in vectors]
-    values = [int(value) for polygon, value in vectors]
+        # Combine both datasets and filter to line features
+        contours_gdf = pd.concat([contours_good, contours_uncertain])
+        is_line = contours_gdf.geometry.type.isin(['MultiLineString', 'LineString'])
+        contours_gdf = contours_gdf.loc[is_line]    
 
-    # Create a geopandas dataframe populated with the polygon shapes
-    vector_mask = gpd.GeoDataFrame(data={'certainty': values},
-                                   geometry=polygons,
-                                   crs=all_time_mask.geobox.crs)
+        # Enforce index name (can be removed if one dataset is empty)
+        contours_gdf.index.name = 'year'
 
-    # Dissolve by class and simplify features to remove hard pixel edges
-    topo = tp.Topology(vector_mask, prequantize=False)
-    vector_mask = topo.toposimplify(30).to_gdf()
-    vector_mask = vector_mask.dissolve('certainty')
-
-    # Rename classes
-    vector_mask = vector_mask.rename({0: 'good', 
-                                      4: 'tidal issues', 
-                                      5: 'insufficient data'})
-
-    # Output class list
-    class_list = []
-
-    # Iterate through each certainty class in the polygon, clip contours
-    # to the extent of this class, and assign descriptive class name
-    for i in vector_mask.index:
-
-        # Clip to extent and fix invalid GeometryCollections
-        vector_class = gpd.clip(contours_gdf, vector_mask.loc[i].geometry)
-        vector_class['geometry'] = gpd.GeoSeries(
-            vector_class.apply(_extract_multiline, axis=1))
-
-        # Give name and append to list
-        vector_class['certainty'] = i
-        class_list.append(vector_class)
-
-    # Combine into a single dataframe
-    contours_gdf = pd.concat(class_list)
-
+    else:
+        contours_gdf['certainty'] = 'good'   
+        
     # Finally, set all 1991 and 1992 coastlines north of -23 degrees 
     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
     pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) & 
