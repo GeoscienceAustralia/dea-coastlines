@@ -838,7 +838,7 @@ def preprocess_cgc(site, datum=0, overwrite=True):
             # list if profile crosses 0
             profile_df = profile_df[profile_df.date > '1987']
             profile_df = profile_df[profile_df.z > -3.0]
-            if (profile_df.z.min() < 0) & (profile_df.z.max() > 0):
+            if (profile_df.z.min() < datum) & (profile_df.z.max() > datum):
                 site_profiles.append(profile_df)
 
         # If list of profiles contain valid data
@@ -993,10 +993,14 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
             profile_df['id'] = (profile_df.beach + '_' + 
                                 profile_df.section + '_' + 
                                 profile_df.profile)
+            
+            # Remove strings from distance column
+            profile_df['distance'] = profile_df.distance.apply(
+                pd.to_numeric, errors='coerce')
 
             # Filter to drop pre-1987 and deep water samples, add to list if any 
             # data is available above 0 MSL
-            if (profile_df.z.min() < 0) & (profile_df.z.max() > 0):
+            if (profile_df.z.min() < datum) & (profile_df.z.max() > datum):
                 site_profiles.append(profile_df)
 
         # If list of profiles contain valid data
@@ -1008,11 +1012,13 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
             # Extend survey lines out from start coordinates using supplied angle
             coords_end = profiles_df.apply(
                 lambda x: dist_angle(x.lon, x.lat, 0.002, x.bearing), axis=1)
-            profiles_df = pd.concat([profiles_df, coords_end], axis=1).drop('bearing', axis=1)
-
+            profiles_df = pd.concat([profiles_df, coords_end], 
+                                    axis=1).drop('bearing', axis=1)
+        
             # Rename fields
-            profiles_df = profiles_df.rename({'lat': 'start_y', 'lon': 'start_x'}, axis=1)
-
+            profiles_df = profiles_df.rename({'lat': 'start_y', 
+                                              'lon': 'start_x'}, axis=1)
+            
             # Reproject coords to Albers and create geodataframe
             trans = Transformer.from_crs('EPSG:4326', 'EPSG:3577', always_xy=True)
             profiles_df['start_x'], profiles_df['start_y'] = trans.transform(
