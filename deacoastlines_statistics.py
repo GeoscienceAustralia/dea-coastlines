@@ -1133,18 +1133,22 @@ def all_time_stats(x, col='dist_'):
     to_drop = [f'{col}{i}' for i in x.outl_time.split(" ") if len(i) > 0]
     
     # Return matching subset of data
-    subset = x.loc[to_keep].drop(to_drop).astype(float)  
+    subset_outl = x.loc[to_keep].dropna().astype(float) 
+    subset_nooutl = subset_outl.drop(to_drop) 
 
-    # Calculate SCE range, NSM and max/min year    
-    stats_dict = {'sce': subset.max() - subset.min(),
-                  'nsm': (subset.loc[subset.last_valid_index()] -
-                              subset.loc[subset.first_valid_index()]),
-                  'max_year': int(subset.idxmax()[-4:]),
-                  'min_year': int(subset.idxmin()[-4:])}
-    
+    # Calculate SCE range, NSM and max/min year 
+    # Since NSM is the most recent shoreline minus the oldest shoreline,
+    # we can calculate this by simply inverting the 1988 distance value
+    # (i.e. 0 - X) if it exists in the data
+    stats_dict = {'sce': subset_nooutl.max() - subset_nooutl.min(),
+                  'nsm': -(subset_nooutl.loc[f'{col}1988'] if 
+                          f'{col}1988' in subset_nooutl else np.nan),
+                  'max_year': int(subset_nooutl.idxmax()[-4:]),
+                  'min_year': int(subset_nooutl.idxmin()[-4:])}
+
     # Compute breaks
-    breaks = breakpoints(x=x.loc[to_keep].values, 
-                         labels=x.loc[to_keep].index.str.slice(5))
+    breaks = breakpoints(x=subset_outl.values, 
+                         labels=subset_outl.index.str.slice(5))
     stats_dict.update({'breaks': ' '.join(breaks)})
     
     return pd.Series(stats_dict)
