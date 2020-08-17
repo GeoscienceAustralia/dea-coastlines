@@ -1218,60 +1218,8 @@ def deacl_validation(val_path,
                                f'{val_label}_x', f'{val_label}_y', f'{val_label}_dist', 
                                f'{sat_label}_x', f'{sat_label}_y', f'{sat_label}_dist',
                                'diff_dist']]
-
-#             # Calculate stats
-#             rmse = mean_squared_error(val_data, sat_data) ** 0.5
-#             mae = mean_absolute_error(val_data, sat_data)
-#             r2 = r2_score(val_data, sat_data)
-#             cor = results_df[[sat_label, val_label]].corr().iloc[0, 1]
-#             stats_dict = {'id': Path(val_path).stem, 
-#                           'rmse': rmse, 'mae': mae, 'r2': r2, 'cor': cor}
-
-#             # Plot image       
-#             fig, ax = plt.subplots(figsize=(8.5, 7))
-#             results_df.plot.scatter(x=val_label,
-#                                     y=sat_label,
-#                                     c=results_df.year,
-#                                     s=25,
-#                                     cmap='YlOrRd',
-#                                     vmin=1987,
-#                                     vmax=2018,
-#                                     ax=ax, 
-#                                     edgecolors='black',
-#                                     linewidth=0.5
-#                                    )
-#             ax.plot(np.linspace(min(val_data.min(), sat_data.min()), 
-#                                 max(val_data.max(), sat_data.max())),
-#                     np.linspace(min(val_data.min(), sat_data.min()), 
-#                                 max(val_data.max(), sat_data.max())),
-#                     color='black',
-#                     linestyle='dashed')
-#             ax.set_title(title)
-#             ax.annotate(f'RMSE: {rmse:.2f} m\n' \
-#                         f'MAE: {mae:.2f} m\n' \
-#                         f'R-squared: {r2:.2f}\n' \
-#                         f'Correlation: {cor:.2f}', 
-#                         xy=(0.05, 0.85),
-#                         xycoords='axes fraction',
-#                         fontsize=11)
-
-#             # Export to file
-#             fig.savefig(f'figures/{Path(val_path).stem}.png', 
-#                         bbox_inches='tight', 
-#                         dpi=50)
-
-#             if eval_shapes:
-#                 export_eval(results_df, 
-#                             datum=datum,
-#                             output_name=f'{Path(val_path).stem}')
-
-#             if return_df:
-#                 return [results_df, stats_dict]
-#             else:
-#                 return stats_dict
-        
-        
-    
+       
+   
 def main(argv=None):
     
     #########
