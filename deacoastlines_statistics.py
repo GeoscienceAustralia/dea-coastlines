@@ -349,7 +349,7 @@ def contours_preprocess(yearly_ds,
     # Generate coastal buffer (30m * `buffer_pixels`) from ocean-land boundary
     buffer_ocean = binary_dilation(all_time_ocean, disk(buffer_pixels))
     buffer_land = binary_dilation(~all_time_ocean, disk(buffer_pixels))
-    coastal_buffer = buffer_ocean & buffer_land    
+    coastal_buffer = buffer_ocean & buffer_land
     
     # Generate annual masks by selecting only water pixels that are 
     # directly connected to the ocean in each yearly timestep
