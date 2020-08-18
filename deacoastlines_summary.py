@@ -58,7 +58,7 @@ def main(argv=None):
         print(sys.argv)
 
     # If no user arguments provided
-    if len(argv) < 3:
+    if len(argv) < 6:
 
         str_usage = "You must specify an analysis name"
         print(str_usage)
@@ -67,20 +67,25 @@ def main(argv=None):
     # Set study area and name for analysis
     output_name = str(argv[1])
     threshold = str(argv[2])
-    summary = bool(argv[3])
+    coastlines = bool(argv[3])
+    statistics = bool(argv[4])
+    summary = argv[5]
     
     #################
     # Merge vectors #
     #################
     
-    print('Combining annual coastlines')
-    os.system(f'ogrmerge.py -o DEACoastLines_coastlines_{output_name}.shp '
-              f'output_data/*/vectors/shapefiles/contours_*_{output_name}_'
-              f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
-    print('Combining rates of change statistics')
-    os.system(f'ogrmerge.py -o DEACoastLines_statistics_{output_name}.shp '
-              f'output_data/*/vectors/shapefiles/stats_*_{output_name}_'
-              f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
+    if coastlines:
+        print('Combining annual coastlines')
+        os.system(f'ogrmerge.py -o DEACoastLines_coastlines_{output_name}.shp '
+                  f'output_data/*/vectors/shapefiles/contours_*_{output_name}_'
+                  f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
+        
+    if statistics:
+        print('Combining rates of change statistics')
+        os.system(f'ogrmerge.py -o DEACoastLines_statistics_{output_name}.shp '
+                  f'output_data/*/vectors/shapefiles/stats_*_{output_name}_'
+                  f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
     
     if summary:
 
@@ -98,7 +103,7 @@ def main(argv=None):
 
         summary_gdf = deacl_stats.points_on_line(contours_gdf, 
                                                  index='2019', 
-                                                 distance=2500)
+                                                 distance=summary)
 
         ####################
         # Generate summary #
@@ -106,17 +111,17 @@ def main(argv=None):
 
         # Generate dictionary of polygon IDs and corresponding points
         poly_points_dict = points_in_poly(points=summary_gdf.geometry, 
-                                          polygons=stats_gdf.buffer(5000))
+                                          polygons=stats_gdf.buffer(summary*2))
 
         # Compute mean and number of obs for each polygon
-        summary_gdf[['rate_time', 'n']] = summary_gdf.apply(
+        summary_gdf[['rate_time', 'rate_soi', 'n']] = summary_gdf.apply(
             lambda row: get_matching_data(row.name, 
                                           stats_gdf,
                                           poly_points_dict,
-                                          min_n=100), axis=1)
+                                          min_n=summary / 25), axis=1)
 
         # Export to file
-        summary_gdf.to_file(f'DEACoastLines_summary_{output_name}.shp')
+        summary_gdf.to_file(f'DEACoastLines_summary_{output_name}_{summary*2}.shp')
 
 
 if __name__ == "__main__":
