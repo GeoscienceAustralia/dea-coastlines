@@ -1448,6 +1448,8 @@ def main(argv=None):
                            if key != 'geometry'}
             schema_dict.update({'sig_time': 'float:8.3',
                                 'outl_time': 'str:80',
+                                'sig_soi': 'float:8.3',
+                                'outl_soi': 'str:80',
                                 'retreat': 'bool', 
                                 'growth': 'bool',
                                 'max_year': 'int:4',
