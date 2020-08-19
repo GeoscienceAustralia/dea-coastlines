@@ -25,10 +25,12 @@ The ability to map shoreline positions for each year provides valuable insights 
 ---
 
 ## Using this repository
-The code in this repository is built on [Digital Earth Australia](https://docs.dea.ga.gov.au/) implementation of the [Open Data Cube](https://www.opendatacube.org/) software for accessing, managing, and analyzing large quantities of Earth observation (EO) data. The software currently runs on [Australia's National Computational Infrastructure (NCI)](https://nci.org.au/). Instructions for setting up an account on the NCI's Virtual Desktop Infrastructure or Gadi supercomputer [can be found here](https://docs.dea.ga.gov.au/setup/NCI/README.html).
+The code in this repository is built on [Digital Earth Australia](https://docs.dea.ga.gov.au/) implementation of the [Open Data Cube](https://www.opendatacube.org/) software for accessing, managing, and analyzing large quantities of Earth observation (EO) data. 
+The software currently runs on [Australia's National Computational Infrastructure (NCI)](https://nci.org.au/). 
+Instructions for setting up an account on the NCI's Virtual Desktop Infrastructure or Gadi supercomputer [can be found here](https://docs.dea.ga.gov.au/setup/NCI/README.html).
 
-This repository contains four main scripts and corresponding Jupyter notebooks:
-* [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This script conducts DEA CoastLines raster generation:
+This repository contains three main scripts (and corresponding Jupyter notebooks) that are intended to be run in the following order:
+1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This script conducts DEA CoastLines raster generation:
 
     * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
     * Convert each satellite image into a remote sensing water index (MNDWI)
@@ -37,13 +39,13 @@ This repository contains four main scripts and corresponding Jupyter notebooks:
     * Mask out high and low tide pixels by removing all observations acquired outside of 50 percent of the observed tidal range centered over mean sea level
     * Combine tidally-masked data into annual median composites from 1988 to the present representing the coastline at approximately mean sea level
 
-* [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastLines_statistics.ipynb`](DEACoastLines_statistics.ipynb): This code conducts vector subpixel coastline extraction:
+2. [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastLines_statistics.ipynb`](DEACoastLines_statistics.ipynb): This code conducts vector subpixel coastline extraction:
 
   * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
   * Extract waterline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
   * Compute rates of coastal change at every 30 m along Australia's non-rocky coastlines using linear regression
   
-* [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA CoastLines layers:
+3. [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA CoastLines layers:
 
     * Combines output coastline and rates of change statistics point vectors into single continental datasets
     * Aggregates this data to produce moving window summary datasets that summarise coastal change at regional and continental scale.
