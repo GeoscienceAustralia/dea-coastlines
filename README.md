@@ -22,8 +22,32 @@ The ability to map shoreline positions for each year provides valuable insights 
 * Modelling how coastlines respond to drivers of change, including extreme weather events, sea level rise or human development 
 * Supporting geomorphological studies of how and why coastlines have changed across time 
 
+---
 
-## Data structure and features
+## Using this repository
+The code in this repository is built on [Digital Earth Australia](https://docs.dea.ga.gov.au/) implementation of the [Open Data Cube](https://www.opendatacube.org/) software for accessing, managing, and analyzing large quantities of Earth observation (EO) data.
+
+This repository contains four main scripts and corresponding Jupyter notebooks:
+* `deacoastlines_generation.py`: This script conducts the raster generation step of the DEA CoastLines process:
+
+    * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
+    * Convert each satellite image into a remote sensing water index (MNDWI)
+    * For each satellite image, model ocean tides into a 2 x 2 km grid based on exact time of image acquisition
+    * Interpolate tide heights into spatial extent of image stack
+    * Mask out high and low tide pixels by removing all observations acquired outside of 50 percent of the observed tidal range centered over mean sea level
+    * Combine tidally-masked data into annual median composites from 1988 to the present representing the coastline at approximately mean sea level
+
+* `deacoastlines_statistics.py`: This script conducts the vector subpixel coastline extraction step of the DEA CoastLines process:
+
+  * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
+  * Extract waterline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
+  * Compute rates of coastal change at 30 m intervals along non-rocky coastlines using linear regression
+  
+* `deacoastlines_summary.py`: This script combines output coastline and rates of change statistics point vectors into single continental datasets, and aggregates this data to produce moving window summary datasets that summarise coastal change at regional and continental scale.
+
+---
+
+## DEA CoastLines dataset
 The **DEA CoastLines** product contains three layers:
 
 ### Annual coastlines
@@ -64,6 +88,8 @@ A point layer giving the average rate of change (in metres per year) for signifi
 
 ![DEA CoastLines summary layer](visualisation/deacl_summary.JPG)
 
+---
+
 ## Key limitations and caveats
 * Rates of change statistics may be inaccurate or invalid for some complex mouthbars, or other coastal environments undergoing rapid non-linear change through time. In these regions, it is advisable to visually assess the underlying annual coastline data when interpreting rates of change to ensure these values are fit-for-purpose. Regions significantly affected by this issue include:
     * Cambridge Gulf, Western Australia
@@ -80,6 +106,8 @@ A point layer giving the average rate of change (in metres per year) for signifi
 * In some urban locations, the spectra of bright white buildings located near the coastline may be inadvertently confused with water, causing a land-ward offset from true coastline positions. 
 * Some areas of extremely dark and persistent shadows (e.g. steep coastal cliffs across southern Australia) may be inadvertently mapped as water, resulting in a landward offset from true coastline positions. 
 * 1991 and 1992 coastlines are currently affected by aerosol-related issues caused by the 1991 Mount Pinatubo eruption. These coastlines should be interpreted with care, particularly across northern Australia. 
+
+---
 
 ## References
 Bishop-Taylor, R., Sagar, S., Lymburner, L., & Beaman, R. J. (2019a). Between the tides: Modelling the elevation of Australia's exposed intertidal zone at continental scale. _Estuarine, Coastal and Shelf Science_, 223, 115-128. Available: https://doi.org/10.1016/j.ecss.2019.03.006
