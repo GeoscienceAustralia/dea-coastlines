@@ -24,6 +24,18 @@ The ability to map shoreline positions for each year provides valuable insights 
 
 ---
 
+## Table of contents
+* [Using this repository](#using-this-repository)
+* [Loading DEA CoastLines data using Web Feature Service (WFS)](#loading-dea-coastlines-data-using-web-feature-service-wfs)
+* [DEA CoastLines dataset](#dea-coastlines-dataset)
+    * [Annual coastlines](#annual-coastlines)
+    * [Rates of change statistics](#rates-of-change-statistics)
+    * [Summary](#summary)
+* [Key limitations and caveats](#key-limitations-and-caveats)
+* [References](#references)
+
+---
+
 ## Using this repository
 The code in this repository is built on the [Digital Earth Australia](https://docs.dea.ga.gov.au/) implementation of the [Open Data Cube](https://www.opendatacube.org/) software for accessing, managing, and analyzing large quantities of Earth observation (EO) data. 
 The software currently runs on [Australia's National Computational Infrastructure (NCI)](https://nci.org.au/). 
