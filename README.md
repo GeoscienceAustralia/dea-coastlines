@@ -53,7 +53,7 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
 
 An additional Jupyter notebook provides useful tools for analysing DEA CoastLines data:
 
-* [`DEACoastLines_utilities.ipynb`](DEACoastLines_utilities.ipynb): 
+* [`DEACoastLines_tools.ipynb`](DEACoastLines_tools.ipynb): 
 
     * Selecting and loading DEA CoastLines data using an interactive map
     * Interactively drawing a transect across DEA CoastLines annual coastlines and generating a plot of coastal change through time
