@@ -1,4 +1,4 @@
-![](https://github.com/GeoscienceAustralia/dea-notebooks/blob/develop/Supplementary_data/dea_logo_wide.jpg)
+![Digital Earth Australia CoastLines](visualisation/deacoastlines_header.gif)
 
 # Digital Earth Australia CoastLines
 
