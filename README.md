@@ -30,7 +30,8 @@ The software currently runs on [Australia's National Computational Infrastructur
 Instructions for setting up an account on the NCI's Virtual Desktop Infrastructure or Gadi supercomputer [can be found here](https://docs.dea.ga.gov.au/setup/NCI/README.html).
 
 This repository contains three main scripts (and corresponding Jupyter notebooks) that are intended to be run in the following order:
-1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This script conducts DEA CoastLines raster generation:
+
+1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This code conducts raster generation for DEA CoastLines:
 
     * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
     * Convert each satellite image into a remote sensing water index (MNDWI)
@@ -41,9 +42,9 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
 
 2. [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastLines_statistics.ipynb`](DEACoastLines_statistics.ipynb): This code conducts vector subpixel coastline extraction:
 
-  * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
-  * Extract waterline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
-  * Compute rates of coastal change at every 30 m along Australia's non-rocky coastlines using linear regression
+    * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
+    * Extract waterline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
+    * Compute rates of coastal change at every 30 m along Australia's non-rocky coastlines using linear regression
   
 3. [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA CoastLines layers:
 
