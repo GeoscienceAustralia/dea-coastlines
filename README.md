@@ -61,6 +61,39 @@ An additional Jupyter notebook provides useful tools for analysing DEA CoastLine
 
 ---
 
+## Loading DEA CoastLines data using Web Feature Service (WFS)
+
+DEA CoastLines data can be loaded directly in a Python script or Jupyter Notebook using the DEA CoastLines Web Feature Service (WFS) and `geopandas`:
+
+```
+import geopandas as gpd
+
+# Specify bounding box
+ymax, xmin = -33.6507, 115.2790
+ymin, xmax = -33.6585, 115.3013
+
+# Set up WFS requests for annual coastlines & rates of change statistics
+deacl_coastlines_wfs = 'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       'service=WFS&version=1.1.0&request=GetFeature&' \
+                       'typeName=dea:coastlines&srsName=EPSG%3A3577&' \
+                       f'maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax}'
+deacl_statistics_wfs = 'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       'service=WFS&version=1.1.0&request=GetFeature&' \
+                       'typeName=dea:coastlines_statistics&' \
+                       'srsName=EPSG%3A3577&maxFeatures=1000&' \
+                       f'bbox={ymin},{xmin},{ymax},{xmax}'
+
+# Load DEA CoastLines data from WFS using geopandas
+deacl_coastlines_gdf = gpd.read_file(deacl_coastlines_wfs)
+deacl_statistics_gdf = gpd.read_file(deacl_statistics_wfs)
+
+# Ensure CRSs are set correctly
+deacl_coastlines_gdf.crs = 'EPSG:3577'
+deacl_statistics_gdf.crs = 'EPSG:3577'
+```
+
+---
+
 ## DEA CoastLines dataset
 The **DEA CoastLines** product contains three layers:
 
