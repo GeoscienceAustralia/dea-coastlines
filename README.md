@@ -28,7 +28,7 @@ The ability to map shoreline positions for each year provides valuable insights 
 The code in this repository is built on [Digital Earth Australia](https://docs.dea.ga.gov.au/) implementation of the [Open Data Cube](https://www.opendatacube.org/) software for accessing, managing, and analyzing large quantities of Earth observation (EO) data.
 
 This repository contains four main scripts and corresponding Jupyter notebooks:
-* [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This script conducts the raster generation step of the DEA CoastLines process:
+* [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This script conducts the DEA CoastLines raster generation step:
 
     * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
     * Convert each satellite image into a remote sensing water index (MNDWI)
@@ -37,13 +37,16 @@ This repository contains four main scripts and corresponding Jupyter notebooks:
     * Mask out high and low tide pixels by removing all observations acquired outside of 50 percent of the observed tidal range centered over mean sea level
     * Combine tidally-masked data into annual median composites from 1988 to the present representing the coastline at approximately mean sea level
 
-* [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastLines_statistics.ipynb`](DEACoastLines_statistics.ipynb): This code conducts the vector subpixel coastline extraction step of the DEA CoastLines process:
+* [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastLines_statistics.ipynb`](DEACoastLines_statistics.ipynb): This code conducts the DEA CoastLines vector subpixel coastline extraction step:
 
   * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
   * Extract waterline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
   * Compute rates of coastal change at 30 m intervals along non-rocky coastlines using linear regression
   
-* [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines output coastline and rates of change statistics point vectors into single continental datasets, and aggregates this data to produce moving window summary datasets that summarise coastal change at regional and continental scale.
+* [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA CoastLines layers:
+
+    * Combines output coastline and rates of change statistics point vectors into single continental datasets
+    * Aggregates this data to produce moving window summary datasets that summarise coastal change at regional and continental scale.
 
 An additional Jupyter notebook provides useful tools for analysing DEA CoastLines data:
 
