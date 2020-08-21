@@ -92,6 +92,8 @@ Zoom in further to view individual annual coastlines.
 
 > Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the 'Coastal > Digital Earth Australia CoastLines > Supplementary data' directory.
 
+![DEA CoastLines on DEA Maps](visualisation/deacoastlines_deamaps_1.JPG)
+
 ### Loading DEA CoastLines data using Web Feature Service (WFS)
 
 DEA CoastLines data can be loaded directly in a Python script or Jupyter Notebook using the DEA CoastLines Web Feature Service (WFS) and `geopandas`:
