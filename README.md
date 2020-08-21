@@ -33,7 +33,7 @@ The ability to map shoreline positions for each year provides valuable insights 
     * [Annual coastlines](#annual-coastlines)
     * [Rates of change statistics](#rates-of-change-statistics)
     * [Summary](#summary)
-* [Key limitations and caveats](#key-limitations-and-caveats)
+* [Caveats and limitations](#caveats-and-limitations)
 * [References](#references)
 
 ---
@@ -135,7 +135,7 @@ The **DEA CoastLines** product contains three layers:
 
 ### Annual coastlines
 Annual coastline vectors from 1988 to 2019 that represent the median or ‘typical’ position of the coastline at approximately mean sea level tide (0 m AHD) for each year.
-   * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, or poor tidal modelling performance. 
+   * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, poor tidal modelling performance, or aerosol issues (see [Caveats and limitations](#caveats-and-limitations))
 
 ![DEA CoastLines coastlines layer](visualisation/deacl_coastlines.JPG)
 
@@ -173,7 +173,7 @@ A point layer giving the average rate of change (in metres per year) for signifi
 
 ---
 
-## Key limitations and caveats
+## Caveats and limitations
 * Rates of change statistics may be inaccurate or invalid for some complex mouthbars, or other coastal environments undergoing rapid non-linear change through time. In these regions, it is advisable to visually assess the underlying annual coastline data when interpreting rates of change to ensure these values are fit-for-purpose. Regions significantly affected by this issue include:
     * Cambridge Gulf, Western Australia
     * Joseph Bonaparte Gulf, Western Australia/Northern Territory
