@@ -26,7 +26,9 @@ The ability to map shoreline positions for each year provides valuable insights 
 
 ## Table of contents
 * [Repository code](#repository-code)
-* [Loading DEA CoastLines data using Web Feature Service (WFS)](#loading-dea-coastlines-data-using-web-feature-service-wfs)
+* [Data access](#data-access)
+    * [Digital Earth Australia Maps](#digital-earth-australia-maps)
+    * [Loading DEA CoastLines data using Web Feature Service (WFS)](#loading-dea-coastlines-data-using-web-feature-service-wfs)
 * [DEA CoastLines dataset](#dea-coastlines-dataset)
     * [Annual coastlines](#annual-coastlines)
     * [Rates of change statistics](#rates-of-change-statistics)
@@ -73,7 +75,24 @@ An additional Jupyter notebook provides useful tools for analysing DEA CoastLine
 
 ---
 
-## Loading DEA CoastLines data using Web Feature Service (WFS)
+## Data access
+
+### Digital Earth Australia Maps
+
+To view this product on the interactive Digital Earth Australia Maps platform: 
+
+1. Open **Digital Earth Australia Maps**: http://maps.dea.ga.gov.au/ 
+2. Select `Add data` on the top-left. 
+3. Select `Coastal > Digital Earth Australia CoastLines > Digital Earth Australia CoastLines`
+4. Click blue 'Add to the map' button on top-right. 
+
+By default, the map will show a summary of coastal change at continental scale. 
+More detailed rates of change will be displayed as you zoom in; to view a time series chart of how an area of coastline has changed over time, click on any labelled point (press "Expand" on the pop-up for more detail). 
+Zoom in further to view individual annual coastlines.
+
+> Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the 'Coastal > Digital Earth Australia CoastLines > Supplementary data' directory.
+
+### Loading DEA CoastLines data using Web Feature Service (WFS)
 
 DEA CoastLines data can be loaded directly in a Python script or Jupyter Notebook using the DEA CoastLines Web Feature Service (WFS) and `geopandas`:
 
