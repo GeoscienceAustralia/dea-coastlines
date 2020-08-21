@@ -134,7 +134,7 @@ deacl_statistics_gdf.crs = 'EPSG:3577'
 The **DEA CoastLines** product contains three layers:
 
 ### Annual coastlines
-Annual coastline vectors from 1988 to 2019 that represent the median or ‘typical’ position of the coastline at approximately mean sea level tide (0 m AHD).
+Annual coastline vectors from 1988 to 2019 that represent the median or ‘typical’ position of the coastline at approximately mean sea level tide (0 m AHD) for each year.
    * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, or poor tidal modelling performance. 
 
 ![DEA CoastLines coastlines layer](visualisation/deacl_coastlines.JPG)
