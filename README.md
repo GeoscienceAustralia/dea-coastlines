@@ -166,7 +166,7 @@ A point dataset providing robust rates of coastal change statistics for every 30
    
 ![DEA CoastLines statistics layer](visualisation/deacl_statistics.JPG)
 
-### Summary
+### Continental summary
 A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
 
 ![DEA CoastLines summary layer](visualisation/deacl_summary.JPG)
