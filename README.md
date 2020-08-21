@@ -128,6 +128,9 @@ deacl_statistics_gdf.crs = 'EPSG:3577'
 ---
 
 ## DEA CoastLines dataset
+
+> For the most up-to-date product metadata, visit the [official DEA CoastLines metadata page](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)
+
 The **DEA CoastLines** product contains three layers:
 
 ### Annual coastlines
