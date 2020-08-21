@@ -90,7 +90,7 @@ By default, the map will show a summary of coastal change at continental scale.
 More detailed rates of change will be displayed as you zoom in; to view a time series chart of how an area of coastline has changed over time, click on any labelled point (press "Expand" on the pop-up for more detail). 
 Zoom in further to view individual annual coastlines.
 
-> Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the 'Coastal > Digital Earth Australia CoastLines > Supplementary data' directory.
+> Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia CoastLines > Supplementary data` directory.
 
 ![DEA CoastLines on DEA Maps](visualisation/deacoastlines_deamaps_1.JPG)
 
