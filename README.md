@@ -6,7 +6,7 @@
 
 **License:** The code in this repository is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Digital Earth Australia data is licensed under the [Creative Commons by Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
-**Product description and metadata:** For the most up-to-date information about this product, visit the offical [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)
+**Product description and metadata:** For the most up-to-date information about this product, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)
 
 **Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastlines/issues/new). For questions or more information about this product, sign up to the [Open Data Cube Slack](https://join.slack.com/t/opendatacube/shared_invite/zt-d6hu7l35-CGDhSxiSmTwacKNuXWFUkg) and post on the [`#dea-coastlines`](https://app.slack.com/client/T0L4V0TFT/C018X6J9HLY/details/) channel.
 
@@ -133,7 +133,7 @@ deacl_statistics_gdf.crs = 'EPSG:3577'
 
 ## DEA Coastlines dataset
 
-> _For the most up-to-date product metadata, visit the offical [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
+> _For the most up-to-date product metadata, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
 
 The **DEA Coastlines** product contains three layers:
 
@@ -178,7 +178,7 @@ A point layer giving the average rate of change (in metres per year) for signifi
 ---
 
 ## Caveats and limitations
-> _For the most up-to-date information about caveats and limitations, visit the offical [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
+> _For the most up-to-date information about caveats and limitations, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
 
 * Rates of change statistics may be inaccurate or invalid for some complex mouthbars, or other coastal environments undergoing rapid non-linear change through time. In these regions, it is advisable to visually assess the underlying annual coastline data when interpreting rates of change to ensure these values are fit-for-purpose. Regions significantly affected by this issue include:
     * Cambridge Gulf, Western Australia
