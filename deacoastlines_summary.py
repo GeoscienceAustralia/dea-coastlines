@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code combines individual datasets into continental DEA CoastLines 
+# This code combines individual datasets into continental DEA Coastlines 
 # layers:
 # 
 #     * Combines output coastline and rates of change statistics point 
@@ -93,13 +93,13 @@ def main(argv=None):
     
     if coastlines:
         print('Combining annual coastlines')
-        os.system(f'ogrmerge.py -o DEACoastLines_coastlines_{output_name}.shp '
+        os.system(f'ogrmerge.py -o DEACoastlines_coastlines_{output_name}.shp '
                   f'output_data/*/vectors/shapefiles/contours_*_{output_name}_'
                   f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
         
     if statistics:
         print('Combining rates of change statistics')
-        os.system(f'ogrmerge.py -o DEACoastLines_statistics_{output_name}.shp '
+        os.system(f'ogrmerge.py -o DEACoastlines_statistics_{output_name}.shp '
                   f'output_data/*/vectors/shapefiles/stats_*_{output_name}_'
                   f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
     
@@ -110,8 +110,8 @@ def main(argv=None):
         ###############################
         
         print('Generating summary')
-        stats_gdf = gpd.read_file(f'DEACoastLines_statistics_{output_name}.shp')
-        contours_gdf = gpd.read_file(f'DEACoastLines_coastlines_{output_name}.shp')
+        stats_gdf = gpd.read_file(f'DEACoastlines_statistics_{output_name}.shp')
+        contours_gdf = gpd.read_file(f'DEACoastlines_coastlines_{output_name}.shp')
 
         contours_gdf = (contours_gdf
                         .loc[contours_gdf.geometry.is_valid]
@@ -137,7 +137,7 @@ def main(argv=None):
                                           min_n=summary / 25), axis=1)
 
         # Export to file
-        summary_gdf.to_file(f'DEACoastLines_summary_{output_name}_{summary*2}.shp')
+        summary_gdf.to_file(f'DEACoastlines_summary_{output_name}_{summary*2}.shp')
 
 
 if __name__ == "__main__":

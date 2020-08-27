@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # This code conducts vector subpixel coastline extraction for DEA 
-# CoastLines:
+# Coastlines:
 # 
 #     * Apply morphological extraction algorithms to mask annual median 
 #       composite rasters to a valid coastal region
@@ -51,16 +51,13 @@ from datacube.utils.cog import write_cog
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-sys.path.append('/g/data/r78/rt1527/dea-notebooks/Scripts')
-from dea_spatialtools import xr_vectorize
-
   
 def load_rasters(output_name, 
                  study_area, 
                  water_index='mndwi'):
     
     """
-    Loads DEA CoastLines water index (e.g. 'MNDWI'), 'tide_m', 'count',
+    Loads DEA Coastlines water index (e.g. 'MNDWI'), 'tide_m', 'count',
     and 'stdev' rasters for both annual and three-year gapfill data
     into a consistent `xarray.Dataset` format for further analysis.
     
@@ -142,7 +139,7 @@ def waterbody_mask(input_data,
                    bbox,
                    yearly_ds):
     """
-    Generates a raster mask for DEACoastLines based on the 
+    Generates a raster mask for DEACoastlines based on the 
     SurfaceHydrologyPolygonsRegional.gdb dataset, and a vector 
     file containing minor modifications to this dataset (e.g. 
     features to remove or add to the dataset).
@@ -277,7 +274,7 @@ def contours_preprocess(yearly_ds,
                         output_path,
                         buffer_pixels=33):  
     """
-    Prepares and preprocesses DEA CoastLines raster data to restrict the
+    Prepares and preprocesses DEA Coastlines raster data to restrict the
     analysis to coastal shorelines, and extract data that is used to
     assess the certainty of extracted shorelines.
     
@@ -296,9 +293,9 @@ def contours_preprocess(yearly_ds,
     Parameters:
     -----------
     yearly_ds : xarray.Dataset
-        An `xarray.Dataset` containing annual DEA CoastLines rasters.
+        An `xarray.Dataset` containing annual DEA Coastlines rasters.
     gapfill_ds : xarray.Dataset
-        An `xarray.Dataset` containing three-year gapfill DEA CoastLines
+        An `xarray.Dataset` containing three-year gapfill DEA Coastlines
         rasters. 
     water_index : string
         A string giving the name of the water index included in the 
@@ -767,7 +764,7 @@ def annual_movements(points_gdf,
     
     Distances are assigned a directionality (negative = located inland, 
     positive = located sea-ward) by sampling water index values from the 
-    underlying DEA CoastLines rasters to determine if a coastline was 
+    underlying DEA Coastlines rasters to determine if a coastline was 
     located in wetter or drier terrain than the baseline coastline.
     
     Parameters:

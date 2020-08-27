@@ -1,16 +1,16 @@
-![Digital Earth Australia CoastLines](visualisation/deacoastlines_header.gif)
+![Digital Earth Australia Coastlines](visualisation/deacoastlines_header.gif)
 
-# Digital Earth Australia CoastLines
+# Digital Earth Australia Coastlines
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **License:** The code in this repository is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Digital Earth Australia data is licensed under the [Creative Commons by Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
-**Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastLines/issues/new). For questions or more information about this product, sign up to the [Open Data Cube Slack](https://join.slack.com/t/opendatacube/shared_invite/zt-d6hu7l35-CGDhSxiSmTwacKNuXWFUkg) and post on the [`#dea-coastlines`](https://app.slack.com/client/T0L4V0TFT/C018X6J9HLY/details/) channel.
+**Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastlines/issues/new). For questions or more information about this product, sign up to the [Open Data Cube Slack](https://join.slack.com/t/opendatacube/shared_invite/zt-d6hu7l35-CGDhSxiSmTwacKNuXWFUkg) and post on the [`#dea-coastlines`](https://app.slack.com/client/T0L4V0TFT/C018X6J9HLY/details/) channel.
 
 ---
 
-**Digital Earth Australia CoastLines** is a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
+**Digital Earth Australia Coastlines** is a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
 
 The product combines satellite data from Geoscience Australia's [Digital Earth Australia program](https://www.ga.gov.au/dea) with tidal modelling to map the typical location of the coastline at mean sea level for each year. The product enables trends of coastal erosion and growth to be examined annually at both a local and continental scale, and for patterns of coastal change to be mapped historically and updated regularly as data continues to be acquired. This allows current rates of coastal change to be compared with that observed in previous years or decades. 
 
@@ -28,8 +28,8 @@ The ability to map shoreline positions for each year provides valuable insights 
 * [Repository code](#repository-code)
 * [Data access](#data-access)
     * [Digital Earth Australia Maps](#digital-earth-australia-maps)
-    * [Loading DEA CoastLines data using Web Feature Service (WFS)](#loading-dea-coastlines-data-using-web-feature-service-wfs)
-* [DEA CoastLines dataset](#dea-coastlines-dataset)
+    * [Loading DEA Coastlines data using Web Feature Service (WFS)](#loading-dea-coastlines-data-using-web-feature-service-wfs)
+* [DEA Coastlines dataset](#dea-coastlines-dataset)
     * [Annual coastlines](#annual-coastlines)
     * [Rates of change statistics](#rates-of-change-statistics)
     * [Summary](#summary)
@@ -45,7 +45,7 @@ Instructions for setting up an account on the NCI's Virtual Desktop Infrastructu
 
 This repository contains three main scripts (and corresponding Jupyter notebooks) that are intended to be run in the following order:
 
-1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This code conducts raster generation for DEA CoastLines:
+1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This code conducts raster generation for DEA Coastlines:
 
     * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
     * Convert each satellite image into a remote sensing water index (MNDWI)
@@ -60,17 +60,17 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
     * Extract waterline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
     * Compute rates of coastal change at every 30 m along Australia's non-rocky coastlines using linear regression
   
-3. [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA CoastLines layers:
+3. [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA Coastlines layers:
 
     * Combines output coastline and rates of change statistics point vectors into single continental datasets
     * Aggregates this data to produce moving window summary datasets that summarise coastal change at regional and continental scale.
 
-An additional Jupyter notebook provides useful tools for analysing DEA CoastLines data:
+An additional Jupyter notebook provides useful tools for analysing DEA Coastlines data:
 
 * [`DEACoastLines_tools.ipynb`](DEACoastLines_tools.ipynb): 
 
-    * Selecting and loading DEA CoastLines data using an interactive map
-    * Interactively drawing a transect across DEA CoastLines annual coastlines and generating a plot of coastal change through time
+    * Selecting and loading DEA Coastlines data using an interactive map
+    * Interactively drawing a transect across DEA Coastlines annual coastlines and generating a plot of coastal change through time
     * Interactively plotting the distribution of retreating and growing coastlines within a selected region
 
 ---
@@ -83,20 +83,20 @@ To view this product on the interactive Digital Earth Australia Maps platform:
 
 1. Open **Digital Earth Australia Maps**: http://maps.dea.ga.gov.au/ 
 2. Select `Add data` on the top-left. 
-3. Select `Coastal > Digital Earth Australia CoastLines > Digital Earth Australia CoastLines`
+3. Select `Coastal > Digital Earth Australia Coastlines > Digital Earth Australia Coastlines`
 4. Click blue 'Add to the map' button on top-right. 
 
 By default, the map will show a summary of coastal change at continental scale. 
 More detailed rates of change will be displayed as you zoom in; to view a time series chart of how an area of coastline has changed over time, click on any labelled point (press "Expand" on the pop-up for more detail). 
 Zoom in further to view individual annual coastlines.
 
-> Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia CoastLines > Supplementary data` directory.
+> Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
 
-![DEA CoastLines on DEA Maps](visualisation/deacoastlines_deamaps_1.JPG)
+![DEA Coastlines on DEA Maps](visualisation/deacoastlines_deamaps_1.JPG)
 
-### Loading DEA CoastLines data using Web Feature Service (WFS)
+### Loading DEA Coastlines data using Web Feature Service (WFS)
 
-DEA CoastLines data can be loaded directly in a Python script or Jupyter Notebook using the DEA CoastLines Web Feature Service (WFS) and `geopandas`:
+DEA Coastlines data can be loaded directly in a Python script or Jupyter Notebook using the DEA Coastlines Web Feature Service (WFS) and `geopandas`:
 
 ```
 import geopandas as gpd
@@ -116,7 +116,7 @@ deacl_statistics_wfs = 'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
                        'srsName=EPSG%3A3577&maxFeatures=1000&' \
                        f'bbox={ymin},{xmin},{ymax},{xmax}'
 
-# Load DEA CoastLines data from WFS using geopandas
+# Load DEA Coastlines data from WFS using geopandas
 deacl_coastlines_gdf = gpd.read_file(deacl_coastlines_wfs)
 deacl_statistics_gdf = gpd.read_file(deacl_statistics_wfs)
 
@@ -127,17 +127,17 @@ deacl_statistics_gdf.crs = 'EPSG:3577'
 
 ---
 
-## DEA CoastLines dataset
+## DEA Coastlines dataset
 
-> _For the most up-to-date product metadata, visit the [official Geoscience Australia DEA CoastLines metadata listing](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
+> _For the most up-to-date product metadata, visit the [official Geoscience Australia DEA Coastlines metadata listing](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
 
-The **DEA CoastLines** product contains three layers:
+The **DEA Coastlines** product contains three layers:
 
 ### Annual coastlines
 Annual coastline vectors from 1988 to 2019 that represent the median or ‘typical’ position of the coastline at approximately mean sea level tide (0 m AHD) for each year.
    * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, poor tidal modelling performance, or aerosol issues (see [Caveats and limitations](#caveats-and-limitations))
 
-![DEA CoastLines coastlines layer](visualisation/deacl_coastlines.JPG)
+![DEA Coastlines coastlines layer](visualisation/deacl_coastlines.JPG)
 
 ### Rates of change statistics
 A point dataset providing robust rates of coastal change statistics for every 30 m along Australia’s non-rocky (clastic) coastlines. The most recent 2019 coastline is used as a baseline for measuring rates of change. By default, points are shown for significant rates of change only (p-value < 0.01, see sig_time below). The dataset contains the following attribute columns: 
@@ -164,12 +164,12 @@ A point dataset providing robust rates of coastal change statistics for every 30
    * `max_year`, `min_year`: The year that annual coastlines were at their maximum (i.e. located furthest towards the ocean) and their minimum (i.e. located furthest inland) respectively (excluding outliers).
    * `breaks`: An experimental list of any years identified as non-linear breakpoints in the time series. This can be useful for verifying that a significant trend is indeed linear, or identifying areas of rapid non-linear change (e.g. associated with coastal development or management).
    
-![DEA CoastLines statistics layer](visualisation/deacl_statistics.JPG)
+![DEA Coastlines statistics layer](visualisation/deacl_statistics.JPG)
 
 ### Continental summary
 A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
 
-![DEA CoastLines summary layer](visualisation/deacl_summary.JPG)
+![DEA Coastlines summary layer](visualisation/deacl_summary.JPG)
 
 ---
 
@@ -198,4 +198,3 @@ Bishop-Taylor, R., Sagar, S., Lymburner, L., & Beaman, R. J. (2019a). Between th
 Bishop-Taylor, R., Sagar, S., Lymburner, L., Alam, I., & Sixsmith, J. (2019b). Sub-pixel waterline extraction: Characterising accuracy and sensitivity to indices and spectra. _Remote Sensing_, 11(24), 2984. Available: https://doi.org/10.3390/rs11242984
 
 Sagar, S., Roberts, D., Bala, B., & Lymburner, L. (2017). Extracting the intertidal extent and topography of the Australian coastline from a 28 year time series of Landsat observations. _Remote Sensing of Environment_, 195, 153-169. Available: https://doi.org/10.1016/j.rse.2017.04.009
-

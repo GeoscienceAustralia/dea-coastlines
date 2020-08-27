@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code conducts raster generation for DEA CoastLines:
+# This code conducts raster generation for DEA Coastlines:
 
 #     * Load stack of all available Landsat 5, 7 and 8 satellite imagery
 #       for a location using ODC Virtual Products
@@ -477,7 +477,7 @@ def main(argv=None):
     output_name = str(argv[2])    
    
     # Connect to datacube    
-    dc = datacube.Datacube(app='DEACoastLines_generation')
+    dc = datacube.Datacube(app='DEACoastlines_generation')
     
     # Start local dask client
     client = start_local_dask(mem_safety_margin='3gb')
@@ -564,7 +564,7 @@ def main(argv=None):
     ##################
     
     # Once all rasters have been generated, compute contours and statistics
-    os.system(f'python /g/data/r78/DEACoastLines/deacoastlines_statistics.py {study_area} {output_name}')
+    os.system(f'python /g/data/r78/DEACoastlines/deacoastlines_statistics.py {study_area} {output_name}')
     
         
 if __name__ == "__main__":
