@@ -1,6 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# This code combines individual datasets into continental DEA CoastLines 
+# layers:
+# 
+#     * Combines output coastline and rates of change statistics point 
+#       vectors into single continental datasets
+#     * Aggregates this data to produce moving window summary datasets 
+#       that summarise coastal change at regional and continental scale.
+#
+# Compatability:
+#
+#     module use /g/data/v10/public/modules/modulefiles
+#     module load dea/20200713
+#     pip install --user ruptures
+#     pip install --user git+https://github.com/mattijn/topojson/
+
+
 import os
 import sys
 import geopandas as gpd
