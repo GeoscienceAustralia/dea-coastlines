@@ -45,7 +45,7 @@ Instructions for setting up an account on the NCI's Virtual Desktop Infrastructu
 
 This repository contains three main scripts (and corresponding Jupyter notebooks) that are intended to be run in the following order:
 
-1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastLines_generation.ipynb`](DEACoastLines_generation.ipynb): This code conducts raster generation for DEA Coastlines:
+1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastlines_generation.ipynb`](DEACoastlines_generation.ipynb): This code conducts raster generation for DEA Coastlines:
 
     * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
     * Convert each satellite image into a remote sensing water index (MNDWI)
@@ -54,7 +54,7 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
     * Mask out high and low tide pixels by removing all observations acquired outside of 50 percent of the observed tidal range centered over mean sea level
     * Combine tidally-masked data into annual median composites from 1988 to the present representing the coastline at approximately mean sea level
 
-2. [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastLines_statistics.ipynb`](DEACoastLines_statistics.ipynb): This code conducts vector subpixel coastline extraction:
+2. [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastlines_statistics.ipynb`](DEACoastlines_statistics.ipynb): This code conducts vector subpixel coastline extraction:
 
     * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
     * Extract waterline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
@@ -67,7 +67,7 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
 
 An additional Jupyter notebook provides useful tools for analysing DEA Coastlines data:
 
-* [`DEACoastLines_tools.ipynb`](DEACoastLines_tools.ipynb): 
+* [`DEACoastlines_tools.ipynb`](DEACoastlines_tools.ipynb): 
 
     * Selecting and loading DEA Coastlines data using an interactive map
     * Interactively drawing a transect across DEA Coastlines annual coastlines and generating a plot of coastal change through time
