@@ -1,4 +1,4 @@
-![Digital Earth Australia Coastlines](visualisation/deacoastlines_header.gif)
+![Digital Earth Australia Coastlines](visualisation/deacoastlines_example_header.gif)
 
 # Digital Earth Australia Coastlines
 
@@ -92,7 +92,7 @@ Zoom in further to view individual annual coastlines.
 
 > Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
 
-![DEA Coastlines on DEA Maps](visualisation/deacoastlines_deamaps_1.JPG)
+![DEA Coastlines on DEA Maps](visualisation/deacoastlines_example_deamaps.JPG)
 
 ### Loading DEA Coastlines data using Web Feature Service (WFS)
 
@@ -137,7 +137,7 @@ The **DEA Coastlines** product contains three layers:
 Annual coastline vectors from 1988 to 2019 that represent the median or ‘typical’ position of the coastline at approximately mean sea level tide (0 m AHD) for each year.
    * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, poor tidal modelling performance, or aerosol issues (see [Caveats and limitations](#caveats-and-limitations))
 
-![DEA Coastlines coastlines layer](visualisation/deacl_coastlines.JPG)
+![DEA Coastlines coastlines layer](visualisation/deacoastlines_example_coastlines.JPG)
 
 ### Rates of change statistics
 A point dataset providing robust rates of coastal change statistics for every 30 m along Australia’s non-rocky (clastic) coastlines. The most recent 2019 coastline is used as a baseline for measuring rates of change. By default, points are shown for significant rates of change only (p-value < 0.01, see sig_time below). The dataset contains the following attribute columns: 
@@ -164,12 +164,12 @@ A point dataset providing robust rates of coastal change statistics for every 30
    * `max_year`, `min_year`: The year that annual coastlines were at their maximum (i.e. located furthest towards the ocean) and their minimum (i.e. located furthest inland) respectively (excluding outliers).
    * `breaks`: An experimental list of any years identified as non-linear breakpoints in the time series. This can be useful for verifying that a significant trend is indeed linear, or identifying areas of rapid non-linear change (e.g. associated with coastal development or management).
    
-![DEA Coastlines statistics layer](visualisation/deacl_statistics.JPG)
+![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
 
 ### Continental summary
 A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
 
-![DEA Coastlines summary layer](visualisation/deacl_summary.JPG)
+![DEA Coastlines summary layer](visualisation/deacoastlines_example_summary.JPG)
 
 ---
 
