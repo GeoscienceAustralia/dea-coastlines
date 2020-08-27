@@ -94,7 +94,7 @@ Zoom in further to view individual annual coastlines:
 
 ![Zooming to annual coastlines in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_2.gif)
  
-> Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
+> Note: To view a DEA Coastlines layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
 
 ### Loading DEA Coastlines data using Web Feature Service (WFS)
 
