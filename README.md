@@ -86,13 +86,15 @@ To view this product on the interactive Digital Earth Australia Maps platform:
 3. Select `Coastal > Digital Earth Australia Coastlines > Digital Earth Australia Coastlines`
 4. Click blue 'Add to the map' button on top-right. 
 
-By default, the map will show a summary of coastal change at continental scale. 
-More detailed rates of change will be displayed as you zoom in; to view a time series chart of how an area of coastline has changed over time, click on any labelled point (press "Expand" on the pop-up for more detail). 
-Zoom in further to view individual annual coastlines.
+By default, the map will show a summary of coastal change at continental scale. More detailed rates of change will be displayed as you zoom in: zoom in until labelled points appear and click on any point to view a time series chart of how an area of coastline has changed over time (press 'Expand' on the pop-up for more detail):
 
+![Zooming to annual rates of change and plotting chart in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_1.gif)
+
+Zoom in further to view individual annual coastlines: 
+
+![Zooming to annual coastlines in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_2.gif)
+ 
 > Note: To view a DEA CoastLine layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
-
-![DEA Coastlines on DEA Maps](visualisation/deacoastlines_example_deamaps.JPG)
 
 ### Loading DEA Coastlines data using Web Feature Service (WFS)
 
