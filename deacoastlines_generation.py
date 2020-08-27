@@ -1,6 +1,30 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# This code conducts raster generation for DEA CoastLines:
+
+#     * Load stack of all available Landsat 5, 7 and 8 satellite imagery
+#       for a location using ODC Virtual Products
+#     * Convert each satellite image into a remote sensing water index 
+#       (MNDWI)
+#     * For each satellite image, model ocean tides into a 2 x 2 km grid
+#       based on exact time of image acquisition
+#     * Interpolate tide heights into spatial extent of image stack
+#     * Mask out high and low tide pixels by removing all observations 
+#       acquired outside of 50 percent of the observed tidal range 
+#       centered over mean sea level
+#     * Combine tidally-masked data into annual median composites from 
+#       1988 to the present representing the coastline at approximately 
+#       mean sea level (0 m AHD)
+#
+# Compatability:
+#
+#     module use /g/data/v10/public/modules/modulefiles
+#     module load dea/20200713
+#     pip install --user ruptures
+#     pip install --user git+https://github.com/mattijn/topojson/
+
+
 import os
 import sys
 import mock
