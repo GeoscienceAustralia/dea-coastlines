@@ -106,19 +106,20 @@ DEA Coastlines data can be loaded directly in a Python script or Jupyter Noteboo
 import geopandas as gpd
 
 # Specify bounding box
-ymax, xmin = -33.6507, 115.2790
-ymin, xmax = -33.6585, 115.3013
+ymax, xmin = -33.65, 115.28
+ymin, xmax = -33.66, 115.30
 
 # Set up WFS requests for annual coastlines & rates of change statistics
-deacl_coastlines_wfs = 'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
-                       'service=WFS&version=1.1.0&request=GetFeature&' \
-                       'typeName=dea:coastlines&srsName=EPSG%3A3577&' \
-                       f'maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax}'
-deacl_statistics_wfs = 'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
-                       'service=WFS&version=1.1.0&request=GetFeature&' \
-                       'typeName=dea:coastlines_statistics&' \
-                       'srsName=EPSG%3A3577&maxFeatures=1000&' \
-                       f'bbox={ymin},{xmin},{ymax},{xmax}'
+deacl_coastlines_wfs = f'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       f'service=WFS&version=1.1.0&request=GetFeature' \
+                       f'&typeName=dea:coastlines&maxFeatures=1000' \
+                       f'&bbox={ymin},{xmin},{ymax},{xmax},' \
+                       f'urn:ogc:def:crs:EPSG:4326'
+deacl_statistics_wfs = f'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       f'service=WFS&version=1.1.0&request=GetFeature' \
+                       f'&typeName=dea:coastlines_statistics&maxFeatures=1000' \
+                       f'&bbox={ymin},{xmin},{ymax},{xmax},' \
+                       f'urn:ogc:def:crs:EPSG:4326'
 
 # Load DEA Coastlines data from WFS using geopandas
 deacl_coastlines_gdf = gpd.read_file(deacl_coastlines_wfs)
