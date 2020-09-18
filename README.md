@@ -35,7 +35,7 @@ The ability to map shoreline positions for each year provides valuable insights 
 * [DEA Coastlines dataset](#dea-coastlines-dataset)
     * [Annual coastlines](#annual-coastlines)
     * [Rates of change statistics](#rates-of-change-statistics)
-    * [Summary](#summary)
+    * [Coastal change hotspots](#coastal-change-hotspots)
 * [Caveats and limitations](#caveats-and-limitations)
 * [References](#references)
 
@@ -66,7 +66,7 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
 3. [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA Coastlines layers:
 
     * Combines output coastline and rates of change statistics point vectors into single continental datasets
-    * Aggregates this data to produce moving window summary datasets that summarise coastal change at regional and continental scale.
+    * Aggregates this data to produce a moving window coastal change hotspot dataset that summarises coastal change at regional and continental scale.
 
 An additional Jupyter notebook provides useful tools for analysing DEA Coastlines data:
 
@@ -172,10 +172,10 @@ A point dataset providing robust rates of coastal change statistics for every 30
    
 ![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
 
-### Continental summary
+### Coastal change hotspots
 A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
 
-![DEA Coastlines summary layer](visualisation/deacoastlines_example_summary.JPG)
+![DEA Coastlines coastal change hotspots](visualisation/deacoastlines_example_summary.JPG)
 
 ---
 
