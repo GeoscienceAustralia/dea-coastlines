@@ -82,14 +82,22 @@ An additional Jupyter notebook provides useful tools for analysing DEA Coastline
 
 ### Digital Earth Australia Maps
 
-To view this product on the interactive Digital Earth Australia Maps platform: 
+To explore DEA Coastlines on the interactive Digital Earth Australia Maps platform, visit the link below (click `Yes` on the `This map contains a story` pop-up box to view an interactive story map):
 
-1. Open **Digital Earth Australia Maps**: http://maps.dea.ga.gov.au/ 
+https://maps.dea.ga.gov.au/#share=s-DEACoastlines
+
+To add DEA Coastlines to DEA Maps manually:
+
+1. Open DEA Maps: http://maps.dea.ga.gov.au/ 
 2. Select `Add data` on the top-left. 
 3. Select `Coastal > Digital Earth Australia Coastlines > Digital Earth Australia Coastlines`
 4. Click blue 'Add to the map' button on top-right. 
 
-By default, the map will show a summary of coastal change at continental scale. More detailed rates of change will be displayed as you zoom in: zoom in until labelled points appear and click on any point to view a time series chart of how an area of coastline has changed over time (press 'Expand' on the pop-up for more detail):
+By default, the map will show hotspots of coastal change at continental scale. 
+Red dots represent retreating coastlines (e.g. erosion), while blue dots indicate seaward growth. The larger the dots and the brighter the colour, the more coastal change that is occurring at the location. 
+
+More detailed rates of change will be displayed as you zoom in. 
+To view a time series chart of how an area of coastline has changed over time, click on any labelled point (press "Expand" on the pop-up for more detail):
 
 ![Zooming to annual rates of change and plotting chart in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_1.gif)
 
