@@ -82,9 +82,9 @@ An additional Jupyter notebook provides useful tools for analysing DEA Coastline
 
 ### Digital Earth Australia Maps
 
-To explore DEA Coastlines on the interactive Digital Earth Australia Maps platform, visit the link below (click `Yes` on the `This map contains a story` pop-up box to view an interactive story map):
+To explore DEA Coastlines on the interactive Digital Earth Australia Maps platform, visit the link below:
 
-https://maps.dea.ga.gov.au/#share=s-DEACoastlines
+[https://maps.dea.ga.gov.au/#share=s-DEACoastlines](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1)
 
 To add DEA Coastlines to DEA Maps manually:
 
