@@ -4,6 +4,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+**Access:** [Explore DEA Coastlines on the interactive Digital Earth Australia Maps platform](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1)
+
 **License:** The code in this repository is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Digital Earth Australia data is licensed under the [Creative Commons by Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
 **Product description and metadata:** For the most up-to-date information about this product, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)
@@ -13,7 +15,7 @@
 
 ---
 
-**Digital Earth Australia Coastlines** is a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
+[**Digital Earth Australia Coastlines**](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1) is a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
 
 The product combines satellite data from Geoscience Australia's [Digital Earth Australia program](https://www.ga.gov.au/dea) with tidal modelling to map the typical location of the coastline at mean sea level for each year. The product enables trends of coastal erosion and growth to be examined annually at both a local and continental scale, and for patterns of coastal change to be mapped historically and updated regularly as data continues to be acquired. This allows current rates of coastal change to be compared with that observed in previous years or decades. 
 
