@@ -163,6 +163,8 @@ On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-
 
 > -10.0 m (± 1.0 m)
 
+![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
+
 The rates of change statistics dataset contains the following attribute columns that can be accessed by clicking on labelled points in the web map: 
 
 ##### Annual coastline distances
@@ -186,8 +188,6 @@ The rates of change statistics dataset contains the following attribute columns 
    * `nsm`: Net Shoreline Movement (NSM). The distance between the oldest (1988) and most recent (2019) annual coastlines (excluding outliers). Negative values indicate the shoreline retreated between the oldest and most recent coastline; positive values indicate growth.
    * `max_year`, `min_year`: The year that annual coastlines were at their maximum (i.e. located furthest towards the ocean) and their minimum (i.e. located furthest inland) respectively (excluding outliers).
    * `breaks`: An experimental list of any years identified as non-linear breakpoints in the time series. This can be useful for verifying that a significant trend is indeed linear, or identifying areas of rapid non-linear change (e.g. associated with coastal development or management).
-   
-![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
 
 ### Coastal change hotspots
 A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
