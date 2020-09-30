@@ -159,11 +159,13 @@ Annual coastline vectors from 1988 to 2019 that represent the median or ‘typic
 A point dataset providing robust rates of coastal change statistics for every 30 m along Australia’s non-rocky (clastic) coastlines.
 The most recent 2019 coastline is used as a baseline for measuring rates of change.
 
-On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1), points are shown for locations with statistically significant rates of change only (p-value < 0.01, see sig_time below). Each point shows annual rates of change (in metres per year; see `rate_time` below), and an estimate of uncertainty in this rate in brackets (95% confidence interval; see `se_time` below). For example, there is a 95% chance that the rate of erosion at a point with the following label is between -9.0 and -11.0 metres per year: 
+![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
+
+On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1), points are shown for locations with statistically significant rates of change only (p-value < 0.01, see sig_time below). 
+Each point shows annual rates of change (in metres per year; see `rate_time` below), and an estimate of uncertainty in this rate in brackets (95% confidence interval; see `se_time` below). 
+For example, there is a 95% chance that the rate of erosion at a point with the following label is between -9.0 and -11.0 metres per year: 
 
 > -10.0 m (± 1.0 m)
-
-![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
 
 The rates of change statistics dataset contains the following attribute columns that can be accessed by clicking on labelled points in the web map: 
 
