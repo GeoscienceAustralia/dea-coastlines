@@ -33,7 +33,8 @@ The ability to map shoreline positions for each year provides valuable insights 
 * [Repository code](#repository-code)
 * [Data access](#data-access)
     * [Digital Earth Australia Maps](#digital-earth-australia-maps)
-    * [Loading DEA Coastlines data using Web Feature Service (WFS)](#loading-dea-coastlines-data-using-web-feature-service-wfs)
+    * [Loading DEA Coastlines data using Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-using-web-feature-service-wfs-using-python)
+    * [Loading DEA Coastlines data using Web Feature Service (WFS) using R](#loading-dea-coastlines-data-using-web-feature-service-wfs-using-r)
 * [DEA Coastlines dataset](#dea-coastlines-dataset)
     * [Annual coastlines](#annual-coastlines)
     * [Rates of change statistics](#rates-of-change-statistics)
@@ -109,7 +110,7 @@ Zoom in further to view individual annual coastlines:
  
 > Note: To view a DEA Coastlines layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
 
-### Loading DEA Coastlines data using Web Feature Service (WFS)
+### Loading DEA Coastlines data using Web Feature Service (WFS) using Python
 
 DEA Coastlines data can be loaded directly in a Python script or Jupyter Notebook using the DEA Coastlines Web Feature Service (WFS) and `geopandas`:
 
@@ -139,6 +140,36 @@ deacl_statistics_gdf = gpd.read_file(deacl_statistics_wfs)
 # Ensure CRSs are set correctly
 deacl_coastlines_gdf.crs = 'EPSG:3577'
 deacl_statistics_gdf.crs = 'EPSG:3577'
+```
+
+### Loading DEA Coastlines data using Web Feature Service (WFS) using R
+DEA Coastlines data can be loaded directly into `R` using the DEA Coastlines Web Feature Service (WFS) and the `sf` package:
+
+```
+library(magrittr)
+library(glue)
+library(sf)
+
+# Specify bounding box
+xmin = 115.28
+xmax = 115.30
+ymin = -33.66
+ymax = -33.65
+
+# Read in DEA Coastlines annual coastline data, using `glue` 
+# to insert our bounding box into the string, `sf` to  load 
+# the spatial data from the Web Feature Service and set the 
+# Coordinate Reference System to Australian Albers (EPSG:3577)
+deacl_coastlines = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=dea:coastlines&maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax},urn:ogc:def:crs:EPSG:4326" %>% 
+  glue::glue() %>%
+  sf::read_sf() %>% 
+  sf::st_set_crs(3577)
+
+# Read in DEA Coastlines rates of change statistics data
+deacl_statistics = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=dea:coastlines_statistics&maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax},urn:ogc:def:crs:EPSG:4326" %>% 
+  glue::glue() %>%
+  sf::read_sf() %>% 
+  sf::st_set_crs(3577)
 ```
 
 ---
