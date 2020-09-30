@@ -161,7 +161,7 @@ The most recent 2019 coastline is used as a baseline for measuring rates of chan
 
 ![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
 
-On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1), points are shown for locations with statistically significant rates of change only (p-value < 0.01, see sig_time below). 
+On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1), points are shown for locations with statistically significant rates of change only (p-value < 0.01, see `sig_time` below). 
 Each point shows annual rates of change (in metres per year; see `rate_time` below), and an estimate of uncertainty in this rate in brackets (95% confidence interval; see `se_time` below). 
 For example, there is a 95% chance that the rate of erosion at a point with the following label is between -9.0 and -11.0 metres per year: 
 
