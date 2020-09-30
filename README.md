@@ -179,7 +179,7 @@ The rates of change statistics dataset contains the following attribute columns 
    * `outl_time`: Individual annual coastlines are noisy estimators of coastline position that can be influenced by environmental conditions (e.g. clouds, breaking waves, sea spray) or modelling issues (e.g. poor tidal modelling results or limited clear satellite observations). To obtain robust rates of change, outlying years are excluded using a robust outlier detection algorithm, and recorded in this column.
    
 ##### Climate driver statistics
-   * `rate_soi`: Annual rates of change (in metres per year) calculated by linearly regressing all annual coastline distances against the Southern Oscillation Index (SOI). Negative values indicate retreat during La Nina years.
+   * `rate_soi`: The slope of any linear relationship between annual coastline distances and the Southern Oscillation Index or SOI (in metres change per unit of SOI). Negative values indicate that coastlines have historically retreated during La Niña years. Please note: this comparison was made against SOI data from [NOAA](https://www.ncdc.noaa.gov/teleconnections/enso/indicators/soi/) which does not apply a standard scaling factor to SOI values unlike Australia's [BOM](http://www.bom.gov.au/climate/glossary/soi.shtml). Divide rate_soi values by 10 to get rates of coastal change per increase in BOM-scaled SOI values.
    * `sig_soi`: Significance (p-value) of the linear relationship between annual coastline distances and SOI. 
    * `se_soi`: Standard error (in metres) of the linear relationship between annual coastline distances and SOI.
    * `outl_soi`: A list of any years excluded from the SOI regression by the robust outlier detection algorithm.
