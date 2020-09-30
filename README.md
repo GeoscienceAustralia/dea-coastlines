@@ -33,8 +33,8 @@ The ability to map shoreline positions for each year provides valuable insights 
 * [Repository code](#repository-code)
 * [Data access](#data-access)
     * [Digital Earth Australia Maps](#digital-earth-australia-maps)
-    * [Loading DEA Coastlines data using Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-using-web-feature-service-wfs-using-python)
-    * [Loading DEA Coastlines data using Web Feature Service (WFS) using R](#loading-dea-coastlines-data-using-web-feature-service-wfs-using-r)
+    * [Loading DEA Coastlines data from the Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
+    * [Loading DEA Coastlines data from the Web Feature Service (WFS) using R](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-r)
 * [DEA Coastlines dataset](#dea-coastlines-dataset)
     * [Annual coastlines](#annual-coastlines)
     * [Rates of change statistics](#rates-of-change-statistics)
@@ -110,7 +110,7 @@ Zoom in further to view individual annual coastlines:
  
 > Note: To view a DEA Coastlines layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
 
-### Loading DEA Coastlines data using Web Feature Service (WFS) using Python
+### Loading DEA Coastlines data from the Web Feature Service (WFS) using Python
 
 DEA Coastlines data can be loaded directly in a Python script or Jupyter Notebook using the DEA Coastlines Web Feature Service (WFS) and `geopandas`:
 
@@ -142,8 +142,8 @@ deacl_coastlines_gdf.crs = 'EPSG:3577'
 deacl_statistics_gdf.crs = 'EPSG:3577'
 ```
 
-### Loading DEA Coastlines data using Web Feature Service (WFS) using R
-DEA Coastlines data can be loaded directly into `R` using the DEA Coastlines Web Feature Service (WFS) and the `sf` package:
+### Loading DEA Coastlines data from the Web Feature Service (WFS) using R
+DEA Coastlines data can be loaded directly into `R` using the DEA Coastlines Web Feature Service (WFS) and `sf`:
 
 ```
 library(magrittr)
