@@ -173,14 +173,14 @@ def model_tides(ds, points_gdf, extent_buffer=0.05):
     x_vals = subset_gdf.geometry.centroid.x
     y_vals = subset_gdf.geometry.centroid.y
     observed_datetimes = ds.time.data.astype('M8[s]').astype('O').tolist()
-
+    
     # Create list of lat/lon/time scenarios to model
     observed_timepoints = [otps.TimePoint(lon, lat, date) 
                            for date in observed_datetimes
                            for lon, lat in zip(x_vals, y_vals)]
 
     # Model tides for each scenario
-    observed_predictedtides = otps.predict_tide(observed_timepoints)
+    observed_predictedtides = otps.predict_tide(observed_timepoints)         
 
     # Output results into pandas.DataFrame
     tidepoints_df = pd.DataFrame([(i.timepoint.timestamp, 
