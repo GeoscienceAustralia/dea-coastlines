@@ -165,9 +165,9 @@ def model_tides(ds, points_gdf, extent_buffer=0.05):
     
     # Obtain extent of loaded data, and f to ensure that tides are
     # modelled reliably and comparably across grid tiles
-    ds_extent = shape(ds.geobox.geographic_extent.json)
-    buffered = ds_extent.buffer(extent_buffer)
-    subset_gdf = points_gdf[points_gdf.geometry.intersects(buffered)]
+    ds_extent = shape(ds.geobox.geographic_extent.json) 
+    buffered = ds_extent.buffer(extent_buffer) 
+    subset_gdf = points_gdf[points_gdf.geometry.intersects(buffered)] 
 
     # Extract lon, lat from tides, and time from satellite data
     x_vals = subset_gdf.geometry.centroid.x
