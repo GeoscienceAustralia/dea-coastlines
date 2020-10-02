@@ -156,10 +156,9 @@ xmax = 115.30
 ymin = -33.66
 ymax = -33.65
 
-# Read in DEA Coastlines annual coastline data, using `glue` 
-# to insert our bounding box into the string, `sf` to  load 
-# the spatial data from the Web Feature Service and set the 
-# Coordinate Reference System to Australian Albers (EPSG:3577)
+# Read in DEA Coastlines annual coastline data, using `glue` to insert our bounding
+# box into the string, and `sf` to  load the spatial data from the Web Feature
+# Service and set the Coordinate Reference System to Australian Albers (EPSG:3577)
 deacl_coastlines = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=dea:coastlines&maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax},urn:ogc:def:crs:EPSG:4326" %>% 
   glue::glue() %>%
   sf::read_sf() %>% 
