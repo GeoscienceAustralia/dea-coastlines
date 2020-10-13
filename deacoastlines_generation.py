@@ -66,6 +66,24 @@ def load_mndwi(dc,
     applies masking and index calculation at native resolution, and 
     only re-projects to the most common CRS for the query using average 
     resampling in the final step.
+    
+    Parameters:
+    -----------
+    dc : datacube.Datacube object
+        Datacube instance used to load data.
+    query : dict
+        A dictionary containing query parameters passed to the 
+        datacube virtual product (e.g. same as provided to `dc.load`).
+    yaml_path : string
+        Path to YAML file containing virtual product recipe.
+    product_name : string, optional
+        Name of the virtual product to load from the YAML recipe.
+    
+    Returns:
+    --------
+    ds : xarray.Dataset
+        An `xarray.Dataset` containing a time series of water index
+        data (e.g. MNDWI) for the provided datacube query
     """
     
     def custom_native_geobox(ds, measurements=None, basis=None):
@@ -122,6 +140,27 @@ def model_tides(ds, points_gdf, extent_buffer=0.05):
     The output is a geopandas.GeoDataFrame with a "time" index 
     (matching the time steps in `ds`), and a "tide_m" column giving the 
     tide heights at each point location.
+    
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        An `xarray.Dataset` containing a time series of water index
+        data (e.g. MNDWI) for the provided datacube query.
+    points_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing spatial points used to
+        model tides using the OTPS tidal model.
+    extent_buffer : float, optional
+        A float giving the extent in degrees to buffer the satellite
+        imagery dataset (`ds`) when selecting spatial points used
+        to model tides. This buffer creates overlap between analysis
+        areas, which ensures that modelled tides are seamless when
+        clipped back to the dataset extent in a subsequent step.
+    
+    Returns:
+    --------
+    tidepoints_gdf : geopandas.GeoDataFrame
+        An `geopandas.GeoDataFrame` containing modelled tide heights
+        with an index based on each timestep in `ds`.
     """
     
     # Obtain extent of loaded data, and f to ensure that tides are
@@ -288,6 +327,38 @@ def interpolate_tide(timestep_tuple,
     """
     Extract a subset of tide modelling point data for a given time-step,
     then interpolate these tides into the extent of the xarray dataset.
+    
+    Parameters:
+    -----------
+    timestep_tuple : tuple
+        A tuple of x, y and time values sourced from `ds`. These values
+        are used to set up the x and y grid into which tide heights for 
+        each timestep are interpolated. For example: 
+        `(ds.x.values, ds.y.values, ds.time.values)`        
+    tidepoints_gdf : geopandas.GeoDataFrame
+        An `geopandas.GeoDataFrame` containing modelled tide heights
+        with an index based on each timestep in `ds`.
+    method : string, optional
+        The method used to interpolate between point values. This string
+        is either passed to `scipy.interpolate.griddata` (for 'linear', 
+        'nearest' and 'cubic' methods), or used to specify Radial Basis 
+        Function interpolation using `scipy.interpolate.Rbf` ('rbf').
+        Defaults to 'rbf'.
+    factor : int, optional
+        An optional integer that can be used to subsample the spatial 
+        interpolation extent to obtain faster interpolation times, then
+        up-sample this array back to the original dimensions of the 
+        data as a final step. For example, setting `factor=10` will 
+        interpolate data into a grid that has one tenth of the 
+        resolution of `ds`. This approach will be significantly faster 
+        than interpolating at full resolution, but will potentially 
+        produce less accurate or reliable results.        
+    
+    Returns:
+    --------
+    out_tide : xarray.DataArray
+        A 2D array containing tide heights interpolated into the extent
+        of the input data.
     """  
   
     # Extract subset of observations based on timestamp of imagery
@@ -317,6 +388,23 @@ def multiprocess_apply(ds, dim, func):
     """
     Applies a custom function along the dimension of an xarray.Dataset,
     then combines the output to match the original dataset.
+    
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        A dataset with a dimension `dim` to apply the custom function 
+        along.
+    dim : string
+        The dimension along which the custom function will be applied.
+    func : function
+        The function that will be applied in parallel to each array
+        along dimension `dim`.
+    
+    Returns:
+    --------
+    xarray.Dataset
+        A concatenated dataset containing an output for each array 
+        along the input `dim` dimension.
     """
     
     pool = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
@@ -333,6 +421,25 @@ def load_tidal_subset(year_ds, tide_cutoff_min, tide_cutoff_max):
     For a given year of data, thresholds data to keep observations
     within a minimum and maximum tide height cutoff range, and load
     the data into memory.
+    
+    Parameters:
+    -----------
+    year_ds : xarray.Dataset
+        An `xarray.Dataset` for a single epoch (typically annually)
+        containing a time series of water index data (e.g. MNDWI) and 
+        tide heights (`tide_m`) for each pixel.
+    tide_cutoff_min, tide_cutoff_max : numeric or xarray.DataArray
+        Numeric values or 2D data arrays containing minimum and 
+        maximum tide height values used to select a subset of 
+        satellite observations for each individual pixel that fall 
+        within this range. All pixels with tide heights outside of 
+        this range will be set to `NaN`.
+    
+    Returns:
+    --------
+    year_ds : xarray.Dataset
+        An in-memory `xarray.Dataset` with pixels set to `NaN` if
+        they were acquired outside of the supplied tide height range.
     """
     
     # Print status
@@ -345,7 +452,7 @@ def load_tidal_subset(year_ds, tide_cutoff_min, tide_cutoff_max):
                  (year_ds.tide_m <= tide_cutoff_max))
     year_ds = year_ds.sel(time=tide_bool.sum(dim=['x', 'y']) > 0)
     
-    # Apply mask, and load in corresponding high tide data
+    # Apply mask, and load in corresponding tide masked data
     year_ds = year_ds.where(tide_bool)
     return year_ds.compute()
 
@@ -361,6 +468,35 @@ def tidal_composite(year_ds,
     deviationo of valid water index results, and optionally writes 
     each water index, tide height, standard deviation and valid pixel 
     counts for the time period to file as GeoTIFFs.
+    
+    Parameters:
+    -----------
+    year_ds : xarray.Dataset
+        A tide-masked `xarray.Dataset` containing a time series of 
+        water index data (e.g. MNDWI) for a single epoch 
+        (typically annually).
+    label : int, float or str
+        An int, float or string used to name the output variables and 
+        files, For example, a year label for the data in `year_ds`.
+    label_dim : str
+        A string giving the name for the dimension that will be created
+        to contain labels supplied to `label`.
+    output_dir : str
+        The directory to output files for the specific analysis.
+    output_suffix : str
+        An optional suffix that will be used to identify certain 
+        outputs. For example, outputs used for gapfilling data
+        can be differentiated from other outputs by supplying 
+        `output_suffix='_gapfill'`. Defaults to '', which will not
+        add a suffix to the output file names.
+    output_geotiff : bool, optional
+        Whether to export output files as GeoTIFFs. Defaults to False.        
+    
+    Returns:
+    --------
+    median_ds : xarray.Dataset
+        An in-memory `xarray.Dataset` containing output composite
+        arrays with a dimension labelled by `label` and `label_dim`.   
     """
         
     # Compute median water indices and counts of valid pixels
@@ -401,6 +537,20 @@ def export_annual_gapfill(ds,
     at the one time, this function loops through the years in the 
     dataset, progressively updating three datasets (the previous year, 
     current year and subsequent year of data).
+    
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        A tide-masked `xarray.Dataset` containing a time series of 
+        water index data (e.g. MNDWI).
+    output_dir : str
+        The directory to output files for the specific analysis.
+    tide_cutoff_min, tide_cutoff_max : numeric or xarray.DataArray
+        Numeric values or 2D data arrays containing minimum and 
+        maximum tide height values used to select a subset of 
+        satellite observations for each individual pixel that fall 
+        within this range. All pixels with tide heights outside of 
+        this range will be set to `NaN`. 
     """
 
     # Create empty vars containing un-composited data from the previous,

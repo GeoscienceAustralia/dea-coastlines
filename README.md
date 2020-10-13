@@ -4,15 +4,18 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+**Access:** [Explore DEA Coastlines on the interactive Digital Earth Australia Maps platform](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1)
+
 **License:** The code in this repository is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Digital Earth Australia data is licensed under the [Creative Commons by Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
 **Product description and metadata:** For the most up-to-date information about this product, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)
 
-**Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastlines/issues/new). For questions or more information about this product, sign up to the [Open Data Cube Slack](https://join.slack.com/t/opendatacube/shared_invite/zt-d6hu7l35-CGDhSxiSmTwacKNuXWFUkg) and post on the [`#dea-coastlines`](https://app.slack.com/client/T0L4V0TFT/C018X6J9HLY/details/) channel.
+**Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastLines/issues/new). For questions or more information about this product, email dea@ga.gov.au or sign up to the [Open Data Cube Slack](https://join.slack.com/t/opendatacube/shared_invite/zt-d6hu7l35-CGDhSxiSmTwacKNuXWFUkg) and post on the [`#dea-coastlines`](https://app.slack.com/client/T0L4V0TFT/C018X6J9HLY/details/) channel.
+
 
 ---
 
-**Digital Earth Australia Coastlines** is a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
+[**Digital Earth Australia Coastlines**](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1) is a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
 
 The product combines satellite data from Geoscience Australia's [Digital Earth Australia program](https://www.ga.gov.au/dea) with tidal modelling to map the typical location of the coastline at mean sea level for each year. The product enables trends of coastal erosion and growth to be examined annually at both a local and continental scale, and for patterns of coastal change to be mapped historically and updated regularly as data continues to be acquired. This allows current rates of coastal change to be compared with that observed in previous years or decades. 
 
@@ -30,11 +33,12 @@ The ability to map shoreline positions for each year provides valuable insights 
 * [Repository code](#repository-code)
 * [Data access](#data-access)
     * [Digital Earth Australia Maps](#digital-earth-australia-maps)
-    * [Loading DEA Coastlines data using Web Feature Service (WFS)](#loading-dea-coastlines-data-using-web-feature-service-wfs)
+    * [Loading DEA Coastlines data from the Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
+    * [Loading DEA Coastlines data from the Web Feature Service (WFS) using R](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-r)
 * [DEA Coastlines dataset](#dea-coastlines-dataset)
     * [Annual coastlines](#annual-coastlines)
     * [Rates of change statistics](#rates-of-change-statistics)
-    * [Summary](#summary)
+    * [Coastal change hotspots](#coastal-change-hotspots)
 * [Caveats and limitations](#caveats-and-limitations)
 * [References](#references)
 
@@ -65,7 +69,7 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
 3. [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA Coastlines layers:
 
     * Combines output coastline and rates of change statistics point vectors into single continental datasets
-    * Aggregates this data to produce moving window summary datasets that summarise coastal change at regional and continental scale.
+    * Aggregates this data to produce a moving window coastal change hotspot dataset that summarises coastal change at regional and continental scale.
 
 An additional Jupyter notebook provides useful tools for analysing DEA Coastlines data:
 
@@ -81,14 +85,22 @@ An additional Jupyter notebook provides useful tools for analysing DEA Coastline
 
 ### Digital Earth Australia Maps
 
-To view this product on the interactive Digital Earth Australia Maps platform: 
+To explore DEA Coastlines on the interactive Digital Earth Australia Maps platform, visit the link below:
 
-1. Open **Digital Earth Australia Maps**: http://maps.dea.ga.gov.au/ 
+[https://maps.dea.ga.gov.au/#share=s-DEACoastlines](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1)
+
+To add DEA Coastlines to DEA Maps manually:
+
+1. Open DEA Maps: http://maps.dea.ga.gov.au/ 
 2. Select `Add data` on the top-left. 
 3. Select `Coastal > Digital Earth Australia Coastlines > Digital Earth Australia Coastlines`
 4. Click blue 'Add to the map' button on top-right. 
 
-By default, the map will show a summary of coastal change at continental scale. More detailed rates of change will be displayed as you zoom in: zoom in until labelled points appear and click on any point to view a time series chart of how an area of coastline has changed over time (press 'Expand' on the pop-up for more detail):
+By default, the map will show hotspots of coastal change at continental scale. 
+Red dots represent retreating coastlines (e.g. erosion), while blue dots indicate seaward growth. The larger the dots and the brighter the colour, the more coastal change that is occurring at the location. 
+
+More detailed rates of change will be displayed as you zoom in. 
+To view a time series chart of how an area of coastline has changed over time, click on any labelled point (press "Expand" on the pop-up for more detail):
 
 ![Zooming to annual rates of change and plotting chart in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_1.gif)
 
@@ -98,7 +110,7 @@ Zoom in further to view individual annual coastlines:
  
 > Note: To view a DEA Coastlines layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
 
-### Loading DEA Coastlines data using Web Feature Service (WFS)
+### Loading DEA Coastlines data from the Web Feature Service (WFS) using Python
 
 DEA Coastlines data can be loaded directly in a Python script or Jupyter Notebook using the DEA Coastlines Web Feature Service (WFS) and `geopandas`:
 
@@ -106,19 +118,20 @@ DEA Coastlines data can be loaded directly in a Python script or Jupyter Noteboo
 import geopandas as gpd
 
 # Specify bounding box
-ymax, xmin = -33.6507, 115.2790
-ymin, xmax = -33.6585, 115.3013
+ymax, xmin = -33.65, 115.28
+ymin, xmax = -33.66, 115.30
 
 # Set up WFS requests for annual coastlines & rates of change statistics
-deacl_coastlines_wfs = 'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
-                       'service=WFS&version=1.1.0&request=GetFeature&' \
-                       'typeName=dea:coastlines&srsName=EPSG%3A3577&' \
-                       f'maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax}'
-deacl_statistics_wfs = 'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
-                       'service=WFS&version=1.1.0&request=GetFeature&' \
-                       'typeName=dea:coastlines_statistics&' \
-                       'srsName=EPSG%3A3577&maxFeatures=1000&' \
-                       f'bbox={ymin},{xmin},{ymax},{xmax}'
+deacl_coastlines_wfs = f'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       f'service=WFS&version=1.1.0&request=GetFeature' \
+                       f'&typeName=dea:coastlines&maxFeatures=1000' \
+                       f'&bbox={ymin},{xmin},{ymax},{xmax},' \
+                       f'urn:ogc:def:crs:EPSG:4326'
+deacl_statistics_wfs = f'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       f'service=WFS&version=1.1.0&request=GetFeature' \
+                       f'&typeName=dea:coastlines_statistics&maxFeatures=1000' \
+                       f'&bbox={ymin},{xmin},{ymax},{xmax},' \
+                       f'urn:ogc:def:crs:EPSG:4326'
 
 # Load DEA Coastlines data from WFS using geopandas
 deacl_coastlines_gdf = gpd.read_file(deacl_coastlines_wfs)
@@ -127,6 +140,35 @@ deacl_statistics_gdf = gpd.read_file(deacl_statistics_wfs)
 # Ensure CRSs are set correctly
 deacl_coastlines_gdf.crs = 'EPSG:3577'
 deacl_statistics_gdf.crs = 'EPSG:3577'
+```
+
+### Loading DEA Coastlines data from the Web Feature Service (WFS) using R
+DEA Coastlines data can be loaded directly into `R` using the DEA Coastlines Web Feature Service (WFS) and `sf`:
+
+```
+library(magrittr)
+library(glue)
+library(sf)
+
+# Specify bounding box
+xmin = 115.28
+xmax = 115.30
+ymin = -33.66
+ymax = -33.65
+
+# Read in DEA Coastlines annual coastline data, using `glue` to insert our bounding
+# box into the string, and `sf` to  load the spatial data from the Web Feature
+# Service and set the Coordinate Reference System to Australian Albers (EPSG:3577)
+deacl_coastlines = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=dea:coastlines&maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax},urn:ogc:def:crs:EPSG:4326" %>% 
+  glue::glue() %>%
+  sf::read_sf() %>% 
+  sf::st_set_crs(3577)
+
+# Read in DEA Coastlines rates of change statistics data
+deacl_statistics = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=dea:coastlines_statistics&maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax},urn:ogc:def:crs:EPSG:4326" %>% 
+  glue::glue() %>%
+  sf::read_sf() %>% 
+  sf::st_set_crs(3577)
 ```
 
 ---
@@ -144,7 +186,16 @@ Annual coastline vectors from 1988 to 2019 that represent the median or ‘typic
 ![DEA Coastlines coastlines layer](visualisation/deacoastlines_example_coastlines.JPG)
 
 ### Rates of change statistics
-A point dataset providing robust rates of coastal change statistics for every 30 m along Australia’s non-rocky (clastic) coastlines. The most recent 2019 coastline is used as a baseline for measuring rates of change. By default, points are shown for significant rates of change only (p-value < 0.01, see sig_time below). The dataset contains the following attribute columns: 
+A point dataset providing robust rates of coastal change statistics for every 30 m along Australia’s non-rocky (clastic) coastlines.
+The most recent 2019 coastline is used as a baseline for measuring rates of change.
+
+![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
+
+On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1), points are shown for locations with statistically significant rates of change only (p-value < 0.01, see `sig_time` below). 
+Each point shows annual rates of change (in metres per year; see `rate_time` below), and an estimate of uncertainty in brackets (95% confidence interval; see `se_time`). 
+For example, there is a 95% chance that a point with a label **-10.0 m (±1.0 m)** has an erosion rate between -9.0 and -11.0 metres per year.
+
+The rates of change statistics dataset contains the following attribute columns that can be accessed by clicking on labelled points in the web map: 
 
 ##### Annual coastline distances
    * `dist_1990`, `dist_1991` etc: Annual coastline positions/distances (in metres) relative to the 2019 baseline coastline. Negative values indicate that an annual coastline was located inland of the 2019 baseline coastline.    
@@ -156,7 +207,7 @@ A point dataset providing robust rates of coastal change statistics for every 30
    * `outl_time`: Individual annual coastlines are noisy estimators of coastline position that can be influenced by environmental conditions (e.g. clouds, breaking waves, sea spray) or modelling issues (e.g. poor tidal modelling results or limited clear satellite observations). To obtain robust rates of change, outlying years are excluded using a robust outlier detection algorithm, and recorded in this column.
    
 ##### Climate driver statistics
-   * `rate_soi`: Annual rates of change (in metres per year) calculated by linearly regressing all annual coastline distances against the Southern Oscillation Index (SOI). Negative values indicate retreat during La Nina years.
+   * `rate_soi`: The slope of any linear relationship between annual coastline distances and the Southern Oscillation Index or SOI (in metres change per unit of SOI). Negative values indicate that coastlines have historically retreated during La Niña years. Please note: this comparison was made against SOI data from [NOAA](https://www.ncdc.noaa.gov/teleconnections/enso/indicators/soi/) which does not apply a standard scaling factor to SOI values unlike Australia's [BOM](http://www.bom.gov.au/climate/glossary/soi.shtml). Divide `rate_soi` and `se_soi` values by 10 to get rates of coastal change per increase in BOM-scaled SOI values.
    * `sig_soi`: Significance (p-value) of the linear relationship between annual coastline distances and SOI. 
    * `se_soi`: Standard error (in metres) of the linear relationship between annual coastline distances and SOI.
    * `outl_soi`: A list of any years excluded from the SOI regression by the robust outlier detection algorithm.
@@ -167,13 +218,11 @@ A point dataset providing robust rates of coastal change statistics for every 30
    * `nsm`: Net Shoreline Movement (NSM). The distance between the oldest (1988) and most recent (2019) annual coastlines (excluding outliers). Negative values indicate the shoreline retreated between the oldest and most recent coastline; positive values indicate growth.
    * `max_year`, `min_year`: The year that annual coastlines were at their maximum (i.e. located furthest towards the ocean) and their minimum (i.e. located furthest inland) respectively (excluding outliers).
    * `breaks`: An experimental list of any years identified as non-linear breakpoints in the time series. This can be useful for verifying that a significant trend is indeed linear, or identifying areas of rapid non-linear change (e.g. associated with coastal development or management).
-   
-![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
 
-### Continental summary
+### Coastal change hotspots
 A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
 
-![DEA Coastlines summary layer](visualisation/deacoastlines_example_summary.JPG)
+![DEA Coastlines coastal change hotspots](visualisation/deacoastlines_example_summary.JPG)
 
 ---
 

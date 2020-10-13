@@ -6,7 +6,7 @@
 # 
 #     * Combines output coastline and rates of change statistics point 
 #       vectors into single continental datasets
-#     * Aggregates this data to produce moving window summary datasets 
+#     * Aggregates this data to produce moving window hotspot datasets 
 #       that summarise coastal change at regional and continental scale.
 #
 # Compatability:
@@ -28,6 +28,22 @@ import deacoastlines_statistics as deacl_stats
 
 
 def points_in_poly(points, polygons):
+    """
+    Builds an optimised spatial index using `rtree` to determine the IDs
+    of points that fall within each polygon ID.
+    
+    Parameters:
+    -----------
+    points : 
+        A `geopandas.GeoSeries` or iterable of `shapely` geometry points
+    polygons : 
+        A `geopandas.GeoSeries` or iterable of `shapely` geometry polygons
+    
+    Returns:
+    --------
+    A dictionary identifying what point IDs fall within each polygon ID.
+    the polygon.
+    """
 
     # Create the R-tree index and store the features in it (bounding box)   
     idx = index.Index()
@@ -45,6 +61,33 @@ def points_in_poly(points, polygons):
 
   
 def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
+    """
+    Computes statistics based on all spatial points that intersect
+    with a specific polygon. This is used to calculate moving
+    window statistics after first creating a dictionary of polygons
+    and intersecting points using `points_in_poly`.
+    
+    Parameters:
+    -----------
+    key : 
+        The ID of a polygon that will be used to select all 
+        intersecting points.
+    stats_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing multiple points which
+        will be selected based on whether they match the points linked
+        to the specific polygon in `poly_points_dict` requested by `key`.
+    poly_points_dict : dict
+        A dictionary identifying what point IDs fall within each polygon 
+        ID. An individual polygon is selected using `key`. 
+    min_n : int, optional
+        If less than `min_n` points are returned for a given polygon,
+        return None.
+    
+    Returns:
+    --------
+    A `pandas.Series` containing statistics based on the points that
+    matched the polygon ID requested by `key`. 
+    """
 
     matching_points = stats_gdf.iloc[poly_points_dict[key]].copy()
 
