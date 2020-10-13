@@ -1,55 +1,54 @@
 {
-   "catalog": [
+   "name":"Digital Earth Australia Coastlines",
+   "type":"group",
+   "preserveOrder":true,
+   "items":[
       {
-         "name": "Digital Earth Australia Coastlines",
-         "type": "group",
-         "preserveOrder": true,
-         "items": [
+         "type":"wms",
+         "name":"Digital Earth Australia Coastlines (beta)",
+         "id":"dea_coastlines",
+         "url":"https://geoserver.dea.ga.gov.au/geoserver/wms",
+         "opacity":"1.0",
+         "layers":"dea:DEACoastLines",
+         "shortReport":"<i>Zoom in to view detailed rates of coastal change and individual annual coastlines<\/i>",
+         "legendUrl":"https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_legend 1.png",
+         "zoomOnEnable":true,
+         "chartDisclaimer":"The graph below shows the distance (in metres) from each 1988-2018 coastline relative to the 2019 baseline. Negative distances below indicate coastlines that were located inland of the 2019 coastline, while positive values indicate coastlines located towards the ocean.",
+         "featureInfoTemplate":{
+            "template":"<div style='width:480px'>{{#n}}<h3 style='font-weight:normal'>Digital Earth Australia Coastlines<\/h3>Zoom in until labelled points appear and click on any point to view a <b>time series chart of how an area of coastline has changed over time<\/b> (press 'Expand' on the pop-up for more detail):<\/br><\/br><img src='https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_1.gif' alt='Clicking on points'><\/br><\/br>Zoom in further to view individual annual coastlines:<\/br><\/br><img src='https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_2.gif' alt='Zooming to coastlines'>{{/n}}{{#sce}}<h2 style='font-weight:normal'>This coastline has <b>{{#retreat}}retreated{{/retreat}}{{#growth}}grown{{/growth}}<\/b> by<\/br> <b>{{#terria.formatNumber}}{maximumFractionDigits:1}{{rate_time}}{{/terria.formatNumber}} metres (±{{#terria.formatNumber}}{maximumFractionDigits:1}{{conf_time}}{{/terria.formatNumber}}) per year<\/b><\/br>on average since <b>1988<\/b><\/h2>The coastline at this location was <b>most seaward in {{max_year}}<\/b>, and <b>most landward in {{min_year}}<\/b>{{#outl_time}} (excluding outlier years; see below){{/outl_time}}. Since 1988, the coastline has moved over a total distance of approximately <b>{{#terria.formatNumber}}{maximumFractionDigits:0}{{sce}}{{/terria.formatNumber}} metres.<\/b><\/br><\/br><chart title='DEA Coastlines ({{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.latitude}}{{/terria.formatNumber}}, {{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.longitude}}{{/terria.formatNumber}})' y-column='Distance (metres) relative to 2019 coastline' x-column='Year' column-units='{{terria.timeSeries.units}}' preview-x-label='Year'>Year,Distance (metres) relative to 2019 coastline\n1988,{{dist_1988}}\n1989,{{dist_1989}}\n1990,{{dist_1990}}\n1991,{{dist_1991}}\n1992,{{dist_1992}}\n1993,{{dist_1993}}\n1994,{{dist_1994}}\n1995,{{dist_1995}}\n1996,{{dist_1996}}\n1997,{{dist_1997}}\n1998,{{dist_1998}}\n1999,{{dist_1999}}\n2000,{{dist_2000}}\n2001,{{dist_2001}}\n2002,{{dist_2002}}\n2003,{{dist_2003}}\n2004,{{dist_2004}}\n2005,{{dist_2005}}\n2006,{{dist_2006}}\n2007,{{dist_2007}}\n2008,{{dist_2008}}\n2009,{{dist_2009}}\n2010,{{dist_2010}}\n2011,{{dist_2011}}\n2012,{{dist_2012}}\n2013,{{dist_2013}}\n2014,{{dist_2014}}\n2015,{{dist_2015}}\n2016,{{dist_2016}}\n2017,{{dist_2017}}\n2018,{{dist_2018}}\n2019,{{dist_2019}}<\/chart>{{#outl_time}}The following years were identified as potential outliers, and should be interpreted with caution:<\/br><\/br><b>{{outl_time}}<\/b>{{/outl_time}}{{/sce}}{{#year}}<h2 style='font-weight:normal'>{{year}} annual coastline<\/h2><h3 style='font-weight:normal'>Certainty: {{certainty}}<\/h3>Annual coastlines represent the typical (i.e. median) position of the shoreline at approximately mean sea level (~0 m AHD) across the entire year period.<\/br><\/br>{{/year}}<\/div>"
+         }
+      },
+      {
+         "name":"Supplementary layers",
+         "type":"group",
+         "preserveOrder":true,
+         "items":[
             {
-               "type": "wms",
-               "name": "Digital Earth Australia Coastlines (beta)",
-               "url": "https://nonprod.geoserver.dea.ga.gov.au/geoserver/wms",
-               "opacity": "1.0",
-               "layers": "dea:DEACoastLines",
-               "shortReport": "<i>Zoom in to view detailed rates of coastal change and individual annual coastlines</i>",
-               "legendUrl": "https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_legend 1.png",
-               "zoomOnEnable": true,
-               "chartDisclaimer": "The graph below shows the distance (in metres) from each 1988-2018 coastline relative to the 2019 baseline. Negative distances below indicate coastlines that were located inland of the 2019 coastline, while positive values indicate coastlines located towards the ocean.",
-               "featureInfoTemplate": {
-                  "template": "<div style='width:480px'>{{#n}}<h3 style='font-weight:normal'>Digital Earth Australia Coastlines</h3>Zoom in until labelled points appear and click on any point to view a <b>time series chart of how an area of coastline has changed over time</b> (press 'Expand' on the pop-up for more detail):</br></br><img src='https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_1.gif' alt='Clicking on points'></br></br>Zoom in further to view individual annual coastlines:</br></br><img src='https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_2.gif' alt='Zooming to coastlines'>{{/n}}{{#sce}}<h2 style='font-weight:normal'>This coastline has <b>{{#retreat}}retreated{{/retreat}}{{#growth}}grown{{/growth}}</b> by</br> <b>{{#terria.formatNumber}}{maximumFractionDigits:1}{{rate_time}}{{/terria.formatNumber}} metres (±{{#terria.formatNumber}}{maximumFractionDigits:1}{{conf_time}}{{/terria.formatNumber}}) per year</b></br>on average since <b>1988</b></h2>The coastline at this location was <b>most seaward in {{max_year}}</b>, and <b>most landward in {{min_year}}</b>{{#outl_time}} (excluding outlier years; see below){{/outl_time}}. Since 1988, the coastline has moved over a total distance of approximately <b>{{#terria.formatNumber}}{maximumFractionDigits:0}{{sce}}{{/terria.formatNumber}} metres.</b></br></br><chart title='DEA Coastlines ({{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.latitude}}{{/terria.formatNumber}}, {{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.longitude}}{{/terria.formatNumber}})' y-column='Distance (metres) relative to 2019 coastline' x-column='Year' column-units='{{terria.timeSeries.units}}' preview-x-label='Year'>Year,Distance (metres) relative to 2019 coastline\n1988,{{dist_1988}}\n1989,{{dist_1989}}\n1990,{{dist_1990}}\n1991,{{dist_1991}}\n1992,{{dist_1992}}\n1993,{{dist_1993}}\n1994,{{dist_1994}}\n1995,{{dist_1995}}\n1996,{{dist_1996}}\n1997,{{dist_1997}}\n1998,{{dist_1998}}\n1999,{{dist_1999}}\n2000,{{dist_2000}}\n2001,{{dist_2001}}\n2002,{{dist_2002}}\n2003,{{dist_2003}}\n2004,{{dist_2004}}\n2005,{{dist_2005}}\n2006,{{dist_2006}}\n2007,{{dist_2007}}\n2008,{{dist_2008}}\n2009,{{dist_2009}}\n2010,{{dist_2010}}\n2011,{{dist_2011}}\n2012,{{dist_2012}}\n2013,{{dist_2013}}\n2014,{{dist_2014}}\n2015,{{dist_2015}}\n2016,{{dist_2016}}\n2017,{{dist_2017}}\n2018,{{dist_2018}}\n2019,{{dist_2019}}</chart>{{#outl_time}}The following years were identified as potential outliers, and should be interpreted with caution:</br></br><b>{{outl_time}}</b>{{/outl_time}}{{/sce}}{{#year}}<h2 style='font-weight:normal'>{{year}} annual coastline</h2><h3 style='font-weight:normal'>Certainty: {{certainty}}</h3>Annual coastlines represent the typical (i.e. median) position of the shoreline at approximately mean sea level (~0 m AHD) across the entire year period.</br></br>{{/year}}</div>"
+               "type":"wms",
+               "name":"Annual coastlines",
+               "id":"dea_coastlines_annual",
+               "url":"https://geoserver.dea.ga.gov.au/geoserver/wms",
+               "opacity":"1.0",
+               "layers":"dea:AnnualCoastlines",
+               "shortReport":"<i>Zoom in to view individual annual coastlines from 1988 to the present<\/i>",
+               "legendUrl":"https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_legend 1.png",
+               "featureInfoTemplate":{
+                  "template":"<div style='width:480px'><h2 style='font-weight:normal'>{{year}} annual coastline<\/h2><h3 style='font-weight:normal'>Certainty: {{certainty}}<\/h3>Annual coastlines represent the typical (i.e. median) position of the shoreline at approximately mean sea level (~0 m AHD) across the entire year period.<\/br><\/br><\/div>"
                }
             },
             {
-               "name": "Supplementary layers",
-               "type": "group",
-               "preserveOrder": true,
-               "items": [
-                  {
-                     "type": "wms",
-                     "name": "Annual coastlines",
-                     "url": "https://nonprod.geoserver.dea.ga.gov.au/geoserver/wms",
-                     "opacity": "1.0",
-                     "layers": "dea:AnnualCoastlines",
-                     "shortReport": "<i>Zoom in to view individual annual coastlines from 1988 to the present</i>",
-                     "legendUrl": "https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_legend 1.png",
-                     "featureInfoTemplate": {
-                        "template": "<div style='width:480px'><h2 style='font-weight:normal'>{{year}} annual coastline</h2><h3 style='font-weight:normal'>Certainty: {{certainty}}</h3>Annual coastlines represent the typical (i.e. median) position of the shoreline at approximately mean sea level (~0 m AHD) across the entire year period.</br></br></div>"
-                       }
-                  },
-                  {
-                     "type": "wms",
-                     "name": "Rates of change statistics",
-                     "url": "https://nonprod.geoserver.dea.ga.gov.au/geoserver/wms",
-                     "opacity": "1.0",
-                     "layers": "dea:RateOfChangeStatistics",
-                     "shortReport": "<i>Zoom in to view detailed rates of coastal change along the Australian coastline</i>",
-                     "legendUrl": "https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_legend 1.png",
-                     "chartDisclaimer": "The graph below shows the distance (in metres) from each 1988-2018 coastline relative to the 2019 baseline. Negative distances below indicate coastlines that were located inland of the 2019 coastline, while positive values indicate coastlines located towards the ocean.",
-                     "featureInfoTemplate": {
-                        "template": "<div style='width:480px'><h2 style='font-weight:normal'>This coastline has <b>{{#retreat}}retreated{{/retreat}}{{#growth}}grown{{/growth}}</b> by</br> <b>{{#terria.formatNumber}}{maximumFractionDigits:1}{{rate_time}}{{/terria.formatNumber}} metres (±{{#terria.formatNumber}}{maximumFractionDigits:1}{{conf_time}}{{/terria.formatNumber}}) per year</b></br>on average since <b>1988</b></h2>The coastline at this location was <b>most seaward in {{max_year}}</b>, and <b>most landward in {{min_year}}</b>{{#outl_time}} (excluding outlier years; see below){{/outl_time}}. Since 1988, the coastline has moved over a total distance of approximately <b>{{#terria.formatNumber}}{maximumFractionDigits:0}{{sce}}{{/terria.formatNumber}} metres.</b></br></br><chart title='DEA Coastlines ({{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.latitude}}{{/terria.formatNumber}}, {{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.longitude}}{{/terria.formatNumber}})' y-column='Distance (metres) relative to 2019 coastline' x-column='Year' column-units='{{terria.timeSeries.units}}' preview-x-label='Year'>Year,Distance (metres) relative to 2019 coastline\n1988,{{dist_1988}}\n1989,{{dist_1989}}\n1990,{{dist_1990}}\n1991,{{dist_1991}}\n1992,{{dist_1992}}\n1993,{{dist_1993}}\n1994,{{dist_1994}}\n1995,{{dist_1995}}\n1996,{{dist_1996}}\n1997,{{dist_1997}}\n1998,{{dist_1998}}\n1999,{{dist_1999}}\n2000,{{dist_2000}}\n2001,{{dist_2001}}\n2002,{{dist_2002}}\n2003,{{dist_2003}}\n2004,{{dist_2004}}\n2005,{{dist_2005}}\n2006,{{dist_2006}}\n2007,{{dist_2007}}\n2008,{{dist_2008}}\n2009,{{dist_2009}}\n2010,{{dist_2010}}\n2011,{{dist_2011}}\n2012,{{dist_2012}}\n2013,{{dist_2013}}\n2014,{{dist_2014}}\n2015,{{dist_2015}}\n2016,{{dist_2016}}\n2017,{{dist_2017}}\n2018,{{dist_2018}}\n2019,{{dist_2019}}</chart>{{#outl_time}}The following years were identified as potential outliers, and should be interpreted with caution:</br></br><b>{{outl_time}}</b>{{/outl_time}}</div>"
-                     }
-                  }
-               ]
+               "type":"wms",
+               "name":"Rates of change statistics",
+               "id":"dea_coastlines_statistics",
+               "url":"https://geoserver.dea.ga.gov.au/geoserver/wms",
+               "opacity":"1.0",
+               "layers":"dea:RateOfChangeStatistics",
+               "shortReport":"<i>Zoom in to view detailed rates of coastal change along the Australian coastline<\/i>",
+               "legendUrl":"https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_legend 1.png",
+               "chartDisclaimer":"The graph below shows the distance (in metres) from each 1988-2018 coastline relative to the 2019 baseline. Negative distances below indicate coastlines that were located inland of the 2019 coastline, while positive values indicate coastlines located towards the ocean.",
+               "featureInfoTemplate":{
+                  "template":"<div style='width:480px'><h2 style='font-weight:normal'>This coastline has <b>{{#retreat}}retreated{{/retreat}}{{#growth}}grown{{/growth}}<\/b> by<\/br> <b>{{#terria.formatNumber}}{maximumFractionDigits:1}{{rate_time}}{{/terria.formatNumber}} metres (±{{#terria.formatNumber}}{maximumFractionDigits:1}{{conf_time}}{{/terria.formatNumber}}) per year<\/b><\/br>on average since <b>1988<\/b><\/h2>The coastline at this location was <b>most seaward in {{max_year}}<\/b>, and <b>most landward in {{min_year}}<\/b>{{#outl_time}} (excluding outlier years; see below){{/outl_time}}. Since 1988, the coastline has moved over a total distance of approximately <b>{{#terria.formatNumber}}{maximumFractionDigits:0}{{sce}}{{/terria.formatNumber}} metres.<\/b><\/br><\/br><chart title='DEA Coastlines ({{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.latitude}}{{/terria.formatNumber}}, {{#terria.formatNumber}}{maximumFractionDigits:4}{{terria.coords.longitude}}{{/terria.formatNumber}})' y-column='Distance (metres) relative to 2019 coastline' x-column='Year' column-units='{{terria.timeSeries.units}}' preview-x-label='Year'>Year,Distance (metres) relative to 2019 coastline\n1988,{{dist_1988}}\n1989,{{dist_1989}}\n1990,{{dist_1990}}\n1991,{{dist_1991}}\n1992,{{dist_1992}}\n1993,{{dist_1993}}\n1994,{{dist_1994}}\n1995,{{dist_1995}}\n1996,{{dist_1996}}\n1997,{{dist_1997}}\n1998,{{dist_1998}}\n1999,{{dist_1999}}\n2000,{{dist_2000}}\n2001,{{dist_2001}}\n2002,{{dist_2002}}\n2003,{{dist_2003}}\n2004,{{dist_2004}}\n2005,{{dist_2005}}\n2006,{{dist_2006}}\n2007,{{dist_2007}}\n2008,{{dist_2008}}\n2009,{{dist_2009}}\n2010,{{dist_2010}}\n2011,{{dist_2011}}\n2012,{{dist_2012}}\n2013,{{dist_2013}}\n2014,{{dist_2014}}\n2015,{{dist_2015}}\n2016,{{dist_2016}}\n2017,{{dist_2017}}\n2018,{{dist_2018}}\n2019,{{dist_2019}}<\/chart>{{#outl_time}}The following years were identified as potential outliers, and should be interpreted with caution:<\/br><\/br><b>{{outl_time}}<\/b>{{/outl_time}}<\/div>"
+               }
             }
          ]
       }
