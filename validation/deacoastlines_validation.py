@@ -20,6 +20,28 @@ from sklearn.metrics import mean_absolute_error
 from shapely.geometry import box, Point, LineString
 
 
+def standardise_source(df):
+    
+    # Dictionary containing method values to rename
+    remap_dict = {'dunefill': np.NaN, 
+                  'rtk gps': 'gps',
+                  'photogrammetry': 'aerial photogrammetry',
+                  'stereo photogrammtery': 'aerial photogrammetry',
+                  'photos': 'aerial photography',
+                  'total station': 'total station/levelling',
+                  'levelling': 'total station/levelling',
+                  'total station\t': 'total station/levelling',
+                  'laser scanning': 'terrestrial laser scanning',
+                  'ads80': 'aerial photogrammetry',
+                  'gps rtk gps': 'gps'}
+    
+    # Set all values to lower case for easier conversion
+    df['source'] = df.source.str.lower()
+    
+    # Replace values
+    df['source'] = df.source.replace(remap_dict)
+    
+
 def dms2dd(s):
     # example: s = "0°51'56.29"
     degrees, minutes, seconds = re.split('[°\'"]+', s)
@@ -322,7 +344,7 @@ def preprocess_wadot(regions_gdf,
             intersect_gdf['date'] = pd.to_datetime(str(year))
             intersect_gdf['beach'] = beach
             intersect_gdf['section'] = 'all'
-            intersect_gdf['source'] = 'photogrammetry' 
+            intersect_gdf['source'] = 'aerial photogrammetry' 
             intersect_gdf['id'] = (intersect_gdf.beach + '_' + 
                                    intersect_gdf.section + '_' + 
                                    intersect_gdf.profile)
@@ -557,7 +579,7 @@ def preprocess_vicdeakin(fname,
                                       'z_clean': 'z'}, axis=1)
     profiles_df['profile'] = profiles_df['profile'].astype(str)
     profiles_df['section'] = 'all'
-    profiles_df['source'] = 'drone'
+    profiles_df['source'] = 'drone photogrammetry'
     profiles_df['id'] = (profiles_df.beach + '_' + 
                          profiles_df.section + '_' + 
                          profiles_df.profile)
@@ -672,7 +694,8 @@ def preprocess_nswbpd(fname, datum=0, overwrite=False):
 
                 # Join into dataframe
                 shoreline_dist = intercept_df.join(
-                    profiles_df.groupby(['id', 'date']).first())
+                    profiles_df.groupby(['id', 'date']).agg(
+                    lambda x: pd.Series.mode(x).iloc[0]))
 
                 # Keep required columns
                 shoreline_dist = shoreline_dist[['beach', 'section', 'profile',  
@@ -680,6 +703,9 @@ def preprocess_nswbpd(fname, datum=0, overwrite=False):
                                                  'start_x', 'start_y', 
                                                  'end_x', 'end_y', f'{datum}_dist', 
                                                  f'{datum}_x', f'{datum}_y']]
+                
+                # Standardise source column
+                standardise_source(shoreline_dist)
 
                 # Export to file
                 shoreline_dist.to_csv(fname_out)
@@ -769,16 +795,20 @@ def preprocess_narrabeen(fname,
 
         # If the output contains data
         if len(intercept_df.index) > 0:
-
+            
             # Join into dataframe
             shoreline_dist = intercept_df.join(
-                profiles_df.groupby(['id', 'date']).first())
+                profiles_df.groupby(['id', 'date']).agg(
+                lambda x: pd.Series.mode(x).iloc[0]))
 
             # Keep required columns
             shoreline_dist = shoreline_dist[['beach', 'section', 'profile', 
                                              'source', 'start_x', 'start_y',
                                              'end_x', 'end_y', f'{datum}_dist', 
-                                             f'{datum}_x', f'{datum}_y']]
+                                             f'{datum}_x', f'{datum}_y']]   
+            
+            # Standardise source column
+            standardise_source(shoreline_dist)
 
             # Export to file
             shoreline_dist.to_csv(fname_out)
@@ -1043,19 +1073,103 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
 
                 # Join into dataframe
                 shoreline_dist = intercept_df.join(
-                    profiles_df.groupby(['id', 'date']).first())
+                    profiles_df.groupby(['id', 'date']).agg(
+                    lambda x: pd.Series.mode(x).iloc[0]))
 
                 # Keep required columns
                 shoreline_dist = shoreline_dist[['beach', 'section', 'profile', 
                                                  'source', 'start_x', 'start_y',
                                                  'end_x', 'end_y', f'{datum}_dist', 
                                                  f'{datum}_x', f'{datum}_y']]
+                
+                # Standardise source column
+                standardise_source(shoreline_dist)
 
                 # Export to file
                 shoreline_dist.to_csv(fname_out)
 
         else:
             print(f'Skipping {fname_out:<80}', end='\r')
+    
+    
+def preprocess_moruya(fname_out, datum=0, overwrite=False):  
+
+    def azimuth(point1, point2):
+        '''azimuth between 2 shapely points (interval 0 - 360)'''
+        angle = np.arctan2(point2.x - point1.x, point2.y - point1.y)
+        return np.degrees(angle)if angle>0 else np.degrees(angle) + 360
+    
+    # Test if file exists
+    if not os.path.exists(fname_out) or overwrite:  
+
+        # Import data
+        profiles_wide = pd.read_csv('input_data/moruya/moruya_processed.csv')
+
+        # Set to datetime
+        profiles_wide['date'] = pd.to_datetime(profiles_wide['date'], format='%d/%m/%Y')
+
+        # Reshape to long format with one row per measurement
+        profiles_df = profiles_wide.melt(id_vars=profiles_wide.columns[0:8], 
+                                         value_vars=profiles_wide.columns[8:], 
+                                         var_name='distance', value_name='z')
+
+        # Drop rows with no elevation measurements
+        profiles_df = profiles_df.dropna(axis=0, subset=['z'])
+
+        # Convert units to metres
+        profiles_df['z'] = profiles_df['z'] * 0.01
+
+        # Convert distance strings to numeric distances
+        profiles_df['distance'] = profiles_df.apply(lambda x: int(x.distance[5:]), axis=1)
+
+        # Generate survey lines start and end points
+        profiles_df['angle'] = profiles_df.apply(
+            lambda x: azimuth(Point(x.start_x, x.start_y), Point(x.mid_x, x.mid_y)), axis = 1)
+        profiles_df[['end_y', 'end_x']] = profiles_df.apply(
+            lambda x: dist_angle(x.start_x, x.start_y, 1000, x.angle), axis = 1)
+        profiles_df = profiles_df.drop(['mid_y', 'mid_x'], axis=1)
+
+        # Reproject coords to Albers and create geodataframe
+        trans = Transformer.from_crs('EPSG:32756', 'EPSG:3577', always_xy=True)
+        profiles_df['start_x'], profiles_df['start_y'] = trans.transform(
+            profiles_df.start_x.values, profiles_df.start_y.values)
+        profiles_df['end_x'], profiles_df['end_y'] = trans.transform(
+            profiles_df.end_x.values, profiles_df.end_y.values)
+
+        # Create site and source column
+        profiles_df['id'] = (profiles_df.beach + '_' + 
+                             profiles_df.section + '_' + 
+                             profiles_df.profile.map(str))
+        profiles_df['source'] = 'emery' 
+
+        # Add coordinates at every supplied distance along transects
+        profiles_df[['x', 'y']] = profiles_df.apply(
+            lambda x: pd.Series(dist_along_transect(x.distance, 
+                                                    x.start_x, 
+                                                    x.start_y, 
+                                                    x.end_x, 
+                                                    x.end_y)), axis=1)
+
+        # Find location and distance to water for datum height (e.g. 0 m AHD)
+        intercept_df = profiles_df.groupby(['id', 'date']).apply(
+            waterline_intercept, z_val=datum).dropna()
+
+        # If the output contains data
+        if len(intercept_df.index) > 0:
+
+            # Join into dataframe
+            shoreline_dist = intercept_df.join(
+                profiles_df.groupby(['id', 'date']).agg(
+                lambda x: pd.Series.mode(x).iloc[0]))
+
+            # Keep required columns
+            shoreline_dist = shoreline_dist[['beach', 'section', 'profile', 
+                                             'source', 'start_x', 'start_y',
+                                             'end_x', 'end_y', f'{datum}_dist', 
+                                             f'{datum}_x', f'{datum}_y']]
+
+            # Export to file
+            shoreline_dist.to_csv(fname_out)
     
 
 def waterbody_mask(input_data,
@@ -1144,23 +1258,23 @@ def deacl_validation(val_path,
     
     if (len(deacl_gdf.index) > 0) & (len(val_df.index) > 0):
     
-        # Set year dtype to allow merging
+        # Add year columns and set dtype to allow merging
         deacl_gdf['year'] = deacl_gdf.year.astype('int64')
-
-        # Add year column
         val_df['year'] = val_df.date.dt.year
-
-        # Aggregate by year and take most common categorical
-        modal_vals = val_df[['source', 'beach', 'section', 'profile']].agg(
-            lambda x: pd.Series.mode(x).iloc[0])
         
-        # Aggregate by year and save count number and source
-        counts = val_df.groupby(['year', 'id']).date.count()
-        val_df = val_df.groupby(['year', 'id']).median()
-        val_df['n'] = counts
-        val_df = val_df.assign(**modal_vals.to_dict())
-        val_df = val_df.reset_index()
+        # Aggregate by year for each ID and compute modal, count and
+        # median stats
+        modal_vals = val_df.groupby(['year', 'id']).agg(
+            lambda x: pd.Series.mode(x).iloc[0])[['beach', 'section', 
+                                                  'profile', 'source']]
+        count_vals = val_df.groupby(['year', 'id']).year.count().rename('n')
+        median_vals = val_df.groupby(['year', 'id']).median() 
 
+        # Combine all aggregated stats into one dataframe
+        val_df = pd.concat([median_vals, 
+                            modal_vals, 
+                            count_vals], axis=1).reset_index()
+        
         # Convert validation start and end locations to linestrings
         val_geometry = val_df.apply(
             lambda x: LineString([(x.start_x, x.start_y), 
