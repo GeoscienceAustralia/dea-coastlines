@@ -23,16 +23,17 @@ from shapely.geometry import box, Point, LineString
 def standardise_source(df):
     
     # Dictionary containing method values to rename
-    remap_dict = {'dunefill': np.NaN, 
+    remap_dict = {'emery': 'emery/levelling',
+                  'levelling': 'emery/levelling',
+                  'dunefill': np.NaN, 
                   'rtk gps': 'gps',
                   'photogrammetry': 'aerial photogrammetry',
                   'stereo photogrammtery': 'aerial photogrammetry',
-                  'photos': 'aerial photography',
-                  'total station': 'total station/levelling',
-                  'levelling': 'total station/levelling',
-                  'total station\t': 'total station/levelling',
-                  'laser scanning': 'terrestrial laser scanning',
                   'ads80': 'aerial photogrammetry',
+                  'photos': 'aerial photogrammetry',
+                  'total station': 'total station',
+                  'total station\t': 'total station',
+                  'laser scanning': 'terrestrial laser scanning',
                   'gps rtk gps': 'gps'}
     
     # Set all values to lower case for easier conversion
@@ -152,16 +153,6 @@ def waterline_intercept(x,
         return pd.Series({f'{z_val}_dist': np.NaN, 
                           f'{z_val}_x': np.NaN, 
                           f'{z_val}_y': np.NaN})
-    
-
-def detect_misaligned_points(profiles_df, x='x', y='y', threshold=10):
-
-    survey_points = gpd.points_from_xy(profiles_df[x], profiles_df[y])
-    transect_lines = profiles_df.apply(
-        lambda x: LineString([(x.start_x, x.start_y), 
-                              (x.end_x, x.end_y)]).buffer(threshold), axis=1)
-    
-    return [t.contains(s) for t, s in zip(transect_lines, survey_points)]
 
 
 def reproj_crs(in_data, 
@@ -372,7 +363,7 @@ def preprocess_wadot(regions_gdf,
         # Combine all year data and export to file
         if len(output_list) > 0:
             shoreline_df = pd.concat(output_list)
-            shoreline_df.to_csv(f'output_data/wadot_{beach:<80}.csv', index=False)
+            shoreline_df.to_csv(f'output_data/wadot_{beach}.csv', index=False)
 
             
 def preprocess_stirling(fname_out, datum=0):
@@ -1140,7 +1131,7 @@ def preprocess_moruya(fname_out, datum=0, overwrite=False):
         profiles_df['id'] = (profiles_df.beach + '_' + 
                              profiles_df.section + '_' + 
                              profiles_df.profile.map(str))
-        profiles_df['source'] = 'emery' 
+        profiles_df['source'] = 'emery/levelling' 
 
         # Add coordinates at every supplied distance along transects
         profiles_df[['x', 'y']] = profiles_df.apply(
@@ -1167,6 +1158,9 @@ def preprocess_moruya(fname_out, datum=0, overwrite=False):
                                              'source', 'start_x', 'start_y',
                                              'end_x', 'end_y', f'{datum}_dist', 
                                              f'{datum}_x', f'{datum}_y']]
+
+            # Remove dodgy Pedro 4 transect
+            shoreline_dist = shoreline_dist.drop('pedro_all_4')
 
             # Export to file
             shoreline_dist.to_csv(fname_out)
@@ -1225,8 +1219,10 @@ def deacl_validation(val_path,
                      sat_label='deacl',
                      val_label='val'):
     
-    # Load validation data
+    # Load validation data and set section/beach
     val_df = pd.read_csv(val_path, parse_dates=['date'])
+    cat_cols = ['beach', 'section', 'profile', 'source']
+    val_df[cat_cols] = val_df[cat_cols].astype('str')
     
     # Get title for plot
     title = val_df.beach.iloc[0].capitalize()
@@ -1265,8 +1261,7 @@ def deacl_validation(val_path,
         # Aggregate by year for each ID and compute modal, count and
         # median stats
         modal_vals = val_df.groupby(['year', 'id']).agg(
-            lambda x: pd.Series.mode(x).iloc[0])[['beach', 'section', 
-                                                  'profile', 'source']]
+            lambda x: pd.Series.mode(x).iloc[0])[cat_cols]
         count_vals = val_df.groupby(['year', 'id']).year.count().rename('n')
         median_vals = val_df.groupby(['year', 'id']).median() 
 
@@ -1301,6 +1296,11 @@ def deacl_validation(val_path,
         results_df[f'{sat_label}_x'] = gpd.GeoSeries(results_df['intersect']).x
         results_df[f'{sat_label}_y'] = gpd.GeoSeries(results_df['intersect']).y
         
+        # Similarly, drop any observations with multiple rows for same 
+        # id (e.g. if transect crosses certain and uncertain coastlines 
+        # in same year same year) as these are also invalid comparisons
+        results_df = results_df.drop_duplicates(subset=['id', 'year'], keep=False)
+        
         # For each row, compute distance between origin and intersect
         results_df[f'{sat_label}_dist'] = results_df.apply(
             lambda x: x.intersect.distance(Point(x.start_x, x.start_y)), 
@@ -1326,8 +1326,14 @@ def deacl_validation(val_path,
             # Calculate difference
             results_df['diff_dist'] = results_df.val_dist - results_df.deacl_dist
             
-            return results_df[['id', 'year', 'beach', 'section', 
-                               'profile', 'source', 'certainty', 'n', 
+            # Add lon and lat columns
+            centroid_points = gpd.GeoSeries(
+                results_df.geometry_val).centroid.to_crs('EPSG:4326')
+            results_df['lon'] = centroid_points.x.round(3)
+            results_df['lat'] = centroid_points.y.round(3)
+                        
+            return results_df[['id', 'year', 'beach', 'section', 'profile', 
+                               'source', 'certainty', 'n', 'lon', 'lat',
                                'start_x', 'start_y', 'end_x', 'end_y', 
                                f'{val_label}_x', f'{val_label}_y', f'{val_label}_dist', 
                                f'{sat_label}_x', f'{sat_label}_y', f'{sat_label}_dist',
