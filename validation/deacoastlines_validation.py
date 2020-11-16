@@ -14,6 +14,7 @@ from pathlib import Path
 from io import StringIO
 from pyproj import Transformer
 from itertools import takewhile
+from scipy import stats
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
@@ -41,6 +42,24 @@ def standardise_source(df):
     
     # Replace values
     df['source'] = df.source.replace(remap_dict)
+    
+            
+def val_slope(profiles_df, intercept_df, datum=0, buffer=25):
+
+    # Join datum dist to full profile dataframe
+    profiles_datum_dist = (profiles_df.set_index(
+        ['id', 'date'])[['distance', 'z']].join(intercept_df[f'{datum}_dist']))
+
+    # Filter to measurements within buffer of datum distance
+    beach_data = profiles_datum_dist[profiles_datum_dist.distance.between(
+        profiles_datum_dist[f'{datum}_dist'] - buffer,
+        profiles_datum_dist[f'{datum}_dist'] + buffer)]
+
+    # Calculate slope
+    beach_slope = beach_data.groupby(['id', 'date']).apply(
+        lambda x: stats.linregress(x=x.distance, y=x.z).slope)
+
+    return beach_slope.round(3)
     
 
 def dms2dd(s):
@@ -349,11 +368,14 @@ def preprocess_wadot(regions_gdf,
                 lambda x: Point(x.start_x, x.start_y).distance(x['val_point']), axis=1)
             intersect_gdf[['0_x', '0_y']] = intersect_gdf.apply(
                 lambda x: pd.Series(x.val_point.coords[0]), axis=1)
+            
+            # Add empty slope var (not possible to compute without profile data)
+            intersect_gdf['slope'] = np.nan
 
             # Keep required columns
             intersect_gdf = intersect_gdf[['id', 'date', 'beach', 
                                            'section', 'profile',  
-                                           'source', 'start_x', 
+                                           'source', 'slope', 'start_x', 
                                            'start_y', 'end_x', 'end_y', 
                                            '0_dist', '0_x', '0_y']]
 
@@ -544,7 +566,7 @@ def preprocess_vicdeakin(fname,
                               parse_dates=['survey_date']).dropna()
 
     # Restrict to pre-2019
-    profiles_df = profiles_df.loc[profiles_df.survey_date.dt.year < 2019]
+    profiles_df = profiles_df.loc[profiles_df.survey_date.dt.year < 2020]
     profiles_df = profiles_df.reset_index(drop=True)
 
     # Remove invalid profiles
@@ -600,10 +622,14 @@ def preprocess_vicdeakin(fname,
             # Join into dataframe
             shoreline_dist = intercept_df.join(
                 beach.groupby(['id', 'date']).first())
+            
+            # Compute validation slope and join into dataframe
+            slope = val_slope(beach, intercept_df, datum=datum)
+            shoreline_dist = shoreline_dist.join(slope.rename('slope'))
 
             # Keep required columns
             shoreline_dist = shoreline_dist[['beach', 'section', 'profile',  
-                                             'source', 'start_x', 'start_y', 
+                                             'source', 'slope', 'start_x', 'start_y', 
                                              'end_x', 'end_y', f'{datum}_dist', 
                                              f'{datum}_x', f'{datum}_y']]
 
@@ -687,10 +713,14 @@ def preprocess_nswbpd(fname, datum=0, overwrite=False):
                 shoreline_dist = intercept_df.join(
                     profiles_df.groupby(['id', 'date']).agg(
                     lambda x: pd.Series.mode(x).iloc[0]))
+                
+                # Compute validation slope and join into dataframe
+                slope = val_slope(profiles_df, intercept_df, datum=datum)
+                shoreline_dist = shoreline_dist.join(slope.rename('slope'))
 
                 # Keep required columns
                 shoreline_dist = shoreline_dist[['beach', 'section', 'profile',  
-                                                 'source', 'foredune_dist', 
+                                                 'source', 'foredune_dist', 'slope',
                                                  'start_x', 'start_y', 
                                                  'end_x', 'end_y', f'{datum}_dist', 
                                                  f'{datum}_x', f'{datum}_y']]
@@ -783,7 +813,7 @@ def preprocess_narrabeen(fname,
         # Find location and distance to water for datum height (e.g. 0 m AHD)
         intercept_df = profiles_df.groupby(['id', 'date']).apply(
             waterline_intercept, z_val=datum).dropna()
-
+        
         # If the output contains data
         if len(intercept_df.index) > 0:
             
@@ -791,10 +821,14 @@ def preprocess_narrabeen(fname,
             shoreline_dist = intercept_df.join(
                 profiles_df.groupby(['id', 'date']).agg(
                 lambda x: pd.Series.mode(x).iloc[0]))
+            
+            # Compute validation slope and join into dataframe
+            slope = val_slope(profiles_df, intercept_df, datum=datum)
+            shoreline_dist = shoreline_dist.join(slope.rename('slope'))
 
             # Keep required columns
             shoreline_dist = shoreline_dist[['beach', 'section', 'profile', 
-                                             'source', 'start_x', 'start_y',
+                                             'source', 'slope', 'start_x', 'start_y',
                                              'end_x', 'end_y', f'{datum}_dist', 
                                              f'{datum}_x', f'{datum}_y']]   
             
@@ -918,10 +952,14 @@ def preprocess_cgc(site, datum=0, overwrite=True):
                 # Join into dataframe
                 shoreline_dist = intercept_df.join(
                     profiles_df.groupby(['id', 'date']).first())
+                
+                # Compute validation slope and join into dataframe
+                slope = val_slope(profiles_df, intercept_df, datum=datum)
+                shoreline_dist = shoreline_dist.join(slope.rename('slope'))
 
                 # Keep required columns
                 shoreline_dist = shoreline_dist[['beach', 'section', 'profile',  
-                                                 'source', 'foredune_dist', 
+                                                 'source', 'foredune_dist', 'slope',
                                                  'start_x', 'start_y', 
                                                  'end_x', 'end_y', f'{datum}_dist', 
                                                  f'{datum}_x', f'{datum}_y']]
@@ -1067,9 +1105,13 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
                     profiles_df.groupby(['id', 'date']).agg(
                     lambda x: pd.Series.mode(x).iloc[0]))
 
+                # Compute validation slope and join into dataframe
+                slope = val_slope(profiles_df, intercept_df, datum=datum)
+                shoreline_dist = shoreline_dist.join(slope.rename('slope'))
+
                 # Keep required columns
-                shoreline_dist = shoreline_dist[['beach', 'section', 'profile', 
-                                                 'source', 'start_x', 'start_y',
+                shoreline_dist = shoreline_dist[['beach', 'section', 'profile',  
+                                                 'source', 'slope', 'start_x', 'start_y', 
                                                  'end_x', 'end_y', f'{datum}_dist', 
                                                  f'{datum}_x', f'{datum}_y']]
                 
@@ -1152,10 +1194,14 @@ def preprocess_moruya(fname_out, datum=0, overwrite=False):
             shoreline_dist = intercept_df.join(
                 profiles_df.groupby(['id', 'date']).agg(
                 lambda x: pd.Series.mode(x).iloc[0]))
+            
+            # Compute validation slope and join into dataframe
+            slope = val_slope(profiles_df, intercept_df, datum=datum)
+            shoreline_dist = shoreline_dist.join(slope.rename('slope'))
 
             # Keep required columns
-            shoreline_dist = shoreline_dist[['beach', 'section', 'profile', 
-                                             'source', 'start_x', 'start_y',
+            shoreline_dist = shoreline_dist[['beach', 'section', 'profile',  
+                                             'source', 'slope', 'start_x', 'start_y', 
                                              'end_x', 'end_y', f'{datum}_dist', 
                                              f'{datum}_x', f'{datum}_y']]
 
@@ -1213,6 +1259,27 @@ def waterbody_mask(input_data,
     return waterbody_gdf
         
 
+def smartline_attrs(val_gdf, bbox):
+
+    # Join Smartline data
+    smartline = gpd.read_file('../input_data/Smartline_basic/smartline_basic.shp',
+                              bbox=bbox.buffer(100)).to_crs('EPSG:3577').rename(
+                                  {'erode_v': 'smartline'}, axis=1)
+
+    # Identify unique profiles (no need to repeat Smartline extraction for each time)
+    inds = [i[1][0] for i in val_gdf.groupby('id').groups.items()]
+
+    # Spatial join unique profiles to smartline and drop unclassified
+    smartline_df = gpd.sjoin(val_gdf.iloc[inds], smartline)[['id', 'smartline']]
+    smartline_df = smartline_df.loc[smartline_df.smartline != 'Unclassified']
+
+    # Find modal class, and drop any rows with multiple obs
+    smartline_df = smartline_df.groupby('id').agg(
+        lambda x: pd.Series.mode(x).iloc[0])
+    
+    return smartline_df.reset_index()
+
+    
 def deacl_validation(val_path,
                      deacl_path,
                      datum=0,
@@ -1260,8 +1327,8 @@ def deacl_validation(val_path,
         
         # Aggregate by year for each ID and compute modal, count and
         # median stats
-        modal_vals = val_df.groupby(['year', 'id']).agg(
-            lambda x: pd.Series.mode(x).iloc[0])[cat_cols]
+        modal_vals = val_df.groupby(['year', 'id'])[cat_cols].agg(
+            lambda x: pd.Series.mode(x).iloc[0])
         count_vals = val_df.groupby(['year', 'id']).year.count().rename('n')
         median_vals = val_df.groupby(['year', 'id']).median() 
 
@@ -1279,6 +1346,11 @@ def deacl_validation(val_path,
         val_gdf = gpd.GeoDataFrame(data=val_df,
                                    geometry=val_geometry,
                                    crs='EPSG:3577').reset_index()
+        
+        # Join Smartline data
+        val_gdf = val_gdf.merge(smartline_attrs(val_gdf, bbox), 
+                                how='left', 
+                                on='id')
 
         # Match each shoreline contour to each date in validation data
         results_df = val_gdf.merge(deacl_gdf,
@@ -1313,6 +1385,10 @@ def deacl_validation(val_path,
             valid = (results_df[f'{sat_label}_dist'] >= 
                      results_df.foredune_dist)
             results_df = results_df.loc[valid]
+            
+        # TO REMOVE
+        if 'slope' not in results_df:
+            results_df['slope'] = np.nan
         
         # If enough data is returned:
         if len(results_df.index) > 0:
@@ -1324,7 +1400,7 @@ def deacl_validation(val_path,
                      f'{datum}_y': f'{val_label}_y'}, axis=1)
             
             # Calculate difference
-            results_df['diff_dist'] = results_df.val_dist - results_df.deacl_dist
+            results_df['error_m'] = results_df.val_dist - results_df.deacl_dist
             
             # Add lon and lat columns
             centroid_points = gpd.GeoSeries(
@@ -1333,11 +1409,11 @@ def deacl_validation(val_path,
             results_df['lat'] = centroid_points.y.round(3)
                         
             return results_df[['id', 'year', 'beach', 'section', 'profile', 
-                               'source', 'certainty', 'n', 'lon', 'lat',
-                               'start_x', 'start_y', 'end_x', 'end_y', 
+                               'source', 'certainty', 'n', 'lon', 'lat', 'slope', 
+                               'smartline', 'start_x', 'start_y', 'end_x', 'end_y', 
                                f'{val_label}_x', f'{val_label}_y', f'{val_label}_dist', 
                                f'{sat_label}_x', f'{sat_label}_y', f'{sat_label}_dist',
-                               'diff_dist']]
+                               'error_m']]
        
    
 def main(argv=None):
