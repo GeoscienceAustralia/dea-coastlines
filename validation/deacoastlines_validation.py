@@ -1279,6 +1279,56 @@ def smartline_attrs(val_gdf, bbox):
     
     return smartline_df.reset_index()
 
+
+def smartline_attrs2(val_gdf, bbox):
+    
+    def nearest_features(input_gdf, comp_gdf, cols='erode_v'):
+
+        # Verify that both datasets are in the same CRS
+        assert input_gdf.crs == comp_gdf.crs
+
+        i_mins = []
+        dist_mins = []
+
+        # Loop through each input and comparison feature, and create lists of
+        # distances and nearest feature indices
+        for input_ft in input_gdf.geometry:
+            dists = [input_ft.distance(comp_ft) for comp_ft in comp_gdf.geometry]
+            dist_mins.append(np.min(dists))
+            i_mins.append(np.argmin(dists))
+
+        # Use indices to extract relevant rows from comparison data,
+        # and add a column giving distance to these nearest features
+        out_gdf = comp_gdf.iloc[i_mins][[cols] if type(cols) == str else cols]
+        out_gdf['near_dist'] = dist_mins
+
+        # Verify that there is one output for every input feature 
+        assert len(input_gdf) == input_gdf.shape[0]
+
+        return out_gdf
+
+    # Join Smartline data
+    smartline = gpd.read_file('../input_data/Smartline.gdb',
+                              bbox=bbox.buffer(100)).to_crs('EPSG:3577').rename(
+                                  {'INTERTD1_V': 'smartline'}, axis=1)
+
+    # Identify unique profiles (no need to repeat Smartline extraction for each time)
+    inds = [i[1][0] for i in val_gdf.groupby('id').groups.items()]
+    input_gdf = val_gdf.iloc[inds].reset_index()
+
+    # Find nearest features
+    nearest_df = nearest_features(input_gdf=input_gdf, 
+                                  comp_gdf=smartline, 
+                                  cols='smartline').reset_index()
+
+    # # Spatial join unique profiles to smartline and drop unclassified
+    input_gdf['smartline'] = nearest_df.smartline
+    smartline_df = input_gdf[['id', 'smartline']]
+    smartline_df = smartline_df.loc[smartline_df.smartline != 'Unclassified']
+
+    return smartline_df
+
+
     
 def deacl_validation(val_path,
                      deacl_path,
@@ -1348,7 +1398,7 @@ def deacl_validation(val_path,
                                    crs='EPSG:3577').reset_index()
         
         # Join Smartline data
-        val_gdf = val_gdf.merge(smartline_attrs(val_gdf, bbox), 
+        val_gdf = val_gdf.merge(smartline_attrs2(val_gdf, bbox), 
                                 how='left', 
                                 on='id')
 
