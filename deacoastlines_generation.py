@@ -660,7 +660,29 @@ def main(argv=None):
     # Load virtual product    
     ds = load_mndwi(dc, 
                     query, 
-                    yaml_path='deacoastlines_virtual_products.yaml')
+                    yaml_path='deacoastlines_virtual_products_v2.yaml',
+                    product_name='ls_nbart_mndwi')
+    
+    # EXPERIMENT
+    import numpy as np
+    from skimage.morphology import binary_opening, disk
+
+    mask = ((ds.fmask == 0) | (ds.fmask == 2) | (ds.fmask == 3) |
+            (ds.fmask == 4)).load()
+
+    # Apply erosion to each timestep in parallel
+    kernel = disk(10)
+    mask = xr.apply_ufunc(binary_opening,
+                          mask,
+                          kernel.reshape((1,) + kernel.shape),
+                          output_dtypes=[np.bool],
+                          dask='parallelized',
+                          keep_attrs=True)
+
+    # Apply mask 
+    ds = ds.drop('fmask').where(~mask)
+    del mask
+    # EXPERIMENT
     
     ###################
     # Tidal modelling #
