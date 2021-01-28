@@ -30,6 +30,7 @@ PBS/*
 validation/input_data/*
 validation/output_data/*
 validation/figures/*
+validation/*.csv
 
 # Others
 dask-worker-space/*

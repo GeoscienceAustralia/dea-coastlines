@@ -23,6 +23,8 @@
 #     module load dea/20200713
 #     pip install --user ruptures
 #     pip install --user git+https://github.com/mattijn/topojson/
+#     pip install --user --upgrade --extra-index-url="https://packages.dea.ga.gov.au" odc-algo
+#     pip install --upgrade dask==2021.1.1 
 
 
 import os
@@ -664,26 +666,14 @@ def main(argv=None):
                     product_name='ls_nbart_mndwi')
     
     # EXPERIMENT
-    import numpy as np
-    from skimage.morphology import binary_opening, disk
-
-    mask = ((ds.fmask == 0) | (ds.fmask == 2) | (ds.fmask == 3) |
-            (ds.fmask == 4)).load()
-
-    # Apply erosion to each timestep in parallel
-    kernel = disk(10)
-    mask = xr.apply_ufunc(binary_opening,
-                          mask,
-                          kernel.reshape((1,) + kernel.shape),
-                          output_dtypes=[np.bool],
-                          dask='parallelized',
-                          keep_attrs=True)
-
-    # Apply mask 
-    ds = ds.drop('fmask').where(~mask)
-    del mask
+    import odc.algo
+    mask = odc.algo.enum_to_bool(ds.fmask, 
+                                 categories=['nodata', 'cloud', 'shadow', 'snow'])
+    mask = odc.algo.binary_closing(mask, 2)
+    mask = odc.algo.mask_cleanup(mask, r=(10, 5))
+    ds = odc.algo.erase_bad(ds, mask, nodata=np.nan).drop('fmask')
     # EXPERIMENT
-    
+
     ###################
     # Tidal modelling #
     ###################
