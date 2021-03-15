@@ -31,6 +31,7 @@ The ability to map shoreline positions for each year provides valuable insights 
 
 ## Table of contents
 * [Repository code](#repository-code)
+    * [Digital Earth Australia Notebooks repository](#digital-earth-australia-notebooks-repository)
 * [Data access](#data-access)
     * [Digital Earth Australia Maps](#digital-earth-australia-maps)
     * [Loading DEA Coastlines data from the Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
