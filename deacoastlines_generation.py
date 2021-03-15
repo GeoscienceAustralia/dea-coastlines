@@ -45,7 +45,7 @@ from collections import Counter
 from shapely.geometry import shape
 from datacube.utils.cog import write_cog
 from datacube.utils.dask import start_local_dask
-from datacube.utils.geometry import GeoBox, Geometry, CRS
+from datacube.utils.geometry import GeoBox, Geometry, CRS, gbox
 from datacube.virtual import catalog_from_file, construct
 
 import warnings
@@ -98,7 +98,9 @@ def load_mndwi(dc,
         affine = Affine(geotransform[0], 0.0, 
                         geotransform[2], 0.0, 
                         geotransform[4], geotransform[5])
-        return GeoBox(width=shape[1], height=shape[0], affine=affine, crs=crs)
+        
+        return GeoBox(width=shape[1], height=shape[0], 
+                        affine=affine, crs=crs)  
 
     # Load in virtual product catalogue and select MNDWI product
     catalog = catalog_from_file(yaml_path)
@@ -656,22 +658,34 @@ def main(argv=None):
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {'geopolygon': geopoly.buffer(0.05),
              'time': ('1987', '2020'),
-             'cloud_cover': [0, 90],
+#              'cloud_cover': [0, 90],
              'dask_chunks': {'time': 1, 'x': 2000, 'y': 2000}}
 
     # Load virtual product    
     ds = load_mndwi(dc, 
                     query, 
-                    yaml_path='deacoastlines_virtual_products_v2.yaml',
+                    yaml_path='deacoastlines_virtual_products_v1.0.0.yaml',
                     product_name='ls_nbart_mndwi')
     
     # EXPERIMENT
     import odc.algo
+    
+    # Temporary workaround map_overlap issues by rechunking
+    # if smallest chunk is less than 10
+    if ((len(ds.x) % 2000) <= 10) or ((len(ds.y) % 2000) <= 10):
+        ds = ds.chunk({'time': 1, 'x': 3200, 'y': 3200})
+
+    # Extract boolean mask
     mask = odc.algo.enum_to_bool(ds.fmask, 
                                  categories=['nodata', 'cloud', 'shadow', 'snow'])
+
+    # Close mask to remove small holes in cloud, open mask to 
+    # remove narrow false positive cloud, then dilate
     mask = odc.algo.binary_closing(mask, 2)
-    mask = odc.algo.mask_cleanup(mask, r=(10, 5))
-    ds = odc.algo.erase_bad(ds, mask, nodata=np.nan).drop('fmask')
+    mask_cleaned = odc.algo.mask_cleanup(mask, r=(10, 10))
+
+    # Add new mask as nodata pixels
+    ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan)
     # EXPERIMENT
 
     ###################

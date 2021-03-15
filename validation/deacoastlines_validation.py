@@ -159,7 +159,8 @@ def waterline_intercept(x,
                         x_col='x', 
                         y_col='y', 
                         z_col='z', 
-                        z_val=0): 
+                        z_val=0,
+                        debug=False): 
     
     # Extract distance and coordinates of where the z_val first 
     # intersects with the profile line
@@ -174,10 +175,12 @@ def waterline_intercept(x,
     # If first and last intersects are the identical, return data. 
     # If not, the comparison is invalid (i.e. NaN)
     if dist_int == rev_int:
+        if debug: print('Single intersection found')
         return pd.Series({f'{z_val}_dist': dist_int, 
                           f'{z_val}_x': x_int, 
                           f'{z_val}_y': y_int})
     else:
+        if debug: print('Multiple intersections returned')
         return pd.Series({f'{z_val}_dist': np.NaN, 
                           f'{z_val}_x': np.NaN, 
                           f'{z_val}_y': np.NaN})
@@ -343,191 +346,108 @@ def coastal_transects_parallel(
         # Clean files
         [os.remove(f) for f in transect_list]
 
-
+        
 def preprocess_wadot(compartment,
+                     overwrite=True,
                      fname='input_data/wadot/Coastline_Movements_20190819.gdb'):
     
+   
     beach = str(compartment.index.item())
+    fname_out = f'output_data/wadot_{beach}.csv'
     print(f'Processing {beach:<80}', end='\r')
-
-    # Read file and filter to AHD 0 shorelines
-    val_gdf = gpd.read_file(fname, 
-                            bbox=compartment).to_crs('EPSG:3577')
-    val_gdf = gpd.clip(gdf=val_gdf, mask=compartment, keep_geom_type=True)
-    val_gdf = val_gdf[(val_gdf.TYPE == 'AHD 0m') | 
-                      (val_gdf.TYPE == 'AHD 0m ')]
-
-    # Filter to post 1987 shorelines and set index to year
-    val_gdf = val_gdf[val_gdf.PHOTO_YEAR > 1987]
-    val_gdf = val_gdf.set_index('PHOTO_YEAR')
-
-    # If no data is returned, skip this iteration
-    if len(val_gdf.index) == 0:
-        print(f'Failed: {beach:<80}', end='\r')
-        return None
-
-    ######################
-    # Generate transects #
-    ######################
-
-    transect_gdf = gpd.read_file('input_data/combined_transects_wadot.geojson', 
-                                 bbox=compartment)
-    transect_gdf = gpd.clip(gdf=transect_gdf, mask=compartment, keep_geom_type=True)
-
-    ################################
-    # Identify 0 MSL intersections #
-    ################################
-
-    output_list = []
-
-    # Select one year
-    for year in val_gdf.index.unique().sort_values(): 
-
-        # Extract validation contour
-        print(f'Processing {beach} {year:<80}', end='\r')
-        val_contour = val_gdf.loc[[year]].geometry.unary_union
-
-        # Copy transect data, and find intersects 
-        # between transects and contour
-        intersect_gdf = transect_gdf.copy()
-        intersect_gdf['val_point'] = transect_gdf.intersection(val_contour)
-        to_keep = gpd.GeoSeries(intersect_gdf['val_point']).geom_type == 'Point'
-        intersect_gdf = intersect_gdf.loc[to_keep]
-
-        # If no data is returned, skip this iteration
-        if len(intersect_gdf.index) == 0:
-            print(f'Failed: {beach} {year:<80}', end='\r')
-            continue
-
-        # Add generic metadata
-        intersect_gdf['date'] = pd.to_datetime(str(year))
-        intersect_gdf['beach'] = beach
-        intersect_gdf['section'] = 'all'
-        intersect_gdf['source'] = 'aerial photogrammetry'
-        intersect_gdf['name'] = 'wadot' 
-        intersect_gdf['id'] = (intersect_gdf.beach + '_' + 
-                               intersect_gdf.section + '_' + 
-                               intersect_gdf.profile)
-
-        # Add measurement metadata
-        intersect_gdf[['start_x', 'start_y']] = intersect_gdf.apply(
-            lambda x: pd.Series(x.geometry.coords[0]), axis=1)
-        intersect_gdf[['end_x', 'end_y']] = intersect_gdf.apply(
-            lambda x: pd.Series(x.geometry.coords[1]), axis=1)
-        intersect_gdf['0_dist'] = intersect_gdf.apply(
-            lambda x: Point(x.start_x, x.start_y).distance(x['val_point']), axis=1)
-        intersect_gdf[['0_x', '0_y']] = intersect_gdf.apply(
-            lambda x: pd.Series(x.val_point.coords[0]), axis=1)
-
-        # Add empty slope var (not possible to compute without profile data)
-        intersect_gdf['slope'] = np.nan
-
-        # Keep required columns
-        intersect_gdf = intersect_gdf[['id', 'date', 'beach', 
-                                       'section', 'profile', 'name',
-                                       'source', 'slope', 'start_x', 
-                                       'start_y', 'end_x', 'end_y', 
-                                       '0_dist', '0_x', '0_y']]
-
-        # Append to file
-        output_list.append(intersect_gdf)
-
-    # Combine all year data and export to file
-    if len(output_list) > 0:
-        shoreline_df = pd.concat(output_list)
-        shoreline_df.to_csv(f'output_data/wadot_{beach}.csv', index=False)
-        
-        
-def preprocess_vic2008(compartment,
-                       fname='input_data/vic2008/ll_gda94/sde_shape/whole/VIC/COASTS/layer/vic_coastline_2008.shp'):
     
-    beach = str(compartment.index.item())
-    print(f'Processing {beach:<80}', end='\r')
+    # Test if file exists
+    if not os.path.exists(fname_out) or overwrite:  
 
-    # Read file and filter to AHD 0 shorelines
-    val_gdf = gpd.read_file(fname, 
+        # Read file and filter to AHD 0 shorelines
+        val_gdf = gpd.read_file(fname, 
                                 bbox=compartment).to_crs('EPSG:3577')
-    val_gdf = gpd.clip(gdf=val_gdf, mask=compartment, keep_geom_type=True)
+        val_gdf = gpd.clip(gdf=val_gdf, mask=compartment, keep_geom_type=True)
+        val_gdf = val_gdf[(val_gdf.TYPE == 'AHD 0m') | 
+                          (val_gdf.TYPE == 'AHD 0m ')]
 
-    # Restrict to LiDAR data and set index to year
-    val_gdf = val_gdf.query("ARC_SOURCE in ('Lidar2009', 'Lidar2012')")
-    val_gdf.index = val_gdf.ARC_SOURCE.str[5:].astype(int)
-
-    # If no data is returned, skip this iteration
-    if len(val_gdf.index) == 0:
-        print(f'Failed: {beach:<80}', end='\r')
-        return None
-
-    ######################
-    # Generate transects #
-    ######################
-
-    transect_gdf = gpd.read_file('input_data/combined_transects_vic2008.geojson', 
-                                 bbox=compartment)
-    transect_gdf = gpd.clip(gdf=transect_gdf, mask=compartment, keep_geom_type=True)
-
-    ################################
-    # Identify 0 MSL intersections #
-    ################################
-
-    output_list = []
-
-    # Select one year
-    for year in val_gdf.index.unique().sort_values(): 
-
-        # Extract validation contour
-        print(f'Processing {beach} {year:<80}', end='\r')
-        val_contour = val_gdf.loc[[year]].geometry.unary_union
-
-        # Copy transect data, and find intersects 
-        # between transects and contour
-        intersect_gdf = transect_gdf.copy()
-        intersect_gdf['val_point'] = transect_gdf.intersection(val_contour)
-        to_keep = gpd.GeoSeries(intersect_gdf['val_point']).geom_type == 'Point'
-        intersect_gdf = intersect_gdf.loc[to_keep]
+        # Filter to post 1987 shorelines and set index to year
+        val_gdf = val_gdf[val_gdf.PHOTO_YEAR > 1987]
+        val_gdf = val_gdf.set_index('PHOTO_YEAR')
 
         # If no data is returned, skip this iteration
-        if len(intersect_gdf.index) == 0:
-            print(f'Failed: {beach} {year:<80}', end='\r')
-            continue
+        if len(val_gdf.index) == 0:
+            print(f'Failed: {beach:<80}', end='\r')
+            return None
 
-        # Add generic metadata
-        intersect_gdf['date'] = pd.to_datetime(str(year))
-        intersect_gdf['beach'] = beach
-        intersect_gdf['section'] = 'all'
-        intersect_gdf['source'] = 'lidar'
-        intersect_gdf['name'] = 'vic2008' 
-        intersect_gdf['id'] = (intersect_gdf.beach + '_' + 
-                               intersect_gdf.section + '_' + 
-                               intersect_gdf.profile)
+        ######################
+        # Generate transects #
+        ######################
 
-        # Add measurement metadata
-        intersect_gdf[['start_x', 'start_y']] = intersect_gdf.apply(
-            lambda x: pd.Series(x.geometry.coords[0]), axis=1)
-        intersect_gdf[['end_x', 'end_y']] = intersect_gdf.apply(
-            lambda x: pd.Series(x.geometry.coords[1]), axis=1)
-        intersect_gdf['0_dist'] = intersect_gdf.apply(
-            lambda x: Point(x.start_x, x.start_y).distance(x['val_point']), axis=1)
-        intersect_gdf[['0_x', '0_y']] = intersect_gdf.apply(
-            lambda x: pd.Series(x.val_point.coords[0]), axis=1)
+        transect_gdf = gpd.read_file('input_data/combined_transects_wadot.geojson', 
+                                     bbox=compartment)
+        transect_gdf = gpd.clip(gdf=transect_gdf, mask=compartment, keep_geom_type=True)
 
-        # Add empty slope var (not possible to compute without profile data)
-        intersect_gdf['slope'] = np.nan
+        ################################
+        # Identify 0 MSL intersections #
+        ################################
 
-        # Keep required columns
-        intersect_gdf = intersect_gdf[['id', 'date', 'beach', 
-                                       'section', 'profile', 'name',
-                                       'source', 'slope', 'start_x', 
-                                       'start_y', 'end_x', 'end_y', 
-                                       '0_dist', '0_x', '0_y']]
+        output_list = []
 
-        # Append to file
-        output_list.append(intersect_gdf)
+        # Select one year
+        for year in val_gdf.index.unique().sort_values(): 
 
-    # Combine all year data and export to file
-    if len(output_list) > 0:
-        shoreline_df = pd.concat(output_list)
-        shoreline_df.to_csv(f'output_data/vic2008_{beach}.csv', index=False)
+            # Extract validation contour
+            print(f'Processing {beach} {year:<80}', end='\r')
+            val_contour = val_gdf.loc[[year]].geometry.unary_union
+
+            # Copy transect data, and find intersects 
+            # between transects and contour
+            intersect_gdf = transect_gdf.copy()
+            intersect_gdf['val_point'] = transect_gdf.intersection(val_contour)
+            to_keep = gpd.GeoSeries(intersect_gdf['val_point']).geom_type == 'Point'
+            intersect_gdf = intersect_gdf.loc[to_keep]
+
+            # If no data is returned, skip this iteration
+            if len(intersect_gdf.index) == 0:
+                print(f'Failed: {beach} {year:<80}', end='\r')
+                continue
+
+            # Add generic metadata
+            intersect_gdf['date'] = pd.to_datetime(str(year))
+            intersect_gdf['beach'] = beach
+            intersect_gdf['section'] = 'all'
+            intersect_gdf['source'] = 'aerial photogrammetry'
+            intersect_gdf['name'] = 'wadot' 
+            intersect_gdf['id'] = (intersect_gdf.beach + '_' + 
+                                   intersect_gdf.section + '_' + 
+                                   intersect_gdf.profile)
+
+            # Add measurement metadata
+            intersect_gdf[['start_x', 'start_y']] = intersect_gdf.apply(
+                lambda x: pd.Series(x.geometry.coords[0]), axis=1)
+            intersect_gdf[['end_x', 'end_y']] = intersect_gdf.apply(
+                lambda x: pd.Series(x.geometry.coords[1]), axis=1)
+            intersect_gdf['0_dist'] = intersect_gdf.apply(
+                lambda x: Point(x.start_x, x.start_y).distance(x['val_point']), axis=1)
+            intersect_gdf[['0_x', '0_y']] = intersect_gdf.apply(
+                lambda x: pd.Series(x.val_point.coords[0]), axis=1)
+
+            # Add empty slope var (not possible to compute without profile data)
+            intersect_gdf['slope'] = np.nan
+
+            # Keep required columns
+            intersect_gdf = intersect_gdf[['id', 'date', 'beach', 
+                                           'section', 'profile', 'name',
+                                           'source', 'slope', 'start_x', 
+                                           'start_y', 'end_x', 'end_y', 
+                                           '0_dist', '0_x', '0_y']]
+
+            # Append to file
+            output_list.append(intersect_gdf)
+
+        # Combine all year data and export to file
+        if len(output_list) > 0:
+            shoreline_df = pd.concat(output_list)
+            shoreline_df.to_csv(fname_out, index=False)
+            
+    else:
+        print(f'Skipping {beach:<80}', end='\r')
 
             
 def preprocess_stirling(fname_out, datum=0):
@@ -1071,8 +991,11 @@ def preprocess_cgc(site, datum=0, overwrite=True):
             profiles_df = pd.merge(left=profiles_df, right=end_xy)
 
             # Compute chainage
+#             profiles_df['distance'] = profiles_df.apply(
+#                 lambda x: math.hypot(x.x - x.start_x, x.y - x.start_y), axis = 1)
+            
             profiles_df['distance'] = profiles_df.apply(
-                lambda x: math.hypot(x.x - x.start_x, x.y - x.start_y), axis = 1)
+                lambda x: Point(x.start_x, x.start_y).distance(Point(x.x, x.y)), axis=1)
             
             # Drop profiles that have been assigned incorrect profile IDs. 
             # To do this, we use a correlation test to determine whether x 
@@ -1122,6 +1045,117 @@ def preprocess_cgc(site, datum=0, overwrite=True):
                 
     else:
         print(f'Skipping {fname_out:<80}', end='\r')
+        
+        
+def preprocess_sadew(fname, datum=0, overwrite=False):   
+    
+    # Get output filename
+    name = Path(fname).stem.split('_')[-1].lower().replace(' ', '')
+    fname_out = f'output_data/sadew_{name}.csv'
+    print(f'Processing {fname_out:<80}', end='\r')
+    
+    # Test if file exists
+    if not os.path.exists(fname_out) or overwrite: 
+
+        # Load data and set nodata values to NaN
+        wide_df = pd.read_csv(fname).replace(-9999, np.nan)
+        wide_df = wide_df.loc[:,~wide_df.columns.str.contains('\.')]
+        wide_df.columns = wide_df.columns.str.lower()
+        wide_df = wide_df.rename({'easting': 'x', 'northing': 'y'}, axis=1)
+        
+        # Determine coordinate transform to use
+        utm_54_profiles = [730007, 715055, 200001, 710019, 615010, 725004, 
+                           725038, 200047, 200074, 200020, 200031, 710030, 
+                           620005, 200046, 710001, 620016, 735007, 200004, 
+                           710018, 625002, 200038, 730003, 710006, 725072, 
+                           715009, 200128, 725033, 200017, 200126, 200034, 
+                           200060, 200030, 615006, 710031, 200053, 735002, 
+                           200056, 200049, 200028, 200057, 615003, 715003, 
+                           735006, 200127, 725029, 725010, 200025, 200033, 
+                           200042, 730010, 200043, 200040, 730004, 200012, 
+                           200051, 710023, 620008, 725071, 625003, 730009, 
+                           615005, 615007, 615002, 200055, 730006, 735004, 
+                           200007, 715056, 200059, 625001, 200008, 735005, 
+                           715004, 200054, 730001, 725009, 710022, 725028, 
+                           730008, 200019, 200044, 200050, 200032, 200036, 
+                           710029, 730002, 200010, 615011, 200052, 200026, 
+                           710025, 200021, 200068, 200002, 715006, 725001, 
+                           200037, 200013, 710026, 620006, 710027, 200048, 
+                           620010, 730005, 710024, 200035, 200006, 620007, 
+                           710032, 200122, 725006, 201057, 200005, 725005, 
+                           710021, 200129, 615009, 715062, 710017, 200024, 
+                           735003, 200045, 200029, 620009, 200039, 200015, 
+                           200058, 200124, 620004, 620002, 200041, 620012, 
+                           625004, 615004, 725031, 200003, 725008, 200011]
+        crs = 'EPSG:28354' if wide_df.profile[0] in utm_54_profiles else 'EPSG:28353'
+
+        # Reproject coords to Albers and create geodataframe
+        trans = Transformer.from_crs(crs, 'EPSG:3577', always_xy=True)
+        wide_df['x'], wide_df['y'] = trans.transform(
+            wide_df.x.values, wide_df.y.values)
+
+        # Reshape into long format with each observation on a new row
+        profile_df = pd.melt(wide_df.drop('sample_no', axis=1), 
+                             id_vars=['x', 'y', 'profile'],
+                             value_name='z').dropna()
+
+        # Extract date info
+        profile_df['date'] = profile_df['variable'].str[1:].str.strip()
+        profile_df['date'] = pd.to_datetime(profile_df['date'], 
+                                            format='%d%m%Y', 
+                                            errors='coerce')
+        profile_df = profile_df.drop('variable', axis=1)
+
+        # Restrict to post 1987 and pre 2020
+        profile_df = profile_df[(profile_df.date.dt.year > 1987) & 
+                                (profile_df.date.dt.year < 2020)]
+
+        # Add unique ID column
+        profile_df['beach'] = 'sadew'
+        profile_df['section'] = 'all'
+        profile_df['profile'] = profile_df['profile'].astype(str)
+        profile_df['id'] = (profile_df.beach + '_' + 
+                              profile_df.section + '_' + 
+                              profile_df.profile)
+        profile_df['source'] = 'hydrographic survey'
+        profile_df['name'] = 'sadew'
+
+        # Compute origin points for each profile
+        profile_df = profile_df.assign(start_x=wide_df.iloc[0, 2], 
+                                       start_y=wide_df.iloc[0, 3],
+                                       end_x=wide_df.iloc[-1, 2],
+                                       end_y=wide_df.iloc[-1, 3])
+
+        # Compute chainage
+        profile_df['distance'] = profile_df.apply(
+            lambda x: math.hypot(x.x - x.start_x, x.y - x.start_y), axis=1)
+
+        # Find location and distance to water for datum height (e.g. 0 m AHD)
+        intercept_df = profile_df.groupby(['id', 'date']).apply(
+            waterline_intercept, z_val=datum).dropna()
+
+        # If the output contains data
+        if len(intercept_df.index) > 0:
+
+            # Join into dataframe
+            shoreline_dist = intercept_df.join(
+                profile_df.groupby(['id', 'date']).first())
+
+            # Compute validation slope and join into dataframe
+            slope = val_slope(profile_df, intercept_df, datum=datum)
+            shoreline_dist = shoreline_dist.join(slope.rename('slope'))
+
+            # Keep required columns
+            shoreline_dist = shoreline_dist[['beach', 'section', 'profile', 'name',
+                                             'source', 'slope', 'start_x', 'start_y', 
+                                             'end_x', 'end_y', f'{datum}_dist', 
+                                             f'{datum}_x', f'{datum}_y']]
+
+            # Export to file
+            shoreline_dist.to_csv(fname_out)
+            
+    else:
+        print(f'Skipping {fname:<80}', end='\r')
         
 
 def preprocess_sunshinecoast(site, datum=0, overwrite=False): 
@@ -1535,7 +1569,7 @@ def waterbody_mask(input_data,
     return waterbody_gdf
         
 
-def smartline_attrs(val_gdf, bbox):
+def smartline_attrs(val_gdf, bbox, advanced=True):
     
     def nearest_features(input_gdf, comp_gdf, cols='erode_v'):
 
@@ -1561,11 +1595,21 @@ def smartline_attrs(val_gdf, bbox):
         assert len(input_gdf) == input_gdf.shape[0]
 
         return out_gdf
+    
+    # Optionally load either Smartline advanced or basic data
+    if advanced:
 
-    # Join Smartline data
-    smartline = gpd.read_file('../input_data/Smartline.gdb',
+        # Join advanced Smartline data
+        smartline = gpd.read_file('../input_data/Smartline.gdb',
+                                  bbox=bbox.buffer(100)).to_crs('EPSG:3577').rename(
+                                      {'INTERTD1_V': 'smartline'}, axis=1)
+        
+    else:
+    
+        # Join basic Smartline data
+        smartline = gpd.read_file('../input_data/Smartline_basic/smartline_basic.shp',
                               bbox=bbox.buffer(100)).to_crs('EPSG:3577').rename(
-                                  {'INTERTD1_V': 'smartline'}, axis=1)
+                                  {'erode_v': 'smartline'}, axis=1)
 
     # Identify unique profiles (no need to repeat Smartline extraction for each time)
     inds = [i[1][0] for i in val_gdf.groupby('id').groups.items()]
@@ -1588,142 +1632,131 @@ def smartline_attrs(val_gdf, bbox):
 def deacl_validation(val_path,
                      deacl_path,
                      datum=0,
+                     prefix='temp',
+                     overwrite=False,
                      sat_label='deacl',
                      val_label='val'):
     
-    # Load validation data and set section/beach
-    print(f'{val_path:<80}', end='\r')
-    val_df = pd.read_csv(val_path, parse_dates=['date'])
-    cat_cols = ['beach', 'section', 'profile', 'source', 'name']
-    val_df[cat_cols] = val_df[cat_cols].astype('str')
+    # Test if file exists
+    out_name = val_path.split('/')[-1]
+    out_name = f'{prefix}_{out_name}'
+    if not os.path.exists(out_name) or overwrite:  
 
-    # Get bounding box to load data for
-    minx, maxy = val_df.min().loc[[f'{datum}_x', f'{datum}_y']]
-    maxx, miny = val_df.max().loc[[f'{datum}_x', f'{datum}_y']]
-    bbox = gpd.GeoSeries(box(minx, miny, maxx, maxy), crs='EPSG:3577')
-    
-#     # Generate waterbody mask
-#     waterbody_gdf = waterbody_mask(
-#         input_data='../input_data/SurfaceHydrologyPolygonsRegional.gdb',
-#         modification_data='../input_data/estuary_mask_modifications.geojson',
-#         bbox=bbox)
+        # Load validation data and set section/beach
+        print(f'{val_path:<80}', end='\r')
+        val_df = pd.read_csv(val_path, parse_dates=['date'])
+        cat_cols = ['beach', 'section', 'profile', 'source', 'name']
+        val_df[cat_cols] = val_df[cat_cols].astype('str')
 
-#     # Buffer by 100m and test what points fall within buffer
-#     # TODO: simplify using pandas geographic indexing e.g. .ix
-#     buffered_mask = waterbody_gdf.buffer(100).unary_union
-#     in_buffer = val_df.apply(
-#         lambda x: buffered_mask.contains(Point(x[f'{datum}_x'], 
-#                                                x[f'{datum}_y'])), axis=1)
+        # Get bounding box to load data for
+        minx, maxy = val_df.min().loc[[f'{datum}_x', f'{datum}_y']]
+        maxx, miny = val_df.max().loc[[f'{datum}_x', f'{datum}_y']]
+        bbox = gpd.GeoSeries(box(minx, miny, maxx, maxy), crs='EPSG:3577')
 
-#     # Remove points that fall within buffer
-#     val_df = val_df.loc[~in_buffer]
-    
-    # Import corresponding waterline contours
-    deacl_gdf = (gpd.read_file(deacl_path, 
-                              bbox=bbox.buffer(100))
-                 .to_crs('EPSG:3577')
-                 .dissolve('year')
-                 .reset_index())
-    
-    if (len(deacl_gdf.index) > 0) & (len(val_df.index) > 0):
-    
-        # Add year columns and set dtype to allow merging
-        deacl_gdf['year'] = deacl_gdf.year.astype('int64')
-        val_df['year'] = val_df.date.dt.year
-        
-        # Aggregate by year for each ID and compute modal, count and
-        # median stats
-        modal_vals = val_df.groupby(['year', 'id'])[cat_cols].agg(
-            lambda x: pd.Series.mode(x).iloc[0])
-        count_vals = val_df.groupby(['year', 'id']).year.count().rename('n')
-        median_vals = val_df.groupby(['year', 'id']).median() 
+        # Import corresponding waterline contours
+        deacl_gdf = (gpd.read_file(deacl_path, 
+                                  bbox=bbox.buffer(100))
+                     .to_crs('EPSG:3577')
+                     .dissolve('year')
+                     .reset_index())
 
-        # Combine all aggregated stats into one dataframe
-        val_df = pd.concat([median_vals, 
-                            modal_vals, 
-                            count_vals], axis=1).reset_index()
-        
-        # Convert validation start and end locations to linestrings
-        val_geometry = val_df.apply(
-            lambda x: LineString([(x.start_x, x.start_y), 
-                                  (x.end_x, x.end_y)]), axis=1)
+        # This will fail if no DEA Coastlines data exists for the area
+        if (len(deacl_gdf.index) > 0) & (len(val_df.index) > 0):
 
-        # Convert geometries to GeoDataFrame
-        val_gdf = gpd.GeoDataFrame(data=val_df,
-                                   geometry=val_geometry,
-                                   crs='EPSG:3577').reset_index()
-        
-        # Join Smartline data
-        val_gdf = val_gdf.merge(smartline_attrs(val_gdf, bbox), 
-                                how='left', 
-                                on='id')
+            # Add year columns and set dtype to allow merging
+            deacl_gdf['year'] = deacl_gdf.year.astype('int64')
+            val_df['year'] = val_df.date.dt.year
 
-        # Match each shoreline contour to each date in validation data
-        results_df = val_gdf.merge(deacl_gdf,
-                                   on='year',
-                                   suffixes=('_val', '_deacl'))
+            # Aggregate by year for each ID and compute modal, count and
+            # median stats
+            modal_vals = val_df.groupby(['year', 'id'])[cat_cols].agg(
+                lambda x: pd.Series.mode(x).iloc[0])
+            count_vals = val_df.groupby(['year', 'id']).year.count().rename('n')
+            median_vals = val_df.groupby(['year', 'id']).median() 
 
-        # For each row, identify where profile intersects with waterline 
-        results_df['intersect'] = results_df.apply(
-            lambda x: x.geometry_val.intersection(x.geometry_deacl), 
-            axis=1)
-        
-        # Drop any multipart geometries as these are invalid comparisons
-        results_df = results_df[results_df.apply(
-            lambda x: x.intersect.type == 'Point', axis=1)]
-        results_df[f'{sat_label}_x'] = gpd.GeoSeries(results_df['intersect']).x
-        results_df[f'{sat_label}_y'] = gpd.GeoSeries(results_df['intersect']).y
-        
-        # For each row, compute distance between origin and intersect
-        results_df[f'{sat_label}_dist'] = results_df.apply(
-            lambda x: x.intersect.distance(Point(x.start_x, x.start_y)), 
-            axis=1)               
-        
-        # If data contains a foredune distance field, drop invalid 
-        # validation points where DEA CoastLines intersection occurs 
-        # behind the foredune 
-        if 'foredune_dist' in results_df:
-            valid = (results_df[f'{sat_label}_dist'] >= 
-                     results_df.foredune_dist)
-            results_df = results_df.loc[valid]
+            # Combine all aggregated stats into one dataframe
+            val_df = pd.concat([median_vals, 
+                                modal_vals, 
+                                count_vals], axis=1).reset_index()
+
+            # Convert validation start and end locations to linestrings
+            val_geometry = val_df.apply(
+                lambda x: LineString([(x.start_x, x.start_y), 
+                                      (x.end_x, x.end_y)]), axis=1)
+
+            # Convert geometries to GeoDataFrame
+            val_gdf = gpd.GeoDataFrame(data=val_df,
+                                       geometry=val_geometry,
+                                       crs='EPSG:3577').reset_index()
+
+            # Join Smartline data
+            val_gdf = val_gdf.merge(smartline_attrs(val_gdf, bbox.buffer(1000)), 
+                                    how='left', 
+                                    on='id')
+
+            # Match each shoreline contour to each date in validation data
+            results_df = val_gdf.merge(deacl_gdf,
+                                       on='year',
+                                       suffixes=('_val', '_deacl'))
+
+            # For each row, identify where profile intersects with waterline 
+            results_df['intersect'] = results_df.apply(
+                lambda x: x.geometry_val.intersection(x.geometry_deacl), 
+                axis=1)
+
+            # Drop any multipart geometries as these are invalid comparisons
+            results_df = results_df[results_df.apply(
+                lambda x: x.intersect.type == 'Point', axis=1)]
+            results_df[f'{sat_label}_x'] = gpd.GeoSeries(results_df['intersect']).x
+            results_df[f'{sat_label}_y'] = gpd.GeoSeries(results_df['intersect']).y
             
-        # TO REMOVE
-        if 'slope' not in results_df:
-            results_df['slope'] = np.nan
-        
-        # If enough data is returned:
-        if len(results_df.index) > 0:
-            
-            # Rename for consistency    
-            results_df = results_df.rename(
-                    {f'{datum}_dist': f'{val_label}_dist',
-                     f'{datum}_x': f'{val_label}_x',
-                     f'{datum}_y': f'{val_label}_y'}, axis=1)
-            
-            # Calculate difference
-            results_df['error_m'] = results_df.val_dist - results_df.deacl_dist
-            
-            # Add lon and lat columns
-            centroid_points = gpd.GeoSeries(
-                results_df.geometry_val).centroid.to_crs('EPSG:4326')
-            results_df['lon'] = centroid_points.x.round(3)
-            results_df['lat'] = centroid_points.y.round(3)
-            
-            # Keep correct columns
-            results_df = results_df[['id', 'year', 'beach', 'section', 'profile', 'name',
-                                     'source', 'certainty', 'n', 'lon', 'lat', 'slope', 
-                                     'smartline', 'start_x', 'start_y', 'end_x', 'end_y', 
-                                     f'{val_label}_x', f'{val_label}_y', f'{val_label}_dist', 
-                                     f'{sat_label}_x', f'{sat_label}_y', f'{sat_label}_dist',
-                                     'error_m']]
-            
-            # Export data
-            out_name = val_path.split('/')[-1]
-            results_df.to_csv(f'temp_{out_name}', index=False)
-                        
-#             return results_df
-       
-   
+            # For each row, compute distance between origin and intersect
+            results_df[f'{sat_label}_dist'] = results_df.apply(
+                lambda x: x.intersect.distance(Point(x.start_x, x.start_y)), 
+                axis=1)               
+
+            # If data contains a foredune distance field, drop invalid 
+            # validation points where DEA CoastLines intersection occurs 
+            # behind the foredune 
+            if 'foredune_dist' in results_df:
+                valid = (results_df[f'{sat_label}_dist'] >= 
+                         results_df.foredune_dist)
+                results_df = results_df.loc[valid]
+
+            # TO REMOVE
+            if 'slope' not in results_df:
+                results_df['slope'] = np.nan
+
+            # If enough data is returned:
+            if len(results_df.index) > 0:
+
+                # Rename for consistency    
+                results_df = results_df.rename(
+                        {f'{datum}_dist': f'{val_label}_dist',
+                         f'{datum}_x': f'{val_label}_x',
+                         f'{datum}_y': f'{val_label}_y'}, axis=1)
+
+                # Calculate difference
+                results_df['error_m'] = results_df.val_dist - results_df.deacl_dist
+
+                # Add lon and lat columns
+                centroid_points = gpd.GeoSeries(
+                    results_df.geometry_val).centroid.to_crs('EPSG:4326')
+                results_df['lon'] = centroid_points.x.round(3)
+                results_df['lat'] = centroid_points.y.round(3)
+
+                # Keep correct columns
+                results_df = results_df[['id', 'year', 'beach', 'section', 'profile', 'name',
+                                         'source', 'certainty', 'n', 'lon', 'lat', 'slope', 
+                                         'smartline', 'start_x', 'start_y', 'end_x', 'end_y', 
+                                         f'{val_label}_x', f'{val_label}_y', f'{val_label}_dist', 
+                                         f'{sat_label}_x', f'{sat_label}_y', f'{sat_label}_dist',
+                                         'error_m']]
+
+                # Export data
+                results_df.to_csv(out_name, index=False)
+
+
 def main(argv=None):
     
     #########
