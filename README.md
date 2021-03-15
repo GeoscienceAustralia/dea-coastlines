@@ -1,4 +1,4 @@
-![Digital Earth Australia Coastlines](visualisation/deacoastlines_example_header.gif)
+![Digital Earth Australia Coastlines](visualisation/images/DEACoastlines_header.gif)
 
 # Digital Earth Australia Coastlines
 
@@ -183,13 +183,13 @@ The **DEA Coastlines** product contains three layers:
 Annual coastline vectors from 1988 to 2019 that represent the median or ‘typical’ position of the coastline at approximately mean sea level tide (0 m AHD) for each year.
    * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, poor tidal modelling performance, or aerosol issues (see [Caveats and limitations](#caveats-and-limitations))
 
-![DEA Coastlines coastlines layer](visualisation/deacoastlines_example_coastlines.JPG)
+![DEA Coastlines annual coastlines layer](visualisation/images/DEACoastlines_annualcoastlines.JPG)
 
 ### Rates of change statistics
 A point dataset providing robust rates of coastal change statistics for every 30 m along Australia’s non-rocky (clastic) coastlines.
 The most recent 2019 coastline is used as a baseline for measuring rates of change.
 
-![DEA Coastlines statistics layer](visualisation/deacoastlines_example_statistics.JPG)
+![DEA Coastlines rates of change layer](visualisation/images/DEACoastlines_ratesofchange.JPG)
 
 On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1), points are shown for locations with statistically significant rates of change only (p-value < 0.01, see `sig_time` below). 
 Each point shows annual rates of change (in metres per year; see `rate_time` below), and an estimate of uncertainty in brackets (95% confidence interval; see `se_time`). 
@@ -222,7 +222,7 @@ The rates of change statistics dataset contains the following attribute columns 
 ### Coastal change hotspots
 A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
 
-![DEA Coastlines coastal change hotspots](visualisation/deacoastlines_example_summary.JPG)
+![DEA Coastlines coastal change hotspots](visualisation/images/DEACoastlines_hotspots.JPG)
 
 ---
 

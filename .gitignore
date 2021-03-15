@@ -13,11 +13,6 @@
 # Ignore rasters
 *.tif
 *.tiff
-*.jpeg
-*.jpg
-*.JPG
-*.png
-*.PNG
 
 # Ignore QGIS projects
 *.qgz
