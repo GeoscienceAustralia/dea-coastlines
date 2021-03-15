@@ -71,11 +71,11 @@ This repository contains three main scripts (and corresponding Jupyter notebooks
     * Combines output coastline and rates of change statistics point vectors into single continental datasets
     * Aggregates this data to produce a moving window coastal change hotspot dataset that summarises coastal change at regional and continental scale.
 
-An additional Jupyter notebook provides useful tools for analysing DEA Coastlines data:
+An additional Jupyter notebook that provides useful tools for loading and analysing DEA Coastlines data can be found on the [DEA Notebooks repository](https://github.com/GeoscienceAustralia/dea-notebooks):
 
-* [`DEACoastlines_tools.ipynb`](DEACoastlines_tools.ipynb): 
+* [Introduction to DEA Coastlines](https://github.com/GeoscienceAustralia/dea-notebooks/blob/develop/DEA_datasets/DEA_Coastlines.ipynb):
 
-    * Selecting and loading DEA Coastlines data using an interactive map
+    * Loading DEA Coastlines data in a Jupyter notebook or Python using the DEA Coastlines Web Feature Service (WFS)
     * Interactively drawing a transect across DEA Coastlines annual coastlines and generating a plot of coastal change through time
     * Interactively plotting the distribution of retreating and growing coastlines within a selected region
 
