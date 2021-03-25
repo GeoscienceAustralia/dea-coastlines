@@ -208,7 +208,7 @@ The rates of change statistics dataset contains the following attribute columns 
 ##### Rates of change statistics
    * `rate_time`: Annual rates of change (in metres per year) calculated by linearly regressing all annual coastline distances against time. Negative values indicate retreat, while positive values indicate growth. 
    * `sig_time`: Significance (p-value) of the linear relationship between annual coastline distances and time. Small values (e.g. p-value < 0.01 or 0.05) may indicate a coastline is undergoing consistent coastal change through time. 
-   * `se_time`: Standard error (in metres) of the linear relationship between annual coastline distances and time. This can be used to generate confidence intervals around the rate of change given by rate_time (e.g. 95% confidence interval = rate_time * 1.96)
+   * `se_time`: Standard error (in metres) of the linear relationship between annual coastline distances and time. This can be used to generate confidence intervals around the rate of change given by rate_time (e.g. 95% confidence interval = `se_time * 1.96`)
    * `outl_time`: Individual annual coastlines are noisy estimators of coastline position that can be influenced by environmental conditions (e.g. clouds, breaking waves, sea spray) or modelling issues (e.g. poor tidal modelling results or limited clear satellite observations). To obtain robust rates of change, outlying years are excluded using a robust outlier detection algorithm, and recorded in this column.
    
 ##### Climate driver statistics
