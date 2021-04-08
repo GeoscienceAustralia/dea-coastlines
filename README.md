@@ -2,6 +2,7 @@
 
 # Digital Earth Australia Coastlines
 
+[![DOI](https://img.shields.io/badge/DOI-10.26186/116268-0e7fbf.svg)](https://doi.org/10.26186/116268)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **Access:** [Explore DEA Coastlines on the interactive Digital Earth Australia Maps platform](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1)
