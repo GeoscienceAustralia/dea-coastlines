@@ -36,6 +36,7 @@ def standardise_source(df):
                   'total station': 'total station',
                   'total station\t': 'total station',
                   'laser scanning': 'terrestrial laser scanning',
+                  'satellite': 'satellite',
                   'gps rtk gps': 'gps'}
     
     # Set all values to lower case for easier conversion
@@ -449,7 +450,107 @@ def preprocess_wadot(compartment,
     else:
         print(f'Skipping {beach:<80}', end='\r')
 
-            
+
+
+def preprocess_dasilva2021(fname='input_data/dasilva2021/dasilva_etal_2021_shorelines.shp'):
+    
+    beach = 'dasilva2021'
+    print(f'Processing {beach:<80}', end='\r')
+
+    # Read file and filter to AHD 0 shorelines
+    fname='input_data/dasilva2021/dasilva_etal_2021_shorelines.shp'
+    val_gdf = gpd.read_file(fname).to_crs('EPSG:3577')
+    val_gdf = val_gdf.loc[val_gdf.Year_ > 1987]
+    val_gdf['Year_'] = val_gdf.Year_.astype(str)
+    val_gdf = val_gdf.set_index('Year_')
+#     val_gdf = gpd.clip(gdf=val_gdf, mask=compartment, keep_geom_type=True)
+
+#     # Restrict to LiDAR data and set index to year
+#     val_gdf = val_gdf.query("ARC_SOURCE in ('Lidar2009', 'Lidar2012')")
+#     val_gdf.index = val_gdf.ARC_SOURCE.str[5:].astype(int)
+
+    # If no data is returned, skip this iteration
+    if len(val_gdf.index) == 0:
+        print(f'Failed: {beach:<80}', end='\r')
+        return None
+
+    ######################
+    # Generate transects #
+    ######################
+
+    transect_gdf = gpd.read_file('input_data/dasilva2021/dasilva_etal_2021_retransects.shp').to_crs('EPSG:3577')[['TransectID', 'Direction', 'order', 'geometry']]
+    transect_gdf.columns = ['profile', 'section', 'order', 'geometry']
+    transect_gdf = transect_gdf.sort_values('order').set_index('order')
+    transect_gdf['profile'] = transect_gdf.profile.astype(str)
+#     transect_gdf = gpd.clip(gdf=transect_gdf, mask=compartment, keep_geom_type=True)
+
+    ################################
+    # Identify 0 MSL intersections #
+    ################################
+
+    output_list = []
+
+    # Select one year
+    for year in val_gdf.index.unique().sort_values(): 
+
+        # Extract validation contour
+        print(f'Processing {beach} {year:<80}', end='\r')
+        val_contour = val_gdf.loc[[year]].geometry.unary_union
+
+        # Copy transect data, and find intersects 
+        # between transects and contour
+        intersect_gdf = transect_gdf.copy()
+        intersect_gdf['val_point'] = transect_gdf.intersection(val_contour)
+        to_keep = gpd.GeoSeries(intersect_gdf['val_point']).geom_type == 'Point'
+        intersect_gdf = intersect_gdf.loc[to_keep]
+
+        # If no data is returned, skip this iteration
+        if len(intersect_gdf.index) == 0:
+            print(f'Failed: {beach} {year:<80}', end='\r')
+            continue
+
+        # Add generic metadata
+        intersect_gdf['date'] = pd.to_datetime(str(year))
+        intersect_gdf['beach'] = beach
+#         intersect_gdf['section'] = 'all'
+        intersect_gdf['source'] = 'satellite'
+        intersect_gdf['name'] = 'dasilva2021' 
+        intersect_gdf['id'] = (intersect_gdf.beach + '_' + 
+                               intersect_gdf.section + '_' + 
+                               intersect_gdf.profile)
+        
+#         return intersect_gdf
+
+        # Add measurement metadata
+        intersect_gdf[['start_x', 'start_y']] = intersect_gdf.apply(
+            lambda x: pd.Series(x.geometry.coords[0]), axis=1)
+        intersect_gdf[['end_x', 'end_y']] = intersect_gdf.apply(
+            lambda x: pd.Series(x.geometry.coords[1]), axis=1)
+        intersect_gdf['0_dist'] = intersect_gdf.apply(
+            lambda x: Point(x.start_x, x.start_y).distance(x['val_point']), axis=1)
+        intersect_gdf[['0_x', '0_y']] = intersect_gdf.apply(
+            lambda x: pd.Series(x.val_point.coords[0][0:2]), axis=1)
+
+        # Add empty slope var (not possible to compute without profile data)
+        intersect_gdf['slope'] = np.nan
+
+        # Keep required columns
+        intersect_gdf = intersect_gdf[['id', 'date', 'beach', 
+                                       'section', 'profile', 'name',
+                                       'source', 'slope', 'start_x', 
+                                       'start_y', 'end_x', 'end_y', 
+                                       '0_dist', '0_x', '0_y']]
+
+        # Append to file
+        output_list.append(intersect_gdf)
+
+    # Combine all year data and export to file
+    if len(output_list) > 0:
+        shoreline_df = pd.concat(output_list)
+        shoreline_df.to_csv(f'output_data/{beach}.csv', index=False)
+
+
+
 def preprocess_stirling(fname_out, datum=0):
 
     # List containing files to import and all params to extract data
