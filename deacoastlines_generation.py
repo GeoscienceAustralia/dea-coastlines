@@ -657,9 +657,9 @@ def main(argv=None):
     # Create query
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {'geopolygon': geopoly.buffer(0.05),
-             'time': ('1987', '2020'),
+             'time': ('1987', '2021'),
 #              'cloud_cover': [0, 90],
-             'dask_chunks': {'time': 1, 'x': 2000, 'y': 2000}}
+             'dask_chunks': {'time': 1, 'x': 3000, 'y': 3000}}
 
     # Load virtual product    
     ds = load_mndwi(dc, 

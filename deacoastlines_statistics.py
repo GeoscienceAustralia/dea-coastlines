@@ -1300,7 +1300,7 @@ def main(argv=None):
     # Set params
     water_index = 'mndwi'
     index_threshold = 0.00
-    baseline_year = '2019'
+    baseline_year = '2020'
 
     ###############################
     # Load DEA CoastLines rasters #
@@ -1349,7 +1349,7 @@ def main(argv=None):
                              delimiter='  ', 
                              skiprows=1, 
                              index_col=0, 
-                             skipfooter=10,
+                             skipfooter=9,
                              engine='python').mean(axis=1).to_frame('soi')
 
     ##############################
