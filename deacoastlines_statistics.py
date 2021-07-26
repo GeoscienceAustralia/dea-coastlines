@@ -46,6 +46,7 @@ from skimage.morphology import binary_opening
 from skimage.morphology import binary_erosion
 from skimage.morphology import binary_dilation
 from skimage.morphology import disk, square
+from skimage.morphology import remove_small_objects
 from datacube.utils.cog import write_cog
 
 import warnings
@@ -134,7 +135,7 @@ def load_rasters(output_name,
     return ds_list
 
 
-def waterbody_mask(input_data,
+def waterbody_masking(input_data,
                    modification_data,
                    bbox,
                    yearly_ds):
@@ -217,19 +218,19 @@ def waterbody_mask(input_data,
     return waterbody_mask
 
 
-def mask_ocean(bool_array, tide_points_gdf, connectivity=1):
+def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
     """
     Identifies ocean by selecting the largest connected area of water
-    pixels that contain tidal modelling points, then dilating this 
-    region to ensure sub-pixel algorithm has pixels on either side of 
-    the water index threshold.
+    pixels that contain tidal modelling points. This region can be
+    optionally dilated to ensure that the sub-pixel algorithm has pixels 
+    on either side of the water index threshold.
     
     Parameters:
     -----------
-    bool_array : xarray.DataArray
-        An array containing True for water pixels, and False for non-
-        water. This can be obtained by thresholding a water index
-        array (e.g. MNDWI > 0).
+    ds : xarray.DataArray
+        An array containing True for land pixels, and False for water.
+        This can be obtained by thresholding a water index
+        array (e.g. MNDWI < 0).
     tide_points_gdf : geopandas.GeoDataFrame
         Spatial points located within the ocean. These points are used
         to ensure that all coastlines are directly connected to the 
@@ -237,42 +238,139 @@ def mask_ocean(bool_array, tide_points_gdf, connectivity=1):
     connectivity : integer, optional
         An integer passed to the 'connectivity' parameter of the
         `skimage.measure.label` function.
+    dilation : integer, optional
+        The number of pixels to dilate ocean pixels to ensure than 
+        adequate land pixels are included for subpixel waterline
+        extraction. Defaults to None.
         
     Returns:
     --------
-    ocean_mask : nd.array
+    ocean_mask : xarray.DataArray
         An array containing the a mask consisting of identified ocean 
-        pixels.
-    
+        pixels as True.    
     """
-    
+
     # First, break boolean array into unique, discrete regions/blobs
-    blobs_labels = xr.apply_ufunc(label, bool_array, None, 0, False, connectivity)
-    
+    blobs = xr.apply_ufunc(label, ds, None, 1, False, 1)
+
     # Get blob ID for each tidal modelling point
     x = xr.DataArray(tide_points_gdf.geometry.x, dims='z')
-    y = xr.DataArray(tide_points_gdf.geometry.y, dims='z')   
-    ocean_blobs = np.unique(blobs_labels.interp(x=x, y=y, method='nearest'))
+    y = xr.DataArray(tide_points_gdf.geometry.y, dims='z')
+    ocean_blobs = np.unique(blobs.interp(x=x, y=y, method='nearest'))
 
     # Return only blobs that contained tide modelling point
-    ocean_mask = blobs_labels.isin(ocean_blobs[ocean_blobs != 0])
-    
+    ocean_mask = blobs.isin(ocean_blobs[ocean_blobs != 0])
+
     # Dilate mask so that we include land pixels on the inland side
     # of each shoreline to ensure contour extraction accurately
     # seperates land and water spectra
-    ocean_mask = binary_dilation(ocean_mask, selem=square(4))
+    if dilation:
+        ocean_mask = xr.apply_ufunc(binary_dilation, 
+                                    ocean_mask, 
+                                    disk(dilation))
 
     return ocean_mask
+
+
+def coastal_masking(ds, tide_points_gdf, buffer=50):
+    """
+    Creates a symmetrical buffer around the land-water boundary
+    in a input boolean array. This is used to create a study area
+    mask that is focused on the coastal zone, excluding inland or 
+    deeper ocean pixels.
+    
+    Parameters:
+    -----------
+    ds : xarray.DataArray
+        A single time-step boolean array containing True for land
+        pixels, and False for water.
+    buffer : integer, optional
+        The number of pixels to buffer the land-water boundary in
+        each direction. 
+        
+    Returns:
+    --------
+    coastal_mask : xarray.DataArray
+        An array containing True within `buffer_pixels` of the
+        land-water boundary, and False everywhere else.    
+    """
+
+    def _coastal_buffer(ds, buffer):
+        """Generate coastal buffer from ocean-land boundary"""
+        buffer_ocean = binary_dilation(ds, buffer)
+        buffer_land = binary_dilation(~ds, buffer)
+        return buffer_ocean & buffer_land
+
+    # Identify ocean pixels that are directly connected to tide points
+    all_time_ocean = ocean_masking(ds, tide_points_gdf)
+
+    # Generate coastal buffer from ocean-land boundary
+    coastal_mask = xr.apply_ufunc(_coastal_buffer,
+                                  all_time_ocean,
+                                  disk(buffer),
+                                  dask='parallelized')
+
+    return coastal_mask
+
+
+def temporal_masking(ds, dilation=8, sieve=3):
+    """
+    Create a temporal mask by dilating land area, then finding pixels
+    that have a neighbour in at least the previous or subsequent timestep.
+    Effectively, this requires land to be located within the less than 
+    the distance provided by `kernel` of land in a neighbouring timestep.
+    
+    Parameters:
+    -----------
+    ds : xarray.DataArray
+        A multi-temporal array containing True for land pixels, and 
+        False for water.
+    dilation : integer, optional
+        The number of pixels to dilate land pixels to identify areas
+        located within less than a specific distance of land in 
+        neighbouring timesteps.
+    sieve : integer, optional
+        The minimum size of land pixels used to create the dilated land
+        area. This serves to reduce noise prior to dilation.
+        
+    Returns:
+    --------
+    temporal_mask : xarray.DataArray
+        A multi-temporal array array containing True for pixels 
+        located within the `dilation` distance of land in at least 
+        one neighbouring timestep.
+    """
+
+    def _sieve_dilate(ds, sieve, kernel):
+        """Remove small isolated pixels, then dilate"""
+        ds = remove_small_objects(ds, sieve)
+        ds = binary_dilation(ds, kernel.reshape((1,) + kernel.shape))
+        return ds
+
+    # Sieve and dilate each timestep
+    mndwi_dilated = xr.apply_ufunc(_sieve_dilate, ds, sieve, disk(dilation),
+                                   dask='parallelized')
+
+    # Take rolling sum to check presence of dilated land in preceding or
+    # following timestep
+    mndwi_rolling = mndwi_dilated.rolling(year=3, center=True,
+                                          min_periods=1).sum()
+
+    # Keep only pixels with at least two observations in the three
+    # observation window, including the middle timestep
+    temporal_mask = (mndwi_rolling > 1) & mndwi_dilated
+
+    return temporal_mask
 
 
 def contours_preprocess(yearly_ds, 
                         gapfill_ds,
                         water_index, 
                         index_threshold, 
-                        waterbody_array, 
+                        waterbody_mask, 
                         tide_points_gdf,
                         output_path,
-                        buffer_pixels=33):  
+                        buffer_pixels=50):  
     """
     Prepares and preprocesses DEA Coastlines raster data to restrict the
     analysis to coastal shorelines, and extract data that is used to
@@ -319,8 +417,8 @@ def contours_preprocess(yearly_ds,
     buffer_pixels : int, optional
         The number of pixels by which to buffer the all time shoreline
         detected by this function to produce an overall coastal buffer.
-        The default is 33 pixels, which at 30 m Landsat resolution 
-        produces a coastal buffer with a radius of approximately 1000 m.
+        The default is 50 pixels, which at 30 m Landsat resolution 
+        produces a coastal buffer with a radius of approximately 1500 m.
         
     Returns:
     --------
@@ -333,7 +431,7 @@ def contours_preprocess(yearly_ds,
     
     # Flag nodata pixels
     nodata = yearly_ds[water_index].isnull()
-    
+
     # Identify pixels with less than 5 annual observations or > 0.25 
     # MNDWI standard deviation in more than half the time series.
     # Apply binary erosion to isolate large connected areas of 
@@ -345,42 +443,36 @@ def contours_preprocess(yearly_ds,
 
     # Remove low obs pixels and replace with 3-year gapfill
     yearly_ds = yearly_ds.where(yearly_ds['count'] > 5, gapfill_ds)
-    
-    # Update nodata layer based on gap-filled data
-    nodata = yearly_ds[water_index].isnull()
-    
+
+    # Update nodata layer based on gap-filled data and waterbody array
+    nodata = yearly_ds[water_index].isnull() | waterbody_mask
+
     # Apply water index threshold, restore nodata values back to NaN, 
     # and assign pixels within waterbody mask to 0 so they are excluded
-    thresholded_ds = ((yearly_ds[water_index] > index_threshold)
-                      .where(~nodata).where(~waterbody_array, 0))
+    thresholded_ds = (yearly_ds[water_index] < index_threshold).where(~nodata)
     
-    # Identify ocean by identifying the largest connected area of water pixels
-    # as water in at least 90% of the entire stack of thresholded data.
-    # Apply a binary opening step to clean noisy pixels
-    all_time = thresholded_ds.mean(dim='year') > 0.9
-    all_time_cleaned = xr.apply_ufunc(binary_opening, all_time, disk(3))
-    all_time_ocean = mask_ocean(all_time_cleaned, tide_points_gdf)   
-    
-    # Generate coastal buffer (30m * `buffer_pixels`) from ocean-land boundary
-    buffer_ocean = binary_dilation(all_time_ocean, disk(buffer_pixels))
-    buffer_land = binary_dilation(~all_time_ocean, disk(buffer_pixels))
-    coastal_buffer = buffer_ocean & buffer_land
-    
+    # Compute temporal mask
+    temporal_mask = temporal_masking(thresholded_ds == 1)
+
+    # Identify pixels that are land in at least 10% of observations,
+    # and use this to generate a coastal buffer
+    all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.1
+    coastal_mask = coastal_masking(all_time, tide_points_gdf, buffer_pixels)
+
     # Generate annual masks by selecting only water pixels that are 
     # directly connected to the ocean in each yearly timestep
-    annual_masks = (thresholded_ds.groupby('year')
-                    .apply(lambda x: mask_ocean(x, tide_points_gdf)))
+    annual_mask = ((thresholded_ds != 0).groupby('year')
+                    .apply(lambda x: ocean_masking(x, tide_points_gdf, 1, 3)))
 
     # Keep pixels within both all time coastal buffer and annual mask
-    masked_ds = yearly_ds[water_index].where(annual_masks & coastal_buffer)
+    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask & temporal_mask)
     
     # Create raster containg all time mask data
     all_time_mask = np.full(yearly_ds.geobox.shape, 0, dtype='int8')
-    all_time_mask[buffer_land & ~coastal_buffer] = 1
-    all_time_mask[buffer_ocean & ~coastal_buffer] = 2
-    all_time_mask[waterbody_array & coastal_buffer] = 3
-    all_time_mask[persistent_stdev & coastal_buffer] = 4
-    all_time_mask[persistent_lowobs & coastal_buffer] = 5
+    all_time_mask[~coastal_mask] = 1
+    all_time_mask[persistent_stdev & coastal_mask] = 4
+    all_time_mask[persistent_lowobs & coastal_mask] = 5
+    all_time_mask[waterbody_mask & coastal_mask] = 3
 
     # Export mask raster to assist evaluating results
     all_time_mask_da = xr.DataArray(data = all_time_mask, 
