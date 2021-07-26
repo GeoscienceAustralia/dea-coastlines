@@ -136,9 +136,9 @@ def load_rasters(output_name,
 
 
 def waterbody_masking(input_data,
-                   modification_data,
-                   bbox,
-                   yearly_ds):
+                      modification_data,
+                      bbox,
+                      yearly_ds):
     """
     Generates a raster mask for DEACoastlines based on the 
     SurfaceHydrologyPolygonsRegional.gdb dataset, and a vector 
@@ -284,6 +284,10 @@ def coastal_masking(ds, tide_points_gdf, buffer=50):
     ds : xarray.DataArray
         A single time-step boolean array containing True for land
         pixels, and False for water.
+    tide_points_gdf : geopandas.GeoDataFrame
+        Spatial points located within the ocean. These points are used
+        to ensure that all coastlines are directly connected to the 
+        ocean.
     buffer : integer, optional
         The number of pixels to buffer the land-water boundary in
         each direction. 
