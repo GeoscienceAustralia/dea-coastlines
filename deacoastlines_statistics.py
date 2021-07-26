@@ -53,7 +53,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
   
-def load_rasters(output_name, 
+def load_rasters(raster_version, 
                  study_area, 
                  water_index='mndwi'):
     
@@ -64,9 +64,9 @@ def load_rasters(output_name,
     
     Parameters:
     -----------
-    output_name : string
-        A string giving the unique DEA Coastlines analysis output name
-        (e.g. 'v0.3.0') used to name raster files.
+    raster_version : string
+        A string giving the unique DEA Coastlines analysis version
+        (e.g. 'v0.3.0') used to load raster files.
     study_area : string or int
         A string giving the study area used to name raster files 
         (e.g. Albers tile `6931`).
@@ -101,13 +101,13 @@ def load_rasters(output_name,
         for layer_name in [f'{water_index}', 'tide_m', 'count', 'stdev']:
 
             # Get paths of files that match pattern
-            paths = glob.glob(f'output_data/{study_area}_{output_name}/' \
+            paths = glob.glob(f'output_data/{study_area}_{raster_version}/' \
                               f'*_{layer_name}{layer_type}')
 
             # Test if data was returned
             if len(paths) == 0:
                 raise ValueError(f"No rasters found for grid cell {study_area} "
-                                 f"(analysis name '{output_name}'). Verify that "
+                                 f"(raster version '{raster_version}'). Verify that "
                                  f"`deacoastlines_generation.py` has been run "
                                  "for this grid cell.")
 
@@ -317,7 +317,7 @@ def coastal_masking(ds, tide_points_gdf, buffer=50):
     return coastal_mask
 
 
-def temporal_masking(ds, dilation=8, sieve=3):
+def temporal_masking(ds, dilation=5, sieve=3):
     """
     Create a temporal mask by dilating land area, then finding pixels
     that have a neighbour in at least the previous or subsequent timestep.
@@ -460,7 +460,7 @@ def contours_preprocess(yearly_ds,
 
     # Identify pixels that are land in at least 10% of observations,
     # and use this to generate a coastal buffer
-    all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.1
+    all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2
     coastal_mask = coastal_masking(all_time, tide_points_gdf, buffer_pixels)
 
     # Generate annual masks by selecting only water pixels that are 
@@ -1385,13 +1385,19 @@ def main(argv=None):
     # If no user arguments provided
     if len(argv) < 3:
 
-        str_usage = "You must specify a study area ID and name"
+        str_usage = "You must specify a study area ID, raster_version and vector_version"
         print(str_usage)
         sys.exit()
         
-    # Set study area and name for analysis
+    # Set study area and raster version for analysis
     study_area = int(argv[1])
-    output_name = str(argv[2])
+    raster_version = str(argv[2])    
+    
+    # Use vector version if available, else use raster version for vector outputs
+    try:
+        vector_version = str(argv[3])    
+    except:
+        vector_version = raster_version
         
     # Set params
     water_index = 'mndwi'
@@ -1403,11 +1409,11 @@ def main(argv=None):
     ###############################
     
     # Load yearly and gapfill data
-    yearly_ds, gapfill_ds = load_rasters(output_name, 
+    yearly_ds, gapfill_ds = load_rasters(raster_version, 
                                          study_area, 
                                          water_index)
     # Create output vector folder
-    output_dir = f'output_data/{study_area}_{output_name}/vectors'
+    output_dir = f'output_data/{study_area}_{raster_version}/vectors'
     os.makedirs(f'{output_dir}/shapefiles', exist_ok=True)
 
     ####################
@@ -1453,7 +1459,7 @@ def main(argv=None):
     ##############################
 
     # Generate waterbody mask
-    waterbody_array = waterbody_mask(
+    waterbody_mask = waterbody_masking(
         input_data='input_data/SurfaceHydrologyPolygonsRegional.gdb',
         modification_data='input_data/estuary_mask_modifications.geojson',
         bbox=bbox,
@@ -1465,15 +1471,15 @@ def main(argv=None):
         gapfill_ds,
         water_index, 
         index_threshold, 
-        waterbody_array, 
+        waterbody_mask, 
         tide_points_gdf,
-        output_path=f'output_data/{study_area}_{output_name}')
+        output_path=f'output_data/{study_area}_{raster_version}')
 
     # Extract contours
     contours_gdf = subpixel_contours(
         da=masked_ds,
         z_values=index_threshold,
-        min_vertices=30,
+        min_vertices=10,
         dim='year').set_index('year')
 
     ######################
@@ -1533,7 +1539,7 @@ def main(argv=None):
             col_schema = schema_dict.items()
             
             # Clip stats to study area extent, remove rocky shores
-            stats_path = f'{output_dir}/stats_{study_area}_{output_name}_' \
+            stats_path = f'{output_dir}/stats_{study_area}_{vector_version}_' \
                          f'{water_index}_{index_threshold:.2f}'
             points_gdf = points_gdf[points_gdf.intersects(study_area_poly['geometry'])]
 
@@ -1554,10 +1560,10 @@ def main(argv=None):
     # Assign certainty to contours based on underlying masks
     contours_gdf = contour_certainty(
         contours_gdf=contours_gdf, 
-        output_path=f'output_data/{study_area}_{output_name}')
+        output_path=f'output_data/{study_area}_{raster_version}')
 
     # Clip annual shoreline contours to study area extent
-    contour_path = f'{output_dir}/contours_{study_area}_{output_name}_' \
+    contour_path = f'{output_dir}/contours_{study_area}_{vector_version}_' \
                    f'{water_index}_{index_threshold:.2f}'
     contours_gdf['geometry'] = contours_gdf.intersection(study_area_poly['geometry'])
     contours_gdf.reset_index().to_crs('EPSG:4326').to_file(f'{contour_path}.geojson', 

@@ -124,8 +124,8 @@ def main(argv=None):
         sys.exit()
         
     # Set study area and name for analysis
-    input_name = str(argv[1])
-    output_name = str(argv[2])
+    vector_version = str(argv[1])
+    summary_version = str(argv[2])
     threshold = str(argv[3])
     coastlines = bool(argv[4])
     statistics = bool(argv[5])
@@ -137,14 +137,14 @@ def main(argv=None):
     
     if coastlines:
         print('Combining annual coastlines')
-        os.system(f'ogrmerge.py -o DEACoastlines_annualcoastlines_{output_name}.shp '
-                  f'output_data/*/vectors/shapefiles/contours_*_{input_name}_'
+        os.system(f'ogrmerge.py -o DEACoastlines_annualcoastlines_{summary_version}.shp '
+                  f'output_data/*/vectors/shapefiles/contours_*_{vector_version}_'
                   f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
         
     if statistics:
         print('Combining rates of change statistics')
-        os.system(f'ogrmerge.py -o DEACoastlines_ratesofchange_{output_name}.shp '
-                  f'output_data/*/vectors/shapefiles/stats_*_{input_name}_'
+        os.system(f'ogrmerge.py -o DEACoastlines_ratesofchange_{summary_version}.shp '
+                  f'output_data/*/vectors/shapefiles/stats_*_{vector_version}_'
                   f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
     
     if summary:
@@ -154,8 +154,8 @@ def main(argv=None):
         ###############################
         
         print('Generating hotspots')
-        stats_gdf = gpd.read_file(f'DEACoastlines_ratesofchange_{output_name}.shp')
-        contours_gdf = gpd.read_file(f'DEACoastlines_annualcoastlines_{output_name}.shp')
+        stats_gdf = gpd.read_file(f'DEACoastlines_ratesofchange_{summary_version}.shp')
+        contours_gdf = gpd.read_file(f'DEACoastlines_annualcoastlines_{summary_version}.shp')
 
         contours_gdf = (contours_gdf
                         .loc[contours_gdf.geometry.is_valid]
@@ -181,7 +181,7 @@ def main(argv=None):
                                           min_n=summary / 25), axis=1)
 
         # Export to file
-        summary_gdf.to_file(f'DEACoastlines_hotspots_{output_name}.shp')
+        summary_gdf.to_file(f'DEACoastlines_hotspots_{summary_version}.shp')
 
 
 if __name__ == "__main__":

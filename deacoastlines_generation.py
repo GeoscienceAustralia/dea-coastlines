@@ -33,6 +33,7 @@ import mock
 import otps
 import datacube
 import datetime
+import odc.algo
 import multiprocessing
 import numpy as np
 import xarray as xr
@@ -622,13 +623,23 @@ def main(argv=None):
     # If no user arguments provided
     if len(argv) < 3:
 
-        str_usage = "You must specify a study area ID and name"
+        str_usage = "You must specify a study area ID and raster_version"
         print(str_usage)
         sys.exit()
         
     # Set study area and name for analysis
     study_area = int(argv[1])
-    output_name = str(argv[2])    
+    raster_version = str(argv[2])
+    
+    # Use vector version if available, else use raster version for vector outputs
+    try:
+        vector_version = str(argv[3])    
+    except:
+        vector_version = raster_version
+    
+    #####################################
+    # Connect to datacube, Dask cluster #
+    #####################################
    
     # Connect to datacube    
     dc = datacube.Datacube(app='DEACoastlines_generation')
@@ -658,7 +669,6 @@ def main(argv=None):
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {'geopolygon': geopoly.buffer(0.05),
              'time': ('1987', '2021'),
-#              'cloud_cover': [0, 90],
              'dask_chunks': {'time': 1, 'x': 3000, 'y': 3000}}
 
     # Load virtual product    
@@ -666,9 +676,6 @@ def main(argv=None):
                     query, 
                     yaml_path='deacoastlines_virtual_products_v1.0.0.yaml',
                     product_name='ls_nbart_mndwi')
-    
-    # EXPERIMENT
-    import odc.algo
     
     # Temporary workaround map_overlap issues by rechunking
     # if smallest chunk is less than 10
@@ -686,7 +693,6 @@ def main(argv=None):
 
     # Add new mask as nodata pixels
     ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan)
-    # EXPERIMENT
 
     ###################
     # Tidal modelling #
@@ -724,7 +730,7 @@ def main(argv=None):
     ##############################
     
     # If output folder doesn't exist, create it
-    output_dir = f'output_data/{study_area}_{output_name}'
+    output_dir = f'output_data/{study_area}_{raster_version}'
     os.makedirs(output_dir, exist_ok=True)
 
     # Iterate through each year and export annual and 3-year gapfill composites
@@ -740,7 +746,7 @@ def main(argv=None):
     ##################
     
     # Once all rasters have been generated, compute contours and statistics
-    os.system(f'python /g/data/r78/DEACoastlines/deacoastlines_statistics.py {study_area} {output_name}')
+    os.system(f'python /g/data/r78/DEACoastlines/deacoastlines_statistics.py {study_area} {raster_version} {vector_version}')
     
         
 if __name__ == "__main__":
