@@ -29,7 +29,7 @@
 
 import os
 import sys
-import mock
+# import mock
 import otps
 import datacube
 import datetime
@@ -48,6 +48,9 @@ from datacube.utils.cog import write_cog
 from datacube.utils.dask import start_local_dask
 from datacube.utils.geometry import GeoBox, Geometry, CRS, gbox
 from datacube.virtual import catalog_from_file, construct
+
+from deafrica_tools.datahandling import mostcommon_crs, load_ard
+from deafrica_tools.bandindices import calculate_indices
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -89,48 +92,80 @@ def load_mndwi(dc,
         data (e.g. MNDWI) for the provided datacube query
     """
     
-    def custom_native_geobox(ds, measurements=None, basis=None):
-        """
-        Obtains native geobox info from dataset metadata
-        """
-        geotransform = ds.metadata_doc['grids']['default']['transform']
-        shape = ds.metadata_doc['grids']['default']['shape']
-        crs = CRS(ds.metadata_doc['crs'])
-        affine = Affine(geotransform[0], 0.0, 
-                        geotransform[2], 0.0, 
-                        geotransform[4], geotransform[5])
+#     def custom_native_geobox(ds, measurements=None, basis=None):
+#         """
+#         Obtains native geobox info from dataset metadata
+#         """
+#         geotransform = ds.metadata_doc['grids']['default']['transform']
+#         shape = ds.metadata_doc['grids']['default']['shape']
+#         crs = CRS(ds.metadata_doc['crs'])
+#         affine = Affine(geotransform[0], 0.0, 
+#                         geotransform[2], 0.0, 
+#                         geotransform[4], geotransform[5])
         
-        return GeoBox(width=shape[1], height=shape[0], 
-                        affine=affine, crs=crs)  
+#         return GeoBox(width=shape[1], height=shape[0], 
+#                         affine=affine, crs=crs)  
 
-    # Load in virtual product catalogue and select MNDWI product
-    catalog = catalog_from_file(yaml_path)
-    product = catalog[product_name]
+#     # Load in virtual product catalogue and select MNDWI product
+#     catalog = catalog_from_file(yaml_path)
+#     product = catalog[product_name]
 
-    # Construct a new version of the product using most common CRS
-    # Determine geobox with custom function to increase lazy loading 
-    # speed (will eventually be done automatically within virtual 
-    # products)
-    with mock.patch('datacube.virtual.impl.native_geobox', 
-                    side_effect=custom_native_geobox):
+#     # Construct a new version of the product using most common CRS
+#     # Determine geobox with custom function to increase lazy loading 
+#     # speed (will eventually be done automatically within virtual 
+#     # products)
+#     with mock.patch('datacube.virtual.impl.native_geobox', 
+#                     side_effect=custom_native_geobox):
 
-        # Identify most common CRS
-        bag = product.query(dc, **query)
-        crs_list = [str(i.crs) for i in bag.contained_datasets()]
-        crs_counts = Counter(crs_list)
-        crs = crs_counts.most_common(1)[0][0]
+#         # Identify most common CRS
+#         bag = product.query(dc, **query)
+#         crs_list = [str(i.crs) for i in bag.contained_datasets()]
+#         crs_counts = Counter(crs_list)
+#         crs = crs_counts.most_common(1)[0][0]
 
-        # Pass CRS to product load
-        settings = dict(output_crs=crs,
-                        resolution=(-30, 30),
-                        align=(15, 15),
-                        resampling={'fmask': 'nearest', 
-                                    'oa_fmask': 'nearest', 
-                                    'nbart_contiguity': 'nearest',
-                                    'oa_nbart_contiguity': 'nearest',
-                                    '*': 'cubic'})
-        box = product.group(bag, **settings, **query)
-        ds = product.fetch(box, **settings, **query)        
+#         # Pass CRS to product load
+#         settings = dict(output_crs=crs,
+#                         resolution=(-30, 30),
+#                         align=(15, 15),
+#                         resampling={'fmask': 'nearest', 
+#                                     'oa_fmask': 'nearest', 
+#                                     'nbart_contiguity': 'nearest',
+#                                     'oa_nbart_contiguity': 'nearest',
+#                                     '*': 'cubic'})
+#         box = product.group(bag, **settings, **query)
+#         ds = product.fetch(box, **settings, **query) 
+
+    # Identify the most common CRS in the region, so data can be loaded with 
+    # minimal distortion. The dictionary comprehension is required as 
+    # dc.find_datasets does not work in combination with dask_chnks
+    crs = mostcommon_crs(dc=dc, product='ls8_sr', 
+                         query={k: v for k, v in query.items() if 
+                                k not in ['dask_chunks']})
+
+    ds = load_ard(dc=dc, 
+          measurements=['green', 'swir_1', 'pixel_quality'], 
+          min_gooddata=0.0,
+          products=[
+                    'ls5_sr', 
+                    'ls7_sr', 
+                    'ls8_sr'
+          ], 
+          output_crs=crs,
+          resampling={'fmask': 'nearest', 
+                      'oa_fmask': 'nearest', 
+                      'nbart_contiguity': 'nearest',
+                      'oa_nbart_contiguity': 'nearest',
+                      '*': 'cubic'},
+          resolution=(-30, 30),
+          align=(15, 15),
+          group_by='solar_day',
+          mask_pixel_quality=False,
+          **query)
+
+    ds = (calculate_indices(ds, index=['MNDWI'], 
+                            collection='c2',
+                            drop=False)
+          .rename({'MNDWI': 'mndwi'}))
         
     return ds
 

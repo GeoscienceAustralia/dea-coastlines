@@ -127,7 +127,7 @@ def load_rasters(raster_version,
         layer_ds = xr.merge(da_list).squeeze('band', drop=True)
         layer_ds = layer_ds.assign_attrs(layer_da.attrs)
         layer_ds.attrs['transform'] = Affine(*layer_ds.transform)
-        layer_ds = layer_ds.sel(year=slice(1988, None))
+        layer_ds = layer_ds.sel(year=slice(2013, None))
 
         # Append to list
         ds_list.append(layer_ds)
@@ -371,7 +371,7 @@ def contours_preprocess(yearly_ds,
                         gapfill_ds,
                         water_index, 
                         index_threshold, 
-                        waterbody_mask, 
+#                         waterbody_mask, 
                         tide_points_gdf,
                         output_path,
                         buffer_pixels=50):  
@@ -449,7 +449,7 @@ def contours_preprocess(yearly_ds,
     yearly_ds = yearly_ds.where(yearly_ds['count'] > 5, gapfill_ds)
 
     # Update nodata layer based on gap-filled data and waterbody array
-    nodata = yearly_ds[water_index].isnull() | waterbody_mask
+    nodata = yearly_ds[water_index].isnull() #| waterbody_mask
 
     # Apply water index threshold, restore nodata values back to NaN, 
     # and assign pixels within waterbody mask to 0 so they are excluded
@@ -461,6 +461,7 @@ def contours_preprocess(yearly_ds,
     # Identify pixels that are land in at least 10% of observations,
     # and use this to generate a coastal buffer
     all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2
+#     return all_time
     coastal_mask = coastal_masking(all_time, tide_points_gdf, buffer_pixels)
 
     # Generate annual masks by selecting only water pixels that are 
@@ -476,7 +477,7 @@ def contours_preprocess(yearly_ds,
     all_time_mask[~coastal_mask] = 1
     all_time_mask[persistent_stdev & coastal_mask] = 4
     all_time_mask[persistent_lowobs & coastal_mask] = 5
-    all_time_mask[waterbody_mask & coastal_mask] = 3
+#     all_time_mask[waterbody_mask & coastal_mask] = 3
 
     # Export mask raster to assist evaluating results
     all_time_mask_da = xr.DataArray(data = all_time_mask, 
@@ -1095,7 +1096,7 @@ def change_regress(row,
 
 def calculate_regressions(points_gdf,
                           contours_gdf, 
-                          climate_df):
+                          climate_df=None):
     """
     For each rate of change point along the baseline annual coastline, 
     compute linear regression rates of change against both time and
@@ -1134,7 +1135,7 @@ def calculate_regressions(points_gdf,
     x_years = contours_gdf.index.unique().astype(int).values
     dist_years = [f'dist_{i}' for i in x_years]  
     points_subset = points_gdf[dist_years]
-    climate_subset = climate_df.loc[x_years, :]
+#     climate_subset = climate_df.loc[x_years, :]
 
     # Compute coastal change rates by linearly regressing annual movements vs. time
     print(f'Comparing annual movements with time')
@@ -1147,19 +1148,19 @@ def calculate_regressions(points_gdf,
     # Identify possible relationships between climate indices and coastal change 
     # by linearly regressing climate indices against annual movements. Significant 
     # results indicate that annual movements may be influenced by climate phenomena
-    for ci in climate_subset:
+#     for ci in climate_subset:
 
-        print(f'Comparing annual movements with {ci}')
+#         print(f'Comparing annual movements with {ci}')
 
-        # Compute stats for each row
-        ci_out = (points_subset
-                  .apply(lambda x: change_regress(row=x, 
-                                                  x_vals=climate_subset[ci].values, 
-                                                  x_labels=x_years), axis=1))
+#         # Compute stats for each row
+#         ci_out = (points_subset
+#                   .apply(lambda x: change_regress(row=x, 
+#                                                   x_vals=climate_subset[ci].values, 
+#                                                   x_labels=x_years), axis=1))
 
-        # Add data as columns  
-        points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', 
-                    f'se_{ci}', f'outl_{ci}']] = ci_out
+#         # Add data as columns  
+#         points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', 
+#                     f'se_{ci}', f'outl_{ci}']] = ci_out
 
     # Set CRS
     points_gdf.crs = contours_gdf.crs
@@ -1167,7 +1168,7 @@ def calculate_regressions(points_gdf,
     # Custom sorting
     reg_cols = chain.from_iterable([f'rate_{i}', f'sig_{i}', 
                                     f'se_{i}', f'outl_{i}'] for i in 
-                                   ['time', *climate_df.columns]) 
+                                   ['time']) 
     
     return points_gdf.loc[:, [*reg_cols, *dist_years, 'geometry']]
 
@@ -1265,9 +1266,9 @@ def all_time_stats(x, col='dist_'):
                   'min_year': int(subset_nooutl.idxmin()[-4:])}
 
     # Compute breaks
-    breaks = breakpoints(x=subset_outl.values, 
-                         labels=subset_outl.index.str.slice(5))
-    stats_dict.update({'breaks': ' '.join(breaks)})
+#     breaks = breakpoints(x=subset_outl.values, 
+#                          labels=subset_outl.index.str.slice(5))
+#     stats_dict.update({'breaks': ' '.join(breaks)})
     
     return pd.Series(stats_dict)
 
