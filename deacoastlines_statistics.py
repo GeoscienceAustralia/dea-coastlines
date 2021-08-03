@@ -922,7 +922,8 @@ def annual_movements(points_gdf,
         distances = points_gdf.apply(
             lambda x: x.geometry.distance(x[f'p_{comp_year}']), axis=1)
         
-        # Set any value over 1000 m to NaN
+        # Set any value over 1000 m to NaN, and drop any points with
+        # less than 50% valid observations
         points_gdf[f'dist_{comp_year}'] = distances.where(distances < 1000)
 
         # Extract comparison array containing water index values for the 
@@ -955,8 +956,14 @@ def annual_movements(points_gdf,
     to_keep = points_gdf.columns.str.contains('dist|geometry')
     points_gdf = points_gdf.loc[:, to_keep]
     points_gdf = points_gdf.assign(**{f'dist_{baseline_year}': 0.0})
-    points_gdf = points_gdf.round(2)    
+    points_gdf = points_gdf.round(2)
     
+    # Drop any observation with more than 50% nodata to 
+    # prevent breakpoint detection errors
+    to_drop = points_gdf.isnull().sum(axis=1) > ((points_gdf.shape[1] - 2) / 2)
+    points_gdf = points_gdf.loc[~to_drop]
+    print(f'Dropping {to_drop.sum()}')
+        
     return points_gdf
 
 
