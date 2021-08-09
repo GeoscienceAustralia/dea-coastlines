@@ -554,7 +554,7 @@ def tidal_composite(year_ds,
     
     # Write each variable to file  
     if export_geotiff:
-        for i in median_ds:              
+        for i in median_ds:
             write_cog(geo_im=median_ds[i].compute(), 
                       fname=f'{output_dir}/{str(label)}_{i}{output_suffix}.tif',
                       overwrite=True)
@@ -688,10 +688,10 @@ def main(argv=None):
     ###########################
 
     # Tide points are used to model tides across the extent of the satellite data
-    points_gdf = gpd.read_file('input_data/tide_points_coastal.geojson')
+    points_gdf = gpd.read_file('input_data/5km_points_africa_coastal.geojson')
 
     # Albers grid cells used to process the analysis
-    gridcell_gdf = (gpd.read_file('input_data/50km_albers_grid_clipped.geojson')
+    gridcell_gdf = (gpd.read_file('input_data/32km_grid_africa_coastal.geojson')
                     .to_crs(epsg=4326)
                     .set_index('id')
                     .loc[[study_area]])
@@ -703,7 +703,7 @@ def main(argv=None):
     # Create query
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {'geopolygon': geopoly.buffer(0.05),
-             'time': ('1987', '2021'),
+             'time': ('1999', '2021'),
              'dask_chunks': {'time': 1, 'x': 3000, 'y': 3000}}
 
     # Load virtual product    
@@ -712,22 +712,24 @@ def main(argv=None):
                     yaml_path='deacoastlines_virtual_products_v1.0.0.yaml',
                     product_name='ls_nbart_mndwi')
     
+    # Identify pixels that are either cloud, cloud shadow or nodata
+    from datacube.storage.masking import make_mask
+    nodata = make_mask(ds['pixel_quality'], **{'nodata': True})
+    mask = (
+        make_mask(ds['pixel_quality'], **{'cloud': 'high_confidence'}) |
+        make_mask(ds['pixel_quality'], **{'cloud_shadow': 'high_confidence'}) | nodata
+    )
+    
     # Temporary workaround map_overlap issues by rechunking
     # if smallest chunk is less than 10
-    if ((len(ds.x) % 2000) <= 10) or ((len(ds.y) % 2000) <= 10):
+    if ((len(ds.x) % 3000) <= 10) or ((len(ds.y) % 3000) <= 10):
         ds = ds.chunk({'time': 1, 'x': 3200, 'y': 3200})
-
-    # Extract boolean mask
-    mask = odc.algo.enum_to_bool(ds.fmask, 
-                                 categories=['nodata', 'cloud', 'shadow', 'snow'])
-
+        
     # Close mask to remove small holes in cloud, open mask to 
     # remove narrow false positive cloud, then dilate
-    mask = odc.algo.binary_closing(mask, 2)
-    mask_cleaned = odc.algo.mask_cleanup(mask, r=(10, 10))
-
-    # Add new mask as nodata pixels
-    ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan)
+    # mask2 = odc.algo.binary_closing(mask, 5)
+    mask_cleaned = odc.algo.mask_cleanup(mask, r=(20, 0))
+    ds = ds.where(~mask_cleaned & ~nodata)
 
     ###################
     # Tidal modelling #
@@ -739,20 +741,29 @@ def main(argv=None):
     # Test if there is data and skip rest of the analysis if not
     if tidepoints_gdf.geometry.unique().shape[0] <= 1:
         sys.exit('Gridcell has 1 or less tidal points; cannot interpolate data')
-
+    
     # Interpolate tides for each timestep into the spatial extent of the data 
-    pool = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
-    print(f'Parallelising {multiprocessing.cpu_count() - 1} processes')
-    out_list = pool.map(partial(interpolate_tide,
-                                tidepoints_gdf=tidepoints_gdf,
-                                factor=50), 
-                        iterable=[(group.x.values, 
-                                   group.y.values, 
-                                   group.time.values) 
-                                  for (i, group) in ds.groupby('time')])
+    out_list = [interpolate_tide(tidepoints_gdf=tidepoints_gdf, 
+                                 timestep_tuple=(group.x.values, group.y.values, group.time.values), 
+                                 factor=50) 
+                for (i, group) in ds.groupby('time')]
 
     # Combine to match the original dataset
-    ds['tide_m'] = xr.concat(out_list, dim=ds['time'])    
+    ds['tide_m'] = xr.concat(out_list, dim=ds['time'])
+
+#     # Interpolate tides for each timestep into the spatial extent of the data 
+#     pool = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
+#     print(f'Parallelising {multiprocessing.cpu_count() - 1} processes')
+#     out_list = pool.map(partial(interpolate_tide,
+#                                 tidepoints_gdf=tidepoints_gdf,
+#                                 factor=50), 
+#                         iterable=[(group.x.values, 
+#                                    group.y.values, 
+#                                    group.time.values) 
+#                                   for (i, group) in ds.groupby('time')])
+
+#     # Combine to match the original dataset
+#     ds['tide_m'] = xr.concat(out_list, dim=ds['time'])    
 
     # Determine tide cutoff
     tide_cutoff_buff = (
@@ -769,7 +780,7 @@ def main(argv=None):
     os.makedirs(output_dir, exist_ok=True)
 
     # Iterate through each year and export annual and 3-year gapfill composites
-    export_annual_gapfill(ds, 
+    export_annual_gapfill(ds.drop_vars(names=['green', 'swir_1', 'pixel_quality']), 
                           output_dir, 
                           tide_cutoff_min, 
                           tide_cutoff_max)    
@@ -781,7 +792,7 @@ def main(argv=None):
     ##################
     
     # Once all rasters have been generated, compute contours and statistics
-    os.system(f'python /g/data/r78/DEACoastlines/deacoastlines_statistics.py {study_area} {raster_version} {vector_version}')
+    os.system(f'python deacoastlines_statistics.py {study_area} {raster_version} {vector_version}')
     
         
 if __name__ == "__main__":

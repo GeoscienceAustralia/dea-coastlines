@@ -95,10 +95,10 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
 
         # Set nonsignificant to 0
         matching_points.loc[matching_points.sig_time > 0.01, 'rate_time'] = 0
-        matching_points.loc[matching_points.sig_soi > 0.01, 'rate_soi'] = 0
+#         matching_points.loc[matching_points.sig_soi > 0.01, 'rate_soi'] = 0
 
         return pd.Series([matching_points.rate_time.mean(),
-                          matching_points.rate_soi.mean(),
+#                           matching_points.rate_soi.mean(),
                           len(matching_points.index)])
 
     else:
@@ -139,13 +139,13 @@ def main(argv=None):
         print('Combining annual coastlines')
         os.system(f'ogrmerge.py -o DEACoastlines_annualcoastlines_{summary_version}.shp '
                   f'output_data/*/vectors/shapefiles/contours_*_{vector_version}_'
-                  f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
+                  f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:6933')
         
     if statistics:
         print('Combining rates of change statistics')
         os.system(f'ogrmerge.py -o DEACoastlines_ratesofchange_{summary_version}.shp '
                   f'output_data/*/vectors/shapefiles/stats_*_{vector_version}_'
-                  f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
+                  f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:6933')
     
     if summary:
 
@@ -162,7 +162,7 @@ def main(argv=None):
                         .set_index('year'))
 
         summary_gdf = deacl_stats.points_on_line(contours_gdf, 
-                                                 index='2019', 
+                                                 index='2020', 
                                                  distance=summary)
 
         ####################
@@ -174,7 +174,8 @@ def main(argv=None):
                                           polygons=stats_gdf.buffer(summary*2))
 
         # Compute mean and number of obs for each polygon
-        summary_gdf[['rate_time', 'rate_soi', 'n']] = summary_gdf.apply(
+#         summary_gdf[['rate_time', 'rate_soi', 'n']] = summary_gdf.apply(
+        summary_gdf[['rate_time', 'n']] = summary_gdf.apply(    
             lambda row: get_matching_data(row.name, 
                                           stats_gdf,
                                           poly_points_dict,

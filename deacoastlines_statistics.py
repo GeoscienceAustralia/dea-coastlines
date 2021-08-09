@@ -25,8 +25,8 @@ import glob
 import numpy as np
 import pandas as pd
 import xarray as xr
-import topojson as tp
-import ruptures as rpt
+# import topojson as tp
+# import ruptures as rpt
 import geopandas as gpd
 from scipy import stats
 from affine import Affine
@@ -44,6 +44,7 @@ from skimage.measure import label
 from skimage.measure import find_contours
 from skimage.morphology import binary_opening
 from skimage.morphology import binary_erosion
+from skimage.morphology import binary_closing
 from skimage.morphology import binary_dilation
 from skimage.morphology import disk, square
 from skimage.morphology import remove_small_objects
@@ -52,10 +53,13 @@ from datacube.utils.cog import write_cog
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+from deafrica_tools.spatial import xr_rasterize
+
   
 def load_rasters(raster_version, 
                  study_area, 
-                 water_index='mndwi'):
+                 water_index='mndwi',
+                 start_year=2000):
     
     """
     Loads DEA Coastlines water index (e.g. 'MNDWI'), 'tide_m', 'count',
@@ -127,7 +131,7 @@ def load_rasters(raster_version,
         layer_ds = xr.merge(da_list).squeeze('band', drop=True)
         layer_ds = layer_ds.assign_attrs(layer_da.attrs)
         layer_ds.attrs['transform'] = Affine(*layer_ds.transform)
-        layer_ds = layer_ds.sel(year=slice(2013, None))
+        layer_ds = layer_ds.sel(year=slice(start_year, None))
 
         # Append to list
         ds_list.append(layer_ds)
@@ -367,11 +371,29 @@ def temporal_masking(ds, dilation=5, sieve=3):
     return temporal_mask
 
 
+def africa_masking(ds, shp_path='input_data/africa_final1_dd84.shp', opening=5, closing=5):
+
+    def _open_close(ds, opening, closing):
+        """Sequentially applies opening then closing to a dataset"""
+        ds = binary_opening(ds, disk(opening))
+        return binary_closing(ds, disk(closing))
+
+    # Load shapefile and rasterise to template
+    africa_shp = gpd.read_file(shp_path,
+                               bbox=gpd.GeoSeries(ds.geobox.extent.geom, 
+                                                  crs=ds.geobox.crs))
+    mask = xr_rasterize(africa_shp, ds)
+    
+    # Clean by applying morphology ops
+    mask_cleaned = xr.apply_ufunc(_open_close, mask, opening, closing)
+    
+    return mask_cleaned
+
+
 def contours_preprocess(yearly_ds, 
                         gapfill_ds,
                         water_index, 
-                        index_threshold, 
-#                         waterbody_mask, 
+                        index_threshold,
                         tide_points_gdf,
                         output_path,
                         buffer_pixels=50):  
@@ -405,9 +427,6 @@ def contours_preprocess(yearly_ds,
     index_threshold : float
         A float giving the water index threshold used to separate land
         and water (e.g. 0.00).
-    waterbody_array : nd.array
-        An array containing rasterised surface water features to exclude
-        from the data, used by the `mask_ocean` function.
     tide_points_gdf : geopandas.GeoDataFrame
         Spatial points located within the ocean. These points are used
         by the `mask_ocean` to ensure that all coastlines are directly 
@@ -456,21 +475,27 @@ def contours_preprocess(yearly_ds,
     thresholded_ds = (yearly_ds[water_index] < index_threshold).where(~nodata)
     
     # Compute temporal mask
-    temporal_mask = temporal_masking(thresholded_ds == 1)
+#     temporal_mask = temporal_masking(thresholded_ds == 1)
 
     # Identify pixels that are land in at least 10% of observations,
     # and use this to generate a coastal buffer
-    all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2
-#     return all_time
+    # all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2
+    all_time = africa_masking(ds=yearly_ds, 
+                              shp_path='input_data/africa_final1_dd84.shp', 
+                              opening=0, 
+                              closing=10)
     coastal_mask = coastal_masking(all_time, tide_points_gdf, buffer_pixels)
+#     return coastal_mask
 
     # Generate annual masks by selecting only water pixels that are 
     # directly connected to the ocean in each yearly timestep
     annual_mask = ((thresholded_ds != 0).groupby('year')
                     .apply(lambda x: ocean_masking(x, tide_points_gdf, 1, 3)))
+    
+#     return annual_mask
 
     # Keep pixels within both all time coastal buffer and annual mask
-    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask & temporal_mask)
+    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask) # & temporal_mask)
     
     # Create raster containg all time mask data
     all_time_mask = np.full(yearly_ds.geobox.shape, 0, dtype='int8')
@@ -1429,23 +1454,16 @@ def main(argv=None):
     ####################
 
     # Get bounding box to load data for
-    bbox = gpd.GeoSeries(box(*array_bounds(height=yearly_ds.sizes['y'], 
-                                           width=yearly_ds.sizes['x'], 
-                                           transform=yearly_ds.transform)), 
-                         crs=yearly_ds.crs)
-
-    # Rocky shore mask
-    smartline_gdf = (gpd.read_file('input_data/Smartline.gdb', 
-                                   bbox=bbox)
-                     .to_crs(yearly_ds.crs))
+    bbox = gpd.GeoSeries(yearly_ds.geobox.extent.geom, 
+                         crs=yearly_ds.geobox.crs)    
 
     # Tide points
-    tide_points_gdf = (gpd.read_file('input_data/tide_points_coastal.geojson', 
+    tide_points_gdf = (gpd.read_file('input_data/5km_points_africa_coastal.geojson', 
                                 bbox=bbox)
                        .to_crs(yearly_ds.crs))
 
     # Study area polygon
-    comp_gdf = (gpd.read_file('input_data/50km_albers_grid_clipped.geojson', 
+    comp_gdf = (gpd.read_file('input_data/32km_grid_africa_coastal.geojson', 
                               bbox=bbox)
                 .set_index('id')
                 .to_crs(str(yearly_ds.crs)))
@@ -1453,25 +1471,9 @@ def main(argv=None):
     # Mask to study area
     study_area_poly = comp_gdf.loc[study_area]
 
-    # Load climate indices
-    climate_df = pd.read_csv('input_data/soi.long.data', 
-                             header=None, 
-                             delimiter='  ', 
-                             skiprows=1, 
-                             index_col=0, 
-                             skipfooter=9,
-                             engine='python').mean(axis=1).to_frame('soi')
-
     ##############################
     # Extract shoreline contours #
     ##############################
-
-    # Generate waterbody mask
-    waterbody_mask = waterbody_masking(
-        input_data='input_data/SurfaceHydrologyPolygonsRegional.gdb',
-        modification_data='input_data/estuary_mask_modifications.geojson',
-        bbox=bbox,
-        yearly_ds=yearly_ds)
 
     # Mask dataset to focus on coastal zone only
     masked_ds = contours_preprocess(
@@ -1479,9 +1481,9 @@ def main(argv=None):
         gapfill_ds,
         water_index, 
         index_threshold, 
-        waterbody_mask, 
         tide_points_gdf,
-        output_path=f'output_data/{study_area}_{raster_version}')
+        output_path=f'output_data/{study_area}_{raster_version}',
+        buffer_pixels=30)
 
     # Extract contours
     contours_gdf = subpixel_contours(
@@ -1496,9 +1498,6 @@ def main(argv=None):
 
     # Extract statistics modelling points along baseline contour
     points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
-
-    # Clip to remove rocky shoreline points
-    points_gdf = rocky_shores_clip(points_gdf, smartline_gdf, buffer=50)
     
     # If any points remain after rocky shoreline clip
     if points_gdf is not None:
@@ -1513,18 +1512,17 @@ def main(argv=None):
 
         # Calculate regressions
         points_gdf = calculate_regressions(points_gdf,
-                                           contours_gdf,
-                                           climate_df)
+                                           contours_gdf)
         
         # Add in retreat/growth helper columns (used for web services)
         points_gdf['retreat'] = points_gdf.rate_time < 0 
         points_gdf['growth'] = points_gdf.rate_time > 0
         
-        # Add Shoreline Change Envelope (SCE), Net Shoreline Movement 
-        # (NSM) and Max/Min years
-        stats_list = ['sce', 'nsm', 'max_year', 'min_year', 'breaks']
-        points_gdf[stats_list] = points_gdf.apply(
-            lambda x: all_time_stats(x), axis=1)
+#         # Add Shoreline Change Envelope (SCE), Net Shoreline Movement 
+#         # (NSM) and Max/Min years
+#         stats_list = ['sce', 'nsm', 'max_year', 'min_year', 'breaks']
+#         points_gdf[stats_list] = points_gdf.apply(
+#             lambda x: all_time_stats(x), axis=1)
         
         ################
         # Export stats #
@@ -1537,13 +1535,14 @@ def main(argv=None):
                            if key != 'geometry'}
             schema_dict.update({'sig_time': 'float:8.3',
                                 'outl_time': 'str:80',
-                                'sig_soi': 'float:8.3',
-                                'outl_soi': 'str:80',
+#                                 'sig_soi': 'float:8.3',
+#                                 'outl_soi': 'str:80',
                                 'retreat': 'bool', 
                                 'growth': 'bool',
-                                'max_year': 'int:4',
-                                'min_year': 'int:4',
-                                'breaks': 'str:80'})
+#                                 'max_year': 'int:4',
+#                                 'min_year': 'int:4',
+#                                 'breaks': 'str:80',
+                               })
             col_schema = schema_dict.items()
             
             # Clip stats to study area extent, remove rocky shores
@@ -1565,10 +1564,10 @@ def main(argv=None):
     # Export contours #
     ###################    
     
-    # Assign certainty to contours based on underlying masks
-    contours_gdf = contour_certainty(
-        contours_gdf=contours_gdf, 
-        output_path=f'output_data/{study_area}_{raster_version}')
+#     # Assign certainty to contours based on underlying masks
+#     contours_gdf = contour_certainty(
+#         contours_gdf=contours_gdf, 
+#         output_path=f'output_data/{study_area}_{raster_version}')
 
     # Clip annual shoreline contours to study area extent
     contour_path = f'{output_dir}/contours_{study_area}_{vector_version}_' \
