@@ -51,6 +51,7 @@ from datacube.virtual import catalog_from_file, construct
 
 from deafrica_tools.datahandling import mostcommon_crs, load_ard
 from deafrica_tools.bandindices import calculate_indices
+import deacoastlines_statistics as deacl_stats
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -540,6 +541,15 @@ def tidal_composite(year_ds,
     """
         
     # Compute median water indices and counts of valid pixels
+    year_ds = year_ds.compute()
+    deacl_stats.subpixel_contours(
+        da=year_ds.mndwi,
+        z_values=0,
+        min_vertices=10,
+        dim='time',
+        crs=year_ds.geobox.crs,
+        output_path='test_yearly.geojson')    
+    
     median_ds = year_ds.median(dim='time', keep_attrs=True)
     median_ds['count'] = (year_ds.mndwi
                           .count(dim='time', keep_attrs=True)
@@ -555,7 +565,7 @@ def tidal_composite(year_ds,
     # Write each variable to file  
     if export_geotiff:
         for i in median_ds:
-            write_cog(geo_im=median_ds[i].compute(), 
+            write_cog(geo_im=median_ds[i],  #.compute(), 
                       fname=f'{output_dir}/{str(label)}_{i}{output_suffix}.tif',
                       overwrite=True)
             
@@ -617,7 +627,7 @@ def export_annual_gapfill(ds,
                             label=year,
                             label_dim='year',
                             output_dir=output_dir, 
-                            export_geotiff=True)        
+                            export_geotiff=True)     
 
         # If ALL of the previous, current and future year vars contain data,
         # combine these three years of observations into a single median 

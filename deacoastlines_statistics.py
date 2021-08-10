@@ -1033,7 +1033,7 @@ def outlier_mad(points, thresh=3.5):
     return modified_z_score > thresh
 
 
-def change_regress(row, 
+def change_regress(y_vals, 
                    x_vals, 
                    x_labels, 
                    threshold=3.5,
@@ -1087,11 +1087,11 @@ def change_regress(row,
     """
     
     # Extract x (time) and y (distance) values
-    x = x_vals
-    y = row.values.astype(np.float)
+#     x = x_vals
+#     y = y_vals
     
     # Drop NAN rows
-    xy_df = np.vstack([x, y]).T
+    xy_df = np.vstack([x_vals, y_vals]).T
     is_valid = ~np.isnan(xy_df).any(axis=1)
     xy_df = xy_df[is_valid]
     valid_labels = x_labels[is_valid]
@@ -1165,7 +1165,7 @@ def calculate_regressions(points_gdf,
     # Compute coastal change rates by linearly regressing annual movements vs. time
     print(f'Comparing annual movements with time')
     rate_out = (points_subset
-                .apply(lambda x: change_regress(row=x,
+                .apply(lambda row: change_regress(y_vals=row.values.astype(np.float),
                                                 x_vals=x_years,
                                                 x_labels=x_years), axis=1))
     points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
