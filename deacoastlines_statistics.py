@@ -878,6 +878,7 @@ def annual_movements(points_gdf,
                      contours_gdf,
                      yearly_ds,                     
                      baseline_year, 
+                     start_year,
                      water_index):
     """
     For each rate of change point along the baseline annual coastline, 
@@ -902,9 +903,13 @@ def annual_movements(points_gdf,
         the rates of change points dataset. This is used to load DEA
         CoastLines water index rasters to calculate change 
         directionality.
+    start_year : string
+        A string giving the first coastline vector year to analyse in 
+        `countours_gdf`. For example, '2000' will analyse all coastline
+        vectors from the year 2000 onward.
     water_index : string
         A string giving the water index used in the analysis. This is 
-        used to load DEA CoastLines water index rasters to calculate 
+        used to load DEA Coastlines water index rasters to calculate 
         change directionality.
         
     Returns:
@@ -927,7 +932,8 @@ def annual_movements(points_gdf,
     baseline_y_vals = points_gdf.geometry.y
 
     # Years to analyse
-    years = contours_gdf.index.unique().values
+    years = contours_gdf.iloc[
+        contours_gdf.index.get_loc(start_year):-1].index.unique().values
 
     # Iterate through all comparison years in contour gdf
     for comp_year in years:
@@ -1084,12 +1090,8 @@ def change_regress(y_vals,
         A `pandas.Series` containing regression parameters and lists
         of outliers.
     
-    """
-    
-    # Extract x (time) and y (distance) values
-#     x = x_vals
-#     y = y_vals
-    
+    """    
+   
     # Drop NAN rows
     xy_df = np.vstack([x_vals, y_vals]).T
     is_valid = ~np.isnan(xy_df).any(axis=1)
@@ -1120,7 +1122,8 @@ def change_regress(y_vals,
 
 
 def calculate_regressions(points_gdf,
-                          contours_gdf, 
+                          contours_gdf,
+                          start_year,
                           climate_df=None):
     """
     For each rate of change point along the baseline annual coastline, 
@@ -1157,7 +1160,8 @@ def calculate_regressions(points_gdf,
     """
 
     # Restrict climate and points data to years in datasets
-    x_years = contours_gdf.index.unique().astype(int).values
+    x_years = contours_gdf.iloc[
+        contours_gdf.index.get_loc(start_year):-1].index.unique().astype(int).values    
     dist_years = [f'dist_{i}' for i in x_years]  
     points_subset = points_gdf[dist_years]
 #     climate_subset = climate_df.loc[x_years, :]
@@ -1166,8 +1170,8 @@ def calculate_regressions(points_gdf,
     print(f'Comparing annual movements with time')
     rate_out = (points_subset
                 .apply(lambda row: change_regress(y_vals=row.values.astype(np.float),
-                                                x_vals=x_years,
-                                                x_labels=x_years), axis=1))
+                                                  x_vals=x_years,
+                                                  x_labels=x_years), axis=1))
     points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
 
     # Identify possible relationships between climate indices and coastal change 
@@ -1444,7 +1448,9 @@ def main(argv=None):
     # Load yearly and gapfill data
     yearly_ds, gapfill_ds = load_rasters(raster_version, 
                                          study_area, 
-                                         water_index)
+                                         water_index,
+                                         1985)
+    
     # Create output vector folder
     output_dir = f'output_data/{study_area}_{raster_version}/vectors'
     os.makedirs(f'{output_dir}/shapefiles', exist_ok=True)
@@ -1506,13 +1512,15 @@ def main(argv=None):
         # for every contour compared to the baseline year
         points_gdf = annual_movements(points_gdf,
                                       contours_gdf,
-                                      yearly_ds,                                     
+                                      yearly_ds,
                                       baseline_year,
+                                      '2000',
                                       water_index)
 
         # Calculate regressions
         points_gdf = calculate_regressions(points_gdf,
-                                           contours_gdf)
+                                           contours_gdf,
+                                           '2000')
         
         # Add in retreat/growth helper columns (used for web services)
         points_gdf['retreat'] = points_gdf.rate_time < 0 

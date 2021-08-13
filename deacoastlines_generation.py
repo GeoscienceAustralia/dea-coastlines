@@ -29,7 +29,7 @@
 
 import os
 import sys
-# import mock
+import mock
 import otps
 import datacube
 import datetime
@@ -45,13 +45,13 @@ from functools import partial
 from collections import Counter
 from shapely.geometry import shape
 from datacube.utils.cog import write_cog
+from datacube.storage.masking import make_mask
 from datacube.utils.dask import start_local_dask
 from datacube.utils.geometry import GeoBox, Geometry, CRS, gbox
 from datacube.virtual import catalog_from_file, construct
 
 from deafrica_tools.datahandling import mostcommon_crs, load_ard
 from deafrica_tools.bandindices import calculate_indices
-import deacoastlines_statistics as deacl_stats
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -93,80 +93,52 @@ def load_mndwi(dc,
         data (e.g. MNDWI) for the provided datacube query
     """
     
-#     def custom_native_geobox(ds, measurements=None, basis=None):
-#         """
-#         Obtains native geobox info from dataset metadata
-#         """
-#         geotransform = ds.metadata_doc['grids']['default']['transform']
-#         shape = ds.metadata_doc['grids']['default']['shape']
-#         crs = CRS(ds.metadata_doc['crs'])
-#         affine = Affine(geotransform[0], 0.0, 
-#                         geotransform[2], 0.0, 
-#                         geotransform[4], geotransform[5])
+    def custom_native_geobox(ds, measurements=None, basis=None):
+        """
+        Obtains native geobox info from dataset metadata
+        """
+        geotransform = ds.metadata_doc['grids']['default']['transform']
+        shape = ds.metadata_doc['grids']['default']['shape']
+        crs = CRS(ds.metadata_doc['crs'])
+        affine = Affine(geotransform[0], 0.0, 
+                        geotransform[2], 0.0, 
+                        geotransform[4], geotransform[5])
         
-#         return GeoBox(width=shape[1], height=shape[0], 
-#                         affine=affine, crs=crs)  
+        return GeoBox(width=shape[1], height=shape[0], 
+                        affine=affine, crs=crs)  
 
-#     # Load in virtual product catalogue and select MNDWI product
-#     catalog = catalog_from_file(yaml_path)
-#     product = catalog[product_name]
+    # Load in virtual product catalogue and select MNDWI product
+    catalog = catalog_from_file(yaml_path)
+    product = catalog[product_name]
 
-#     # Construct a new version of the product using most common CRS
-#     # Determine geobox with custom function to increase lazy loading 
-#     # speed (will eventually be done automatically within virtual 
-#     # products)
-#     with mock.patch('datacube.virtual.impl.native_geobox', 
-#                     side_effect=custom_native_geobox):
+    # Construct a new version of the product using most common CRS
+    # Determine geobox with custom function to increase lazy loading 
+    # speed (will eventually be done automatically within virtual 
+    # products)
+    with mock.patch('datacube.virtual.impl.native_geobox', 
+                    side_effect=custom_native_geobox):
 
-#         # Identify most common CRS
-#         bag = product.query(dc, **query)
-#         crs_list = [str(i.crs) for i in bag.contained_datasets()]
-#         crs_counts = Counter(crs_list)
-#         crs = crs_counts.most_common(1)[0][0]
+        # Identify most common CRS
+        bag = product.query(dc, **query)
+        crs_list = [str(i.crs) for i in bag.contained_datasets()]
+        crs_counts = Counter(crs_list)
+        crs = crs_counts.most_common(1)[0][0]
 
-#         # Pass CRS to product load
-#         settings = dict(output_crs=crs,
-#                         resolution=(-30, 30),
-#                         align=(15, 15),
-#                         resampling={'fmask': 'nearest', 
-#                                     'oa_fmask': 'nearest', 
-#                                     'nbart_contiguity': 'nearest',
-#                                     'oa_nbart_contiguity': 'nearest',
-#                                     '*': 'cubic'})
-#         box = product.group(bag, **settings, **query)
-#         ds = product.fetch(box, **settings, **query) 
+        # Pass CRS to product load
+        settings = dict(output_crs=crs,
+                        resolution=(-30, 30),
+                        align=(15, 15),
+                        resampling={'pixel_quality': 'nearest',
+                                    '*': 'cubic'})
+        box = product.group(bag, **settings, **query)
+        ds = product.fetch(box, **settings, **query) 
 
-    # Identify the most common CRS in the region, so data can be loaded with 
-    # minimal distortion. The dictionary comprehension is required as 
-    # dc.find_datasets does not work in combination with dask_chnks
-    crs = mostcommon_crs(dc=dc, product='ls8_sr', 
-                         query={k: v for k, v in query.items() if 
-                                k not in ['dask_chunks']})
-
-    ds = load_ard(dc=dc, 
-          measurements=['green', 'swir_1', 'pixel_quality'], 
-          min_gooddata=0.0,
-          products=[
-                    'ls5_sr', 
-                    'ls7_sr', 
-                    'ls8_sr'
-          ], 
-          output_crs=crs,
-          resampling={'fmask': 'nearest', 
-                      'oa_fmask': 'nearest', 
-                      'nbart_contiguity': 'nearest',
-                      'oa_nbart_contiguity': 'nearest',
-                      '*': 'cubic'},
-          resolution=(-30, 30),
-          align=(15, 15),
-          group_by='solar_day',
-          mask_pixel_quality=False,
-          **query)
-
-    ds = (calculate_indices(ds, index=['MNDWI'], 
-                            collection='c2',
-                            drop=False)
-          .rename({'MNDWI': 'mndwi'}))
+#     # Identify the most common CRS in the region, so data can be loaded with 
+#     # minimal distortion. The dictionary comprehension is required as 
+#     # dc.find_datasets does not work in combination with dask_chnks
+#     crs = mostcommon_crs(dc=dc, product='ls8_sr', 
+#                          query={k: v for k, v in query.items() if 
+#                                 k not in ['dask_chunks']})
         
     return ds
 
@@ -540,16 +512,7 @@ def tidal_composite(year_ds,
         arrays with a dimension labelled by `label` and `label_dim`.   
     """
         
-    # Compute median water indices and counts of valid pixels
-    year_ds = year_ds.compute()
-    deacl_stats.subpixel_contours(
-        da=year_ds.mndwi,
-        z_values=0,
-        min_vertices=10,
-        dim='time',
-        crs=year_ds.geobox.crs,
-        output_path='test_yearly.geojson')    
-    
+    # Compute median water indices and counts of valid pixels    
     median_ds = year_ds.median(dim='time', keep_attrs=True)
     median_ds['count'] = (year_ds.mndwi
                           .count(dim='time', keep_attrs=True)
@@ -565,7 +528,7 @@ def tidal_composite(year_ds,
     # Write each variable to file  
     if export_geotiff:
         for i in median_ds:
-            write_cog(geo_im=median_ds[i],  #.compute(), 
+            write_cog(geo_im=median_ds[i].compute(), 
                       fname=f'{output_dir}/{str(label)}_{i}{output_suffix}.tif',
                       overwrite=True)
             
@@ -713,22 +676,19 @@ def main(argv=None):
     # Create query
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {'geopolygon': geopoly.buffer(0.05),
-             'time': ('1999', '2021'),
+             'time': ('1980', '2021'),
              'dask_chunks': {'time': 1, 'x': 3000, 'y': 3000}}
 
     # Load virtual product    
     ds = load_mndwi(dc, 
                     query, 
-                    yaml_path='deacoastlines_virtual_products_v1.0.0.yaml',
-                    product_name='ls_nbart_mndwi')
+                    yaml_path='virtual_products_v1.0.0.yaml',
+                    product_name='ls_mndwi')
     
     # Identify pixels that are either cloud, cloud shadow or nodata
-    from datacube.storage.masking import make_mask
-    nodata = make_mask(ds['pixel_quality'], **{'nodata': True})
-    mask = (
-        make_mask(ds['pixel_quality'], **{'cloud': 'high_confidence'}) |
-        make_mask(ds['pixel_quality'], **{'cloud_shadow': 'high_confidence'}) | nodata
-    )
+    nodata = make_mask(ds['pixel_quality'], nodata=True)
+    mask = (make_mask(ds['pixel_quality'], cloud='high_confidence') |
+            make_mask(ds['pixel_quality'], cloud_shadow='high_confidence') | nodata)
     
     # Temporary workaround map_overlap issues by rechunking
     # if smallest chunk is less than 10
@@ -754,26 +714,14 @@ def main(argv=None):
     
     # Interpolate tides for each timestep into the spatial extent of the data 
     out_list = [interpolate_tide(tidepoints_gdf=tidepoints_gdf, 
-                                 timestep_tuple=(group.x.values, group.y.values, group.time.values), 
+                                 timestep_tuple=(group.x.values, 
+                                                 group.y.values, 
+                                                 group.time.values), 
                                  factor=50) 
                 for (i, group) in ds.groupby('time')]
 
     # Combine to match the original dataset
     ds['tide_m'] = xr.concat(out_list, dim=ds['time'])
-
-#     # Interpolate tides for each timestep into the spatial extent of the data 
-#     pool = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
-#     print(f'Parallelising {multiprocessing.cpu_count() - 1} processes')
-#     out_list = pool.map(partial(interpolate_tide,
-#                                 tidepoints_gdf=tidepoints_gdf,
-#                                 factor=50), 
-#                         iterable=[(group.x.values, 
-#                                    group.y.values, 
-#                                    group.time.values) 
-#                                   for (i, group) in ds.groupby('time')])
-
-#     # Combine to match the original dataset
-#     ds['tide_m'] = xr.concat(out_list, dim=ds['time'])    
 
     # Determine tide cutoff
     tide_cutoff_buff = (
