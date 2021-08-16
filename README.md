@@ -235,21 +235,32 @@ A point layer giving the average rate of change (in metres per year) for signifi
 ## Caveats and limitations
 > _For the most up-to-date information about caveats and limitations, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
 
+
+#### Annual shorelines
+* Annual coastlines from DEA Coastlines summarise the median (i.e. "dominant") position of the coastline throughout the entire year, corrected to a consistent tide height (0 m AMSL). Annual coastlines will therefore not reflect shorter-term coastal variability, for example changes in shoreline position between low and high tide, seasonal effects, or short-lived influences of individual storms. This means that these annual coastlines will show lower variability than the true range of coastal variability observed along the Australian coastline.
+
+#### Rates of change statistics
 * Rates of change statistics may be inaccurate or invalid for some complex mouthbars, or other coastal environments undergoing rapid non-linear change through time. In these regions, it is advisable to visually assess the underlying annual coastline data when interpreting rates of change to ensure these values are fit-for-purpose. Regions significantly affected by this issue include:
     * Cambridge Gulf, Western Australia
     * Joseph Bonaparte Gulf, Western Australia/Northern Territory
-* Annual coastlines may be less accurate in regions with complex tidal dynamics or large tidal ranges, and low-lying intertidal flats where small tidal modelling errors can lead to large horizontal offsets in coastline positions. Annual coastline accuracy in intertidal environments may also be reduced by the influence of wet muddy substrate or intertidal vegetation, which can make it difficult to extract a single unambiguous coastline (Bishop-Taylor et al. 2019a, 2019b). It is anticipated that future versions of this product will show improved results due to integrating more advanced methods for waterline detection in intertidal regions, and through improvements in tidal modelling methods. Regions significantly affected by intertidal issues include:
+    
+#### Data quality issues
+* Annual coastlines may be less accurate in regions with complex tidal dynamics or large tidal ranges, and low-lying intertidal flats where small tidal modelling errors can lead to large horizontal offsets in coastline positions. Annual coastline accuracy in intertidal environments may also be reduced by the influence of wet muddy substrate or intertidal vegetation, which can make it difficult to extract a single unambiguous coastline (Bishop-Taylor et al. 2019a, 2019b). It is anticipated that future versions of this product will show improved results due to integrating more advanced methods for waterline detection in intertidal regions, and through improvements in tidal modelling methods. Regions significantly affected by intertidal issues include:
     * The Pilbara coast, Western Australia from Onslow to Pardoo
     * The Mackay region, Queensland from Proserpine to Broad Sound
     * The upper Spencer Gulf, South Australia from Port Broughton to Port Augusta
     * Western Port Bay, Victoria from Tooradin to Pioneer Bay
     * Hunter Island Group, Tasmania from Woolnorth to Perkins Island
     * Moreton Bay, Queensland from Sandstone Bay to Wellington Point
-* Coastlines may be noisier and more difficult to interpret in regions with low availability of satellite observations caused by persistent cloud cover. In these regions it can be difficult to obtain the minimum number of clear satellite observations required to generate clean, noise-free annual coastlines. Regions significantly affected by cloud cover issues include:
+* Coastlines may be noisier and more difficult to interpret in regions with low availability of satellite observations caused by persistent cloud cover. In these regions it can be difficult to obtain the minimum number of clear satellite observations required to generate clean, noise-free annual coastlines. Affected regions include:
     * South-western Tasmania from Macquarie Heads to Southport
-* In some urban locations, the spectra of bright white buildings located near the coastline may be inadvertently confused with water, causing a land-ward offset from true coastline positions. 
-* Some areas of extremely dark and persistent shadows (e.g. steep coastal cliffs across southern Australia) may be inadvertently mapped as water, resulting in a landward offset from true coastline positions. 
-* 1991 and 1992 coastlines are currently affected by aerosol-related issues caused by the 1991 Mount Pinatubo eruption. These coastlines should be interpreted with care, particularly across northern Australia. 
+* In some urban locations, the spectra of bright white buildings located near the coastline may be inadvertently confused with water, causing a land-ward offset from true coastline positions. 
+* Some areas of extremely dark and persistent shadows (e.g. steep coastal cliffs across southern Australia) may be inadvertently mapped as water, resulting in a landward offset from true coastline positions. 
+* 1991 and 1992 coastlines are currently affected by aerosol-related issues caused by the 1991 Mount Pinatubo eruption. These coastlines should be interpreted with care, particularly across northern Australia. 
+
+#### Validation approach
+* To compare annual coastlines to validation datasets, multiple validation observations in a year were combined into a single median measurement of coastline position. In the case where only a single validation observation was taken for a year, this single observation may not be reflective of typical shoreline conditions across the entire year period. Because of this, validation results are expected to be more reliable for validation datasets with multiple observations per year.
+* The current validation approach was biased strongly towards Australia's south-western, southern and south-eastern coastlines due to the availability of historical coastal monitoring data. This bias prevented us from including more complex intertidal environments in our validation, which is likely to have inflated the accuracy of our results due to issues outlined above.
 
 ---
 
