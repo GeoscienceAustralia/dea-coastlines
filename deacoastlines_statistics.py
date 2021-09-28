@@ -40,7 +40,7 @@ from rasterio.features import shapes
 from rasterio.features import sieve
 from rasterio.features import rasterize
 from rasterio.transform import array_bounds
-from skimage.measure import label
+from skimage.measure import label, regionprops
 from skimage.measure import find_contours
 from skimage.morphology import binary_opening
 from skimage.morphology import binary_erosion
@@ -317,25 +317,72 @@ def coastal_masking(ds, tide_points_gdf, buffer=50):
     return coastal_mask
 
 
-def temporal_masking(ds, dilation=5, sieve=3):
+# def temporal_masking(ds, dilation=5, sieve=3):
+#     """
+#     Create a temporal mask by dilating land area, then finding pixels
+#     that have a neighbour in at least the previous or subsequent timestep.
+#     Effectively, this requires land to be located within the less than 
+#     the distance provided by `kernel` of land in a neighbouring timestep.
+    
+#     Parameters:
+#     -----------
+#     ds : xarray.DataArray
+#         A multi-temporal array containing True for land pixels, and 
+#         False for water.
+#     dilation : integer, optional
+#         The number of pixels to dilate land pixels to identify areas
+#         located within less than a specific distance of land in 
+#         neighbouring timesteps.
+#     sieve : integer, optional
+#         The minimum size of land pixels used to create the dilated land
+#         area. This serves to reduce noise prior to dilation.
+        
+#     Returns:
+#     --------
+#     temporal_mask : xarray.DataArray
+#         A multi-temporal array array containing True for pixels 
+#         located within the `dilation` distance of land in at least 
+#         one neighbouring timestep.
+#     """
+
+#     def _sieve_dilate(ds, sieve, kernel):
+#         """Remove small isolated pixels, then dilate"""
+#         ds = remove_small_objects(ds, sieve)
+#         ds = binary_dilation(ds, kernel.reshape((1,) + kernel.shape))
+#         return ds
+
+#     # Sieve and dilate each timestep
+#     mndwi_dilated = xr.apply_ufunc(_sieve_dilate, ds, sieve, disk(dilation),
+#                                    dask='parallelized')
+
+#     # Take rolling sum to check presence of dilated land in preceding or
+#     # following timestep
+#     mndwi_rolling = mndwi_dilated.rolling(year=3, center=True,
+#                                           min_periods=1).sum()
+
+#     # Keep only pixels with at least two observations in the three
+#     # observation window, including the middle timestep
+#     temporal_mask = (mndwi_rolling > 1) & mndwi_dilated
+
+#     return temporal_mask
+
+def temporal_masking(ds):
     """
-    Create a temporal mask by dilating land area, then finding pixels
-    that have a neighbour in at least the previous or subsequent timestep.
-    Effectively, this requires land to be located within the less than 
-    the distance provided by `kernel` of land in a neighbouring timestep.
+    Create a temporal mask by identifying land pixels with a direct 
+    spatial connection (e.g. contiguous) to land pixels in either the 
+    previous or subsequent timestep. 
+    
+    This is used to clean up noisy land pixels (e.g. caused by clouds,
+    white water, sensor issues), as these pixels typically occur 
+    randomly with no relationship to the distribution of land in 
+    neighbouring timesteps. True land, however, is likely to appear 
+    in proximity to land before or after the specific timestep.
     
     Parameters:
     -----------
     ds : xarray.DataArray
         A multi-temporal array containing True for land pixels, and 
         False for water.
-    dilation : integer, optional
-        The number of pixels to dilate land pixels to identify areas
-        located within less than a specific distance of land in 
-        neighbouring timesteps.
-    sieve : integer, optional
-        The minimum size of land pixels used to create the dilated land
-        area. This serves to reduce noise prior to dilation.
         
     Returns:
     --------
@@ -344,25 +391,41 @@ def temporal_masking(ds, dilation=5, sieve=3):
         located within the `dilation` distance of land in at least 
         one neighbouring timestep.
     """
+    
+    def _noncontiguous(labels, intensity):
+        
+        # For each blob of land, obtain whether it intersected with land in
+        # any neighbouring timestep
+        region_props = regionprops(labels.values,
+                                   intensity_image=intensity.values)
+        contiguous = [i.label for i in region_props if i.max_intensity == 0]
+        
+        # Filter array to only contiguous land
+        noncontiguous_array = np.isin(labels, contiguous)
+        
+        # Return as xr.DataArray
+        return xr.DataArray(~noncontiguous_array,
+                            coords=labels.coords,
+                            dims=labels.dims)
+    
 
-    def _sieve_dilate(ds, sieve, kernel):
-        """Remove small isolated pixels, then dilate"""
-        ds = remove_small_objects(ds, sieve)
-        ds = binary_dilation(ds, kernel.reshape((1,) + kernel.shape))
-        return ds
+    # Label independent groups of pixels in each timestep in the array
+    labelled_ds = xr.apply_ufunc(label, ds, None, 0,
+                                 dask='parallelized').rename('labels')
 
-    # Sieve and dilate each timestep
-    mndwi_dilated = xr.apply_ufunc(_sieve_dilate, ds, sieve, disk(dilation),
-                                   dask='parallelized')
+    # Check if a pixel was neighboured by land in either the 
+    # previous or subsequent timestep by shifting array in both directions
+    masked_neighbours = (ds.shift(year = -1, fill_value=False) | 
+                         ds.shift(year = 1, fill_value=False)).astype(int).rename('neighbours')
 
-    # Take rolling sum to check presence of dilated land in preceding or
-    # following timestep
-    mndwi_rolling = mndwi_dilated.rolling(year=3, center=True,
-                                          min_periods=1).sum()
+    # Merge both into an xr.Dataset
+    label_neighbour_ds = xr.merge([labelled_ds, masked_neighbours])
 
-    # Keep only pixels with at least two observations in the three
-    # observation window, including the middle timestep
-    temporal_mask = (mndwi_rolling > 1) & mndwi_dilated
+    # Apply continguity test to each year to obtain pixels that are
+    # contiguous (spatially connected to) to land in the previous or subsequent timestep
+    temporal_mask = label_neighbour_ds.groupby(
+        'year').apply(lambda x: _noncontiguous(labels=x.labels,
+                                               intensity=x.neighbours))
 
     return temporal_mask
 
@@ -460,7 +523,7 @@ def contours_preprocess(yearly_ds,
 
     # Identify pixels that are land in at least 10% of observations,
     # and use this to generate a coastal buffer
-    all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2
+    all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2  # & temporal_mask
     coastal_mask = coastal_masking(all_time, tide_points_gdf, buffer_pixels)
 
     # Generate annual masks by selecting only water pixels that are 
@@ -469,7 +532,7 @@ def contours_preprocess(yearly_ds,
                     .apply(lambda x: ocean_masking(x, tide_points_gdf, 1, 3)))
 
     # Keep pixels within both all time coastal buffer and annual mask
-    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask & temporal_mask)
+    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask & temporal_mask)  #  & temporal_mask
     
     # Create raster containg all time mask data
     all_time_mask = np.full(yearly_ds.geobox.shape, 0, dtype='int8')
@@ -603,9 +666,12 @@ def subpixel_contours(da,
                              if i.shape[0] > min_vertices]
             
         except:
+            
+            # This is a hack to avoid the bug described here by
+            # adding a small float to the 0 threshold:
+            # https://github.com/scikit-image/scikit-image/issues/4830
             line_features = [LineString(i[:,[1, 0]]) 
-                             for i in find_contours(da_i.data, z_value, 
-                                                    fully_connected='high') 
+                             for i in find_contours(da_i.data, z_value + 0.00000001) 
                              if i.shape[0] > min_vertices]          
 
         # Output resulting lines into a single combined MultiLineString
@@ -1007,7 +1073,7 @@ def outlier_mad(points, thresh=3.5):
     return modified_z_score > thresh
 
 
-def change_regress(row, 
+def change_regress(y_vals, 
                    x_vals, 
                    x_labels, 
                    threshold=3.5,
@@ -1030,10 +1096,8 @@ def change_regress(row,
 
     Parameters:
     -----------
-    row : 
-        A `pandas.DataFrame` row
-    x_vals : list of numeric values, or nd.array
-        A sequence of values to use as the x/independent variable
+    x_vals, y_vals : list of numeric values, or nd.array
+        A sequence of values to use as the x and y variables
     x_labels : list
         A sequence of strings corresponding to each value in `x_vals`.
         This is used to label any observations that are flagged as 
@@ -1059,13 +1123,9 @@ def change_regress(row,
         of outliers.
     
     """
-    
-    # Extract x (time) and y (distance) values
-    x = x_vals
-    y = row.values.astype(np.float)
-    
+      
     # Drop NAN rows
-    xy_df = np.vstack([x, y]).T
+    xy_df = np.vstack([x_vals, y_vals]).T
     is_valid = ~np.isnan(xy_df).any(axis=1)
     xy_df = xy_df[is_valid]
     valid_labels = x_labels[is_valid]
@@ -1139,9 +1199,9 @@ def calculate_regressions(points_gdf,
     # Compute coastal change rates by linearly regressing annual movements vs. time
     print(f'Comparing annual movements with time')
     rate_out = (points_subset
-                .apply(lambda x: change_regress(row=x,
-                                                x_vals=x_years,
-                                                x_labels=x_years), axis=1))
+                .apply(lambda row: change_regress(y_vals=row.values.astype(np.float),
+                                                  x_vals=x_years,
+                                                  x_labels=x_years), axis=1))
     points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
 
     # Identify possible relationships between climate indices and coastal change 
@@ -1153,9 +1213,9 @@ def calculate_regressions(points_gdf,
 
         # Compute stats for each row
         ci_out = (points_subset
-                  .apply(lambda x: change_regress(row=x, 
-                                                  x_vals=climate_subset[ci].values, 
-                                                  x_labels=x_years), axis=1))
+                  .apply(lambda row: change_regress(y_vals=row.values.astype(np.float), 
+                                                    x_vals=climate_subset[ci].values, 
+                                                    x_labels=x_years), axis=1))
 
         # Add data as columns  
         points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', 
@@ -1172,43 +1232,43 @@ def calculate_regressions(points_gdf,
     return points_gdf.loc[:, [*reg_cols, *dist_years, 'geometry']]
 
 
-def breakpoints(x, labels, model='l1', pen=200, min_size=2, jump=1):
-    """
-    Takes an array of values, and returns a labelled breakpoints list
-    using the `ruptures` Python package.
+# def breakpoints(x, labels, model='l1', pen=200, min_size=2, jump=1):
+#     """
+#     Takes an array of values, and returns a labelled breakpoints list
+#     using the `ruptures` Python package.
     
-    Parameters:
-    -----------
-    x : array-like
-        An array of numeric values used as the input to the breakpoint
-        detection algorithm.
-    labels : array-like
-        An array of labels corresponding to each item in `x`, used to
-        return a labelled list of outliers.
-    pen : integer, optional
-        Penalty value used to detect outliers, passed to `ruptures`'
-        `.predict` method.
-    min_size : integer, optional
-        Minimum segment length used to detect outliers, passed to 
-        `ruptures`' `Pelt` function.
-    jump : integer, optional
-         Subsampling (e.g. one every jump points) used to detect 
-         outliers, passed to `ruptures`' `Pelt` function.
+#     Parameters:
+#     -----------
+#     x : array-like
+#         An array of numeric values used as the input to the breakpoint
+#         detection algorithm.
+#     labels : array-like
+#         An array of labels corresponding to each item in `x`, used to
+#         return a labelled list of outliers.
+#     pen : integer, optional
+#         Penalty value used to detect outliers, passed to `ruptures`'
+#         `.predict` method.
+#     min_size : integer, optional
+#         Minimum segment length used to detect outliers, passed to 
+#         `ruptures`' `Pelt` function.
+#     jump : integer, optional
+#          Subsampling (e.g. one every jump points) used to detect 
+#          outliers, passed to `ruptures`' `Pelt` function.
         
-    Returns:
-    --------
-    A list containing the label of any observation that was detected
-    as a breakpoint value.
+#     Returns:
+#     --------
+#     A list containing the label of any observation that was detected
+#     as a breakpoint value.
     
-    Notes:
-    -----------
-    For more information on the parameters above, see:
-    https://centre-borelli.github.io/ruptures-docs/detection/pelt.html
-    """
+#     Notes:
+#     -----------
+#     For more information on the parameters above, see:
+#     https://centre-borelli.github.io/ruptures-docs/detection/pelt.html
+#     """
     
-    algo = rpt.Pelt(model=model, min_size=min_size, jump=jump).fit(x)
-    result = algo.predict(pen=pen)
-    return [labels[i] for i in result[0:-1]]
+#     algo = rpt.Pelt(model=model, min_size=min_size, jump=jump).fit(x)
+#     result = algo.predict(pen=pen)
+#     return [labels[i] for i in result[0:-1]]
 
 
 def all_time_stats(x, col='dist_'):
@@ -1264,10 +1324,10 @@ def all_time_stats(x, col='dist_'):
                   'max_year': int(subset_nooutl.idxmax()[-4:]),
                   'min_year': int(subset_nooutl.idxmin()[-4:])}
 
-    # Compute breaks
-    breaks = breakpoints(x=subset_outl.values, 
-                         labels=subset_outl.index.str.slice(5))
-    stats_dict.update({'breaks': ' '.join(breaks)})
+#     # Compute breaks
+#     breaks = breakpoints(x=subset_outl.values, 
+#                          labels=subset_outl.index.str.slice(5))
+#     stats_dict.update({'breaks': ' '.join(breaks)})
     
     return pd.Series(stats_dict)
 
@@ -1444,8 +1504,9 @@ def main(argv=None):
                        .to_crs(yearly_ds.crs))
 
     # Study area polygon
-    comp_gdf = (gpd.read_file('input_data/50km_albers_grid_clipped.geojson', 
-                              bbox=bbox)
+    #     studyarea_path = 'input_data/50km_albers_grid_clipped.geojson'
+    studyarea_path = 'input_data/50km_albers_grid_coralislands.geojson'
+    comp_gdf = (gpd.read_file(studyarea_path, bbox=bbox)
                 .set_index('id')
                 .to_crs(str(yearly_ds.crs)))
 
@@ -1488,6 +1549,10 @@ def main(argv=None):
         z_values=index_threshold,
         min_vertices=10,
         dim='year').set_index('year')
+    
+    # Add maturity details
+    contours_gdf['maturity'] = 'final'
+    contours_gdf.loc[contours_gdf.index == baseline_year, 'maturity'] = 'interim'
 
     ######################
     # Compute statistics #
@@ -1521,7 +1586,7 @@ def main(argv=None):
         
         # Add Shoreline Change Envelope (SCE), Net Shoreline Movement 
         # (NSM) and Max/Min years
-        stats_list = ['sce', 'nsm', 'max_year', 'min_year', 'breaks']
+        stats_list = ['sce', 'nsm', 'max_year', 'min_year']
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x), axis=1)
         
@@ -1542,7 +1607,8 @@ def main(argv=None):
                                 'growth': 'bool',
                                 'max_year': 'int:4',
                                 'min_year': 'int:4',
-                                'breaks': 'str:80'})
+#                                 'breaks': 'str:80',
+                               })
             col_schema = schema_dict.items()
             
             # Clip stats to study area extent, remove rocky shores
