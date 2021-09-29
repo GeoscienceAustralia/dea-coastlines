@@ -317,55 +317,6 @@ def coastal_masking(ds, tide_points_gdf, buffer=50):
     return coastal_mask
 
 
-# def temporal_masking(ds, dilation=5, sieve=3):
-#     """
-#     Create a temporal mask by dilating land area, then finding pixels
-#     that have a neighbour in at least the previous or subsequent timestep.
-#     Effectively, this requires land to be located within the less than 
-#     the distance provided by `kernel` of land in a neighbouring timestep.
-    
-#     Parameters:
-#     -----------
-#     ds : xarray.DataArray
-#         A multi-temporal array containing True for land pixels, and 
-#         False for water.
-#     dilation : integer, optional
-#         The number of pixels to dilate land pixels to identify areas
-#         located within less than a specific distance of land in 
-#         neighbouring timesteps.
-#     sieve : integer, optional
-#         The minimum size of land pixels used to create the dilated land
-#         area. This serves to reduce noise prior to dilation.
-        
-#     Returns:
-#     --------
-#     temporal_mask : xarray.DataArray
-#         A multi-temporal array array containing True for pixels 
-#         located within the `dilation` distance of land in at least 
-#         one neighbouring timestep.
-#     """
-
-#     def _sieve_dilate(ds, sieve, kernel):
-#         """Remove small isolated pixels, then dilate"""
-#         ds = remove_small_objects(ds, sieve)
-#         ds = binary_dilation(ds, kernel.reshape((1,) + kernel.shape))
-#         return ds
-
-#     # Sieve and dilate each timestep
-#     mndwi_dilated = xr.apply_ufunc(_sieve_dilate, ds, sieve, disk(dilation),
-#                                    dask='parallelized')
-
-#     # Take rolling sum to check presence of dilated land in preceding or
-#     # following timestep
-#     mndwi_rolling = mndwi_dilated.rolling(year=3, center=True,
-#                                           min_periods=1).sum()
-
-#     # Keep only pixels with at least two observations in the three
-#     # observation window, including the middle timestep
-#     temporal_mask = (mndwi_rolling > 1) & mndwi_dilated
-
-#     return temporal_mask
-
 def temporal_masking(ds):
     """
     Create a temporal mask by identifying land pixels with a direct 
@@ -918,7 +869,8 @@ def annual_movements(points_gdf,
                      contours_gdf,
                      yearly_ds,                     
                      baseline_year, 
-                     water_index):
+                     water_index,
+                     max_valid_dist=1000):
     """
     For each rate of change point along the baseline annual coastline, 
     compute the distance to the nearest point on all neighbouring annual
@@ -946,6 +898,9 @@ def annual_movements(points_gdf,
         A string giving the water index used in the analysis. This is 
         used to load DEA CoastLines water index rasters to calculate 
         change directionality.
+    max_valid_dist : int or float, optional
+        Any annual distance greater than this distance will be set
+        to `np.nan`.
         
     Returns:
     --------
@@ -988,9 +943,9 @@ def annual_movements(points_gdf,
         distances = points_gdf.apply(
             lambda x: x.geometry.distance(x[f'p_{comp_year}']), axis=1)
         
-        # Set any value over 1000 m to NaN, and drop any points with
+        # Set any value over X m to NaN, and drop any points with
         # less than 50% valid observations
-        points_gdf[f'dist_{comp_year}'] = distances.where(distances < 1000)
+        points_gdf[f'dist_{comp_year}'] = distances.where(distances < max_valid_dist)
 
         # Extract comparison array containing water index values for the 
         # current year being analysed
@@ -1024,11 +979,11 @@ def annual_movements(points_gdf,
     points_gdf = points_gdf.assign(**{f'dist_{baseline_year}': 0.0})
     points_gdf = points_gdf.round(2)
     
-    # Drop any observation with more than 50% nodata to 
-    # prevent breakpoint detection errors
-    to_drop = points_gdf.isnull().sum(axis=1) > ((points_gdf.shape[1] - 2) / 2)
-    points_gdf = points_gdf.loc[~to_drop]
-    print(f'Dropping {to_drop.sum()}')
+#     # Drop any observation with more than 50% nodata to 
+#     # prevent breakpoint detection errors
+#     to_drop = points_gdf.isnull().sum(axis=1) > ((points_gdf.shape[1] - 2) / 2)
+#     points_gdf = points_gdf.loc[~to_drop]
+#     print(f'Dropping {to_drop.sum()}')
         
     return points_gdf
 
@@ -1124,31 +1079,35 @@ def change_regress(y_vals,
     
     """
       
-    # Drop NAN rows
+    # Drop invalid NaN rows
     xy_df = np.vstack([x_vals, y_vals]).T
-    is_valid = ~np.isnan(xy_df).any(axis=1)
-    xy_df = xy_df[is_valid]
-    valid_labels = x_labels[is_valid]
+    valid_bool = ~np.isnan(xy_df).any(axis=1)
+    xy_df = xy_df[valid_bool]
+    valid_labels = x_labels[valid_bool]
     
     # If detrending parameters are provided, apply these to the data to
     # remove the trend prior to running the regression
     if detrend_params:
-        xy_df[:,1] = xy_df[:,1]-(detrend_params[0]*xy_df[:,0]+detrend_params[1])    
+        xy_df[:, 1] = xy_df[:, 1] - (detrend_params[0] * xy_df[:, 0] + detrend_params[1])    
     
-    # Remove outliers
-    outlier_bool = ~outlier_mad(xy_df, thresh=threshold)
-    xy_df = xy_df[outlier_bool]
+    # Remove outliers using MAD
+    outlier_bool = outlier_mad(xy_df, thresh=threshold)
+    xy_df = xy_df[~outlier_bool]
+    valid_labels = valid_labels[~outlier_bool]
+    
+    # Create string of all outliers and invalid NaN rows
+    outlier_set = set(x_labels) - set(valid_labels)    
+    outlier_str = ' '.join(map(str, sorted(outlier_set)))
         
     # Compute linear regression
-    lin_reg = stats.linregress(x=xy_df[:,0], 
-                               y=xy_df[:,1])  
+    lin_reg = stats.linregress(x=xy_df[:, 0], y=xy_df[:, 1])     
     
     # Return slope, p-values and list of outlier years excluded from regression   
-    results_dict = {slope_var: np.round(lin_reg.slope, 3), 
+    results_dict = {slope_var:  np.round(lin_reg.slope, 3), 
                     interc_var: np.round(lin_reg.intercept, 3),
                     pvalue_var: np.round(lin_reg.pvalue, 3),
                     stderr_var: np.round(lin_reg.stderr, 3),
-                    outliers_var: ' '.join(map(str, valid_labels[~outlier_bool]))}
+                    outliers_var: outlier_str}
     
     return pd.Series(results_dict)
 
@@ -1232,45 +1191,6 @@ def calculate_regressions(points_gdf,
     return points_gdf.loc[:, [*reg_cols, *dist_years, 'geometry']]
 
 
-# def breakpoints(x, labels, model='l1', pen=200, min_size=2, jump=1):
-#     """
-#     Takes an array of values, and returns a labelled breakpoints list
-#     using the `ruptures` Python package.
-    
-#     Parameters:
-#     -----------
-#     x : array-like
-#         An array of numeric values used as the input to the breakpoint
-#         detection algorithm.
-#     labels : array-like
-#         An array of labels corresponding to each item in `x`, used to
-#         return a labelled list of outliers.
-#     pen : integer, optional
-#         Penalty value used to detect outliers, passed to `ruptures`'
-#         `.predict` method.
-#     min_size : integer, optional
-#         Minimum segment length used to detect outliers, passed to 
-#         `ruptures`' `Pelt` function.
-#     jump : integer, optional
-#          Subsampling (e.g. one every jump points) used to detect 
-#          outliers, passed to `ruptures`' `Pelt` function.
-        
-#     Returns:
-#     --------
-#     A list containing the label of any observation that was detected
-#     as a breakpoint value.
-    
-#     Notes:
-#     -----------
-#     For more information on the parameters above, see:
-#     https://centre-borelli.github.io/ruptures-docs/detection/pelt.html
-#     """
-    
-#     algo = rpt.Pelt(model=model, min_size=min_size, jump=jump).fit(x)
-#     result = algo.predict(pen=pen)
-#     return [labels[i] for i in result[0:-1]]
-
-
 def all_time_stats(x, col='dist_'):
     """
     Apply any statistics that apply to the entire set of annual 
@@ -1306,28 +1226,26 @@ def all_time_stats(x, col='dist_'):
 
     # Select date columns only
     to_keep = x.index.str.contains(col)
-    
+
     # Identify outlier years to drop from calculation
     to_drop = [f'{col}{i}' for i in x.outl_time.split(" ") if len(i) > 0]
-    
+
     # Return matching subset of data
-    subset_outl = x.loc[to_keep].dropna().astype(float) 
+    subset_outl = x.loc[to_keep].astype(float) 
     subset_nooutl = subset_outl.drop(to_drop) 
 
     # Calculate SCE range, NSM and max/min year 
     # Since NSM is the most recent shoreline minus the oldest shoreline,
     # we can calculate this by simply inverting the 1988 distance value
     # (i.e. 0 - X) if it exists in the data
-    stats_dict = {'sce': subset_nooutl.max() - subset_nooutl.min(),
+    stats_dict = {'valid_obs': subset_nooutl.shape[0],
+                  'valid_span': (int(subset_nooutl.index[-1][-4:]) - 
+                                 int(subset_nooutl.index[0][-4:]) + 1),
+                  'sce': subset_nooutl.max() - subset_nooutl.min(),
                   'nsm': -(subset_nooutl.loc[f'{col}1988'] if 
                           f'{col}1988' in subset_nooutl else np.nan),
                   'max_year': int(subset_nooutl.idxmax()[-4:]),
                   'min_year': int(subset_nooutl.idxmin()[-4:])}
-
-#     # Compute breaks
-#     breaks = breakpoints(x=subset_outl.values, 
-#                          labels=subset_outl.index.str.slice(5))
-#     stats_dict.update({'breaks': ' '.join(breaks)})
     
     return pd.Series(stats_dict)
 
@@ -1580,13 +1498,9 @@ def main(argv=None):
                                            contours_gdf,
                                            climate_df)
         
-        # Add in retreat/growth helper columns (used for web services)
-        points_gdf['retreat'] = points_gdf.rate_time < 0 
-        points_gdf['growth'] = points_gdf.rate_time > 0
-        
-        # Add Shoreline Change Envelope (SCE), Net Shoreline Movement 
-        # (NSM) and Max/Min years
-        stats_list = ['sce', 'nsm', 'max_year', 'min_year']
+        # Add count and span of valid obs, Shoreline Change Envelope (SCE), 
+        # Net Shoreline Movement (NSM) and Max/Min years
+        stats_list = ['valid_obs', 'valid_span', 'sce', 'nsm', 'max_year', 'min_year']
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x), axis=1)
         
@@ -1603,15 +1517,14 @@ def main(argv=None):
                                 'outl_time': 'str:80',
                                 'sig_soi': 'float:8.3',
                                 'outl_soi': 'str:80',
-                                'retreat': 'bool', 
-                                'growth': 'bool',
+                                'valid_obs': 'int:4',
+                                'valid_span': 'int:4',
                                 'max_year': 'int:4',
                                 'min_year': 'int:4',
-#                                 'breaks': 'str:80',
                                })
             col_schema = schema_dict.items()
             
-            # Clip stats to study area extent, remove rocky shores
+            # Clip stats to study area extent
             stats_path = f'{output_dir}/stats_{study_area}_{vector_version}_' \
                          f'{water_index}_{index_threshold:.2f}'
             points_gdf = points_gdf[points_gdf.intersects(study_area_poly['geometry'])]
