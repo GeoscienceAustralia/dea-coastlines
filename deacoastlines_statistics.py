@@ -135,6 +135,87 @@ def load_rasters(raster_version,
     return ds_list
 
 
+def load_climate_data(index='soi_local', 
+                      years=(1988, 2020), 
+                      annual=True, 
+                      detrend=True):
+    
+    """
+    Load climate index timeseries data from https://psl.noaa.gov,
+    and optionally clip to a time range and aggregate by year.
+    
+    Parameters:
+    -----------
+    index : str
+        A string giving the name of the climate index to load. 
+        Currently supports 'soi', 'soi_local' (pointing to local
+        path on NCI), and 'pdo'
+    years : tuple of floats, optional
+        A tuple giving the first and last year of data to include.
+    annual : bool, optional
+        Whether to aggregate data to annual means.
+        
+    Returns:
+    --------
+    climate_df : A pandas.DataFrame containing climate index timeseries. 
+    """
+    
+    # Climate index dict
+    index_urls = {
+        'soi_local': {
+            'url': '/g/data/r78/DEACoastlines/input_data/soi.long.data',
+            'footer': 9,
+            'nodata': -99.99
+        },
+        'soi': {
+            'url': 'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/soi.long.data',
+            'footer': 9,
+            'nodata': -99.99
+        },
+        'pdo': {
+            'url': 'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/pdo.long.data',
+            'footer': 12,
+            'nodata': -9.90
+        }
+    }
+
+    # Load data
+    climate_df = pd.read_csv(index_urls[index]['url'],
+                             header=None,
+                             delimiter=r'\s+',
+                             skiprows=1,
+                             index_col=0,
+                             skipfooter=index_urls[index]['footer'],
+                             engine='python',
+                             na_values=index_urls[index]['nodata'])
+
+    # Melt into long format
+    climate_df.index.name = 'year'
+    climate_df = climate_df.reset_index().melt(id_vars='year',
+                                               var_name='month',
+                                               value_name=index[:3])
+    climate_df = climate_df.sort_values(['year', 'month'])
+    
+    # Annual means
+    if annual:
+        climate_df = climate_df.groupby('year').mean()
+    
+    # Clip to years
+    if years:
+        first_year, last_year = years
+        climate_df = climate_df.query("@first_year <= year <= @last_year")
+        
+    # Detrend
+    if detrend:
+        index_regress = stats.linregress(x=climate_df.index, 
+                                         y=climate_df[index[:3]]) 
+        climate_df.iloc[:, 0] = climate_df.iloc[:, 0] - (index_regress.slope * 
+                      climate_df.index + 
+                      index_regress.intercept)
+
+    return climate_df
+
+
 def waterbody_masking(input_data,
                       modification_data,
                       bbox,
@@ -978,12 +1059,6 @@ def annual_movements(points_gdf,
     points_gdf = points_gdf.loc[:, to_keep]
     points_gdf = points_gdf.assign(**{f'dist_{baseline_year}': 0.0})
     points_gdf = points_gdf.round(2)
-    
-#     # Drop any observation with more than 50% nodata to 
-#     # prevent breakpoint detection errors
-#     to_drop = points_gdf.isnull().sum(axis=1) > ((points_gdf.shape[1] - 2) / 2)
-#     points_gdf = points_gdf.loc[~to_drop]
-#     print(f'Dropping {to_drop.sum()}')
         
     return points_gdf
 
@@ -1163,6 +1238,10 @@ def calculate_regressions(points_gdf,
                                                   x_labels=x_years), axis=1))
     points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
 
+    # Copy slope and intercept into points_subset so they can be
+    # used to temporally de-trend annual distances
+    points_subset[['slope', 'intercept']] = rate_out[['slope', 'intercept']]
+    
     # Identify possible relationships between climate indices and coastal change 
     # by linearly regressing climate indices against annual movements. Significant 
     # results indicate that annual movements may be influenced by climate phenomena
@@ -1172,9 +1251,10 @@ def calculate_regressions(points_gdf,
 
         # Compute stats for each row
         ci_out = (points_subset
-                  .apply(lambda row: change_regress(y_vals=row.values.astype(np.float), 
+                  .apply(lambda row: change_regress(y_vals=row.values[:-2].astype(np.float), 
                                                     x_vals=climate_subset[ci].values, 
-                                                    x_labels=x_years), axis=1))
+                                                    x_labels=x_years,
+                                                    detrend_params=(row.slope, row.intercept)), axis=1))
 
         # Add data as columns  
         points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', 
@@ -1196,6 +1276,9 @@ def all_time_stats(x, col='dist_'):
     Apply any statistics that apply to the entire set of annual 
     distance/movement values. This currently includes:
     
+        valid_obs, valid_span : The number of valid (non-outlier) 
+             obervations, and the length of time in years between
+             the first and last valid observation.
         sce: Shoreline Change Envelope (SCE). A measure of the maximum 
              change or variability across all annual coastlines, 
              calculated by computing the maximum distance between any 
@@ -1422,8 +1505,8 @@ def main(argv=None):
                        .to_crs(yearly_ds.crs))
 
     # Study area polygon
-    #     studyarea_path = 'input_data/50km_albers_grid_clipped.geojson'
-    studyarea_path = 'input_data/50km_albers_grid_coralislands.geojson'
+    studyarea_path = 'input_data/50km_albers_grid_clipped.geojson'
+    # studyarea_path = 'input_data/50km_albers_grid_coralislands.geojson'
     comp_gdf = (gpd.read_file(studyarea_path, bbox=bbox)
                 .set_index('id')
                 .to_crs(str(yearly_ds.crs)))
@@ -1432,13 +1515,10 @@ def main(argv=None):
     study_area_poly = comp_gdf.loc[study_area]
 
     # Load climate indices
-    climate_df = pd.read_csv('input_data/soi.long.data', 
-                             header=None, 
-                             delimiter='  ', 
-                             skiprows=1, 
-                             index_col=0, 
-                             skipfooter=9,
-                             engine='python').mean(axis=1).to_frame('soi')
+    climate_df = load_climate_data(index='soi_local', 
+                                   years=(1988, int(baseline_year)), 
+                                   annual=True,
+                                   detrend=True)
 
     ##############################
     # Extract shoreline contours #
@@ -1467,10 +1547,6 @@ def main(argv=None):
         z_values=index_threshold,
         min_vertices=10,
         dim='year').set_index('year')
-    
-    # Add maturity details
-    contours_gdf['maturity'] = 'final'
-    contours_gdf.loc[contours_gdf.index == baseline_year, 'maturity'] = 'interim'
 
     ######################
     # Compute statistics #
@@ -1547,6 +1623,10 @@ def main(argv=None):
     contours_gdf = contour_certainty(
         contours_gdf=contours_gdf, 
         output_path=f'output_data/{study_area}_{raster_version}')
+    
+    # Add maturity details
+    contours_gdf['maturity'] = 'final'
+    contours_gdf.loc[contours_gdf.index == baseline_year, 'maturity'] = 'interim'
 
     # Clip annual shoreline contours to study area extent
     contour_path = f'{output_dir}/contours_{study_area}_{vector_version}_' \

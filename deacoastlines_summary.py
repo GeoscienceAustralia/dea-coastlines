@@ -162,7 +162,7 @@ def main(argv=None):
                         .set_index('year'))
 
         summary_gdf = deacl_stats.points_on_line(contours_gdf, 
-                                                 index='2019', 
+                                                 index='2020', 
                                                  distance=summary)
 
         ####################
@@ -181,7 +181,7 @@ def main(argv=None):
                                           min_n=summary / 25), axis=1)
 
         # Export to file
-        summary_gdf.to_file(f'DEACoastlines_hotspots_{summary_version}.shp')
+        summary_gdf.to_file(f'DEACoastlines_hotspots_{summary_version}_{summary}.shp')
 
 
 if __name__ == "__main__":
