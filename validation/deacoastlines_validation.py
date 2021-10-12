@@ -89,7 +89,13 @@ def dist_angle(lon, lat, dist, angle):
 
 
 def interp_intercept(x, y1, y2, reverse=False):
-    """Find the intercept of two curves, given by the same x data"""
+    """
+    Find the intercept of two curves, given by the same x data
+    
+    References:
+    ----------
+    Source: https://stackoverflow.com/a/43551544/2510900
+    """
     
     def intercept(point1, point2, point3, point4):
         """find the intersection between two lines
@@ -463,11 +469,6 @@ def preprocess_dasilva2021(fname='input_data/dasilva2021/dasilva_etal_2021_shore
     val_gdf = val_gdf.loc[val_gdf.Year_ > 1987]
     val_gdf['Year_'] = val_gdf.Year_.astype(str)
     val_gdf = val_gdf.set_index('Year_')
-#     val_gdf = gpd.clip(gdf=val_gdf, mask=compartment, keep_geom_type=True)
-
-#     # Restrict to LiDAR data and set index to year
-#     val_gdf = val_gdf.query("ARC_SOURCE in ('Lidar2009', 'Lidar2012')")
-#     val_gdf.index = val_gdf.ARC_SOURCE.str[5:].astype(int)
 
     # If no data is returned, skip this iteration
     if len(val_gdf.index) == 0:
@@ -482,7 +483,6 @@ def preprocess_dasilva2021(fname='input_data/dasilva2021/dasilva_etal_2021_shore
     transect_gdf.columns = ['profile', 'section', 'order', 'geometry']
     transect_gdf = transect_gdf.sort_values('order').set_index('order')
     transect_gdf['profile'] = transect_gdf.profile.astype(str)
-#     transect_gdf = gpd.clip(gdf=transect_gdf, mask=compartment, keep_geom_type=True)
 
     ################################
     # Identify 0 MSL intersections #
@@ -512,14 +512,11 @@ def preprocess_dasilva2021(fname='input_data/dasilva2021/dasilva_etal_2021_shore
         # Add generic metadata
         intersect_gdf['date'] = pd.to_datetime(str(year))
         intersect_gdf['beach'] = beach
-#         intersect_gdf['section'] = 'all'
         intersect_gdf['source'] = 'satellite'
         intersect_gdf['name'] = 'dasilva2021' 
         intersect_gdf['id'] = (intersect_gdf.beach + '_' + 
                                intersect_gdf.section + '_' + 
                                intersect_gdf.profile)
-        
-#         return intersect_gdf
 
         # Add measurement metadata
         intersect_gdf[['start_x', 'start_y']] = intersect_gdf.apply(
@@ -901,12 +898,6 @@ def preprocess_nswbpd(fname, datum=0, overwrite=False):
         print(f'Skipping {fname:<80}', end='\r')
         
         
-# bermagui(horseshoebay)_2_6
-# monavale_1_28
-# parksbeach_5s_9
-# parksbeach_5s_10
-
-
 def preprocess_narrabeen(fname, 
                          fname_out='output_data/wrl_narrabeen.csv', 
                          datum=0,
@@ -1091,10 +1082,7 @@ def preprocess_cgc(site, datum=0, overwrite=True):
             profiles_df = pd.merge(left=profiles_df, right=start_xy)
             profiles_df = pd.merge(left=profiles_df, right=end_xy)
 
-            # Compute chainage
-#             profiles_df['distance'] = profiles_df.apply(
-#                 lambda x: math.hypot(x.x - x.start_x, x.y - x.start_y), axis = 1)
-            
+            # Compute chainage           
             profiles_df['distance'] = profiles_df.apply(
                 lambda x: Point(x.start_x, x.start_y).distance(Point(x.x, x.y)), axis=1)
             
@@ -1856,36 +1844,3 @@ def deacl_validation(val_path,
 
                 # Export data
                 results_df.to_csv(out_name, index=False)
-
-
-def main(argv=None):
-    
-    #########
-    # Setup #
-    #########
-    
-    if argv is None:
-
-        argv = sys.argv
-        print(sys.argv)
-
-    # If no user arguments provided
-    if len(argv) < 2:
-
-        str_usage = "You must specify an analysis name"
-        print(str_usage)
-        sys.exit()
-        
-    # Set study area and name for analysis
-    output_name = str(argv[1])
-        
-
-    ###############################
-    # Load DEA CoastLines vectors #
-    ###############################
-    
-
-
-
-if __name__ == "__main__":
-    main()

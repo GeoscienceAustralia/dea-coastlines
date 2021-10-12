@@ -656,8 +656,7 @@ def main(argv=None):
     points_gdf = gpd.read_file('input_data/tide_points_coastal.geojson')
 
     # Albers grid cells used to process the analysis
-#     studyarea_path = 'input_data/50km_albers_grid_clipped.geojson'
-    studyarea_path = 'input_data/50km_albers_grid_coralislands.geojson'
+    studyarea_path = 'input_data/50km_albers_grid_clipped.geojson'
     gridcell_gdf = (gpd.read_file(studyarea_path)
                     .to_crs(epsg=4326)
                     .set_index('id')
