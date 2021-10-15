@@ -40,7 +40,7 @@ The ability to map shoreline positions for each year provides valuable insights 
     * [Loading DEA Coastlines data from the Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
     * [Loading DEA Coastlines data from the Web Feature Service (WFS) using R](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-r)
 * [DEA Coastlines dataset](#dea-coastlines-dataset)
-    * [Annual coastlines](#annual-coastlines)
+    * [Annual shorelines](#annual-shorelines)
     * [Rates of change statistics](#rates-of-change-statistics)
     * [Coastal change hotspots](#coastal-change-hotspots)
 * [Caveats and limitations](#caveats-and-limitations)
