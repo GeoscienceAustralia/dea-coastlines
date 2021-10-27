@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code conducts vector subpixel coastline extraction for DEA 
+# This code conducts vector subpixel shoreline extraction for DEA 
 # Coastlines:
 # 
 #     * Apply morphological extraction algorithms to mask annual median 

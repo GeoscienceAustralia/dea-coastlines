@@ -4,7 +4,7 @@
 # This code combines individual datasets into continental DEA Coastlines 
 # layers:
 # 
-#     * Combines output coastline and rates of change statistics point 
+#     * Combines output shorelines and rates of change statistics point 
 #       vectors into single continental datasets
 #     * Aggregates this data to produce moving window hotspot datasets 
 #       that summarise coastal change at regional and continental scale.
@@ -89,13 +89,9 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
     matched the polygon ID requested by `key`. 
     """
 
-    matching_points = stats_gdf.iloc[poly_points_dict[key]].copy()
+    matching_points = stats_gdf.iloc[poly_points_dict[key]]
 
     if len(matching_points.index) > min_n:
-
-        # Set nonsignificant to 0
-        matching_points.loc[matching_points.sig_time > 0.01, 'rate_time'] = 0
-        matching_points.loc[matching_points.sig_soi > 0.01, 'rate_soi'] = 0
 
         return pd.Series([matching_points.rate_time.mean(),
                           matching_points.rate_soi.mean(),
@@ -136,8 +132,8 @@ def main(argv=None):
     #################
     
     if coastlines:
-        print('Combining annual coastlines')
-        os.system(f'ogrmerge.py -o DEACoastlines_annualcoastlines_{summary_version}.shp '
+        print('Combining annual shorelines')
+        os.system(f'ogrmerge.py -o DEACoastlines_annualshorelines_{summary_version}.shp '
                   f'output_data/*/vectors/shapefiles/contours_*_{vector_version}_'
                   f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
         
@@ -154,26 +150,46 @@ def main(argv=None):
         ###############################
         
         print('Generating hotspots')
-        stats_gdf = gpd.read_file(f'DEACoastlines_ratesofchange_{summary_version}.shp')
-        contours_gdf = gpd.read_file(f'DEACoastlines_annualcoastlines_{summary_version}.shp')
-
+        # minx, maxy = 2033907.3171458526, -3037348.802034656
+        # maxx, miny = 2098351.0518029686, -3221372.9057473103
+        # bbox = (minx, miny, maxx, maxy)
+        bbox = None
+        stats_gdf = gpd.read_file(f'DEACoastlines_ratesofchange_{summary_version}.shp', bbox=bbox)
+        contours_gdf = gpd.read_file(f'DEACoastlines_annualshorelines_{summary_version}.shp', bbox=bbox)
+        
+        # Set year index on coastlines
         contours_gdf = (contours_gdf
                         .loc[contours_gdf.geometry.is_valid]
                         .set_index('year'))
 
+        # Extract summary points
         summary_gdf = deacl_stats.points_on_line(contours_gdf, 
                                                  index='2020', 
                                                  distance=summary)
+        
+        # Drop low observations from rates
+        stats_gdf = stats_gdf.loc[stats_gdf.valid_obs > 25]
+        stats_gdf = stats_gdf.reset_index(drop=True)
+
+        # Set nonsignificant rates to 0 m / year
+        stats_gdf.loc[stats_gdf.sig_time > 0.01, 'rate_time'] = 0
+        stats_gdf.loc[stats_gdf.sig_soi > 0.01, 'rate_soi'] = 0
+
+        # Clip to 50 m rates to remove extreme outliers
+        stats_gdf['rate_time'] = stats_gdf.rate_time.clip(-50, 50)   
+        
 
         ####################
         # Generate summary #
         ####################
 
         # Generate dictionary of polygon IDs and corresponding points
+        print('Identifying points in each polygon')
         poly_points_dict = points_in_poly(points=summary_gdf.geometry, 
                                           polygons=stats_gdf.buffer(summary*2))
 
         # Compute mean and number of obs for each polygon
+        print('Calculating mean rates')
         summary_gdf[['rate_time', 'rate_soi', 'n']] = summary_gdf.apply(
             lambda row: get_matching_data(row.name, 
                                           stats_gdf,
