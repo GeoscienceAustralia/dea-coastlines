@@ -1748,6 +1748,8 @@ def deacl_validation(val_path,
                      .to_crs('EPSG:3577')
                      .dissolve('year')
                      .reset_index())
+        
+        print(deacl_gdf)
 
         # This will fail if no DEA Coastlines data exists for the area
         if (len(deacl_gdf.index) > 0) & (len(val_df.index) > 0):
