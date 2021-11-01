@@ -45,6 +45,121 @@ def standardise_source(df):
     # Replace values
     df['source'] = df.source.replace(remap_dict)
     
+
+def to_vector(df,
+              fname='test.shp',
+              x='x',
+              y='y',
+              crs='EPSG:3577',
+              output_crs='EPSG:3577'):
+    
+    # Convert datetimes to strings
+    df = df.copy()
+    is_datetime = df.dtypes == 'datetime64[ns]'
+    df.loc[:, is_datetime] = df.loc[:, is_datetime].astype(str) 
+    
+    # Export to file
+    gdf = gpd.GeoDataFrame(data=df.loc[:, df.dtypes != 'datetime64[ns]'],
+                     geometry=gpd.points_from_xy(x=df[x], y=df[y]),
+                     crs=crs).to_crs(output_crs).to_file(fname)
+    
+    return gdf
+
+
+def export_eval(df, output_name, output_crs='EPSG:3577'):
+    
+    from shapely.geometry import box, Point, LineString
+
+    # Extract geometries
+    val_points = gpd.points_from_xy(x=df.val_x, y=df.val_y)
+    deacl_points = gpd.points_from_xy(x=df.deacl_x, y=df.deacl_y)
+    df_profiles = df.groupby('id').first()
+    profile_lines = df_profiles.apply(
+        lambda x: LineString([(x.start_x, x.start_y), (x.end_x, x.end_y)]), axis=1)
+
+    # Export validation points
+    val_gdf = gpd.GeoDataFrame(data=df,
+                               geometry=val_points,
+                               crs=output_crs).to_crs('EPSG:4326')
+    val_gdf.to_file(f'figures/eval/{output_name}_val.geojson', 
+                    driver='GeoJSON')
+
+    # Export DEACL points
+    deacl_gdf = gpd.GeoDataFrame(data=df,
+                                 geometry=deacl_points,
+                                 crs=output_crs).to_crs('EPSG:4326')
+    deacl_gdf.to_file(f'figures/eval/{output_name}_deacl.geojson', 
+                      driver='GeoJSON')
+
+    # Export profiles
+    profile_gdf = gpd.GeoDataFrame(data=df_profiles,
+                                 geometry=profile_lines,
+                                 crs=output_crs).to_crs('EPSG:4326')
+    profile_gdf.to_file(f'figures/eval/{output_name}_profiles.geojson', 
+                        driver='GeoJSON')
+
+
+def deacl_val_stats(val_dist, deacl_dist, n=None, remove_bias=False):
+
+    np.seterr(all='ignore')
+
+    # Compute difference and bias
+    diff_dist = val_dist - deacl_dist
+    bias = diff_dist.mean()
+    
+    if remove_bias:
+        deacl_dist += bias
+        diff_dist = val_dist - deacl_dist
+
+    # Compute stats
+    if n is None:
+        n = len(val_dist)
+    else:
+        n = sum(n)
+        
+    mae = mean_absolute_error(val_dist, deacl_dist)
+    rmse = mean_squared_error(val_dist, deacl_dist)**0.5
+    
+    
+    if n > 1:
+        corr = np.corrcoef(x=val_dist, y=deacl_dist)[0][1]
+        stdev = diff_dist.std()
+        
+    else:
+        corr = np.nan
+        stdev = np.nan
+
+    return pd.Series({
+        'n': n,
+        'mae': f'{mae:.2f}',
+        'rmse': f'{rmse:.2f}',
+        'stdev': f'{stdev:.2f}',
+        'corr': f'{corr:.3f}',
+        'bias': f'{bias:.2f}',
+    }).astype(float)
+
+
+def rse_tableformat(not_bias_corrected, bias_corrected, groupby='source'):
+
+    # Fix rounding and total observations
+    not_bias_corrected['n'] = not_bias_corrected['n'].astype(int)
+    not_bias_corrected[['bias', 'stdev', 'mae', 'rmse']] = not_bias_corrected[['bias', 'stdev', 'mae', 'rmse']].round(1)
+    not_bias_corrected['n'] = not_bias_corrected.groupby(groupby)['n'].sum()
+    
+    # Move bias corrected values into brackets
+    not_bias_corrected['MAE (m)'] = (not_bias_corrected.mae.astype('str') + ' (' + 
+                                 bias_corrected.mae.round(1).astype('str') + ')')
+    not_bias_corrected['RMSE (m)'] = (not_bias_corrected.rmse.astype('str') + ' (' + 
+                                  bias_corrected.rmse.round(1).astype('str') + ')')
+    
+    # Sort by MAE, rename columns
+    not_bias_corrected = (not_bias_corrected.sort_values('mae')
+     .drop(['mae', 'rmse'], axis=1)
+     .rename({'stdev': 'SD (m)', 'corr': 'Correlation', 'bias': 'Bias (m)'}, axis=1)
+             [['n', 'Bias (m)', 'MAE (m)', 'RMSE (m)', 'SD (m)', 'Correlation']])
+
+    return not_bias_corrected
+    
             
 def val_slope(profiles_df, intercept_df, datum=0, buffer=25, method='distance'):
 
