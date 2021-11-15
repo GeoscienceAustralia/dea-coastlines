@@ -1857,20 +1857,12 @@ def deacl_validation(val_path,
         maxx, miny = val_df.max().loc[[f'{datum}_x', f'{datum}_y']]
         bbox = gpd.GeoSeries(box(minx, miny, maxx, maxy), crs='EPSG:3577')
 
-#         # Import corresponding waterline contours
-#         deacl_gdf = (gpd.read_file(deacl_path, 
-#                                   bbox=bbox.buffer(100))
-#                      .to_crs('EPSG:3577')
-#                      .dissolve('year')
-#                      .reset_index())
-
         # Import corresponding waterline contours
-        deacl_gdf = gpd.read_file(deacl_path, 
+        deacl_gdf = (gpd.read_file(deacl_path, 
                                   bbox=bbox.buffer(100))
-        deacl_gdf['year'] = deacl_gdf.time.str[0:4] 
-        deacl_gdf['certainty'] = 'good'
-        deacl_gdf = deacl_gdf.drop('time', axis=1).to_crs('EPSG:3577').dissolve('year').reset_index()
-
+                     .to_crs('EPSG:3577')
+                     .dissolve('year')
+                     .reset_index())
 
         # This will fail if no DEA Coastlines data exists for the area
         if (len(deacl_gdf.index) > 0) & (len(val_df.index) > 0):
