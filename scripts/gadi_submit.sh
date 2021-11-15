@@ -22,8 +22,8 @@ do
 
     PBS="#!/bin/bash\n\
     #PBS -N ${study_area}_${vector_version}\n\
-    #PBS -o PBS/DEACoastlines_${study_area}_${vector_version}.out\n\
-    #PBS -e PBS/DEACoastlines_${study_area}_${vector_version}.err\n\
+    #PBS -o scripts/PBS/DEACoastlines_${study_area}_${vector_version}.out\n\
+    #PBS -e scripts/PBS/DEACoastlines_${study_area}_${vector_version}.err\n\
     #PBS -l storage=gdata/v10+gdata/r78+gdata/xu18+gdata/fk4\n\
     #PBS -P r78\n\
     #PBS -q hugemem\n\

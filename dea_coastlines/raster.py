@@ -130,7 +130,27 @@ def load_mndwi(dc,
                                     'oa_nbart_contiguity': 'nearest',
                                     '*': 'cubic'})
         box = product.group(bag, **settings, **query)
-        ds = product.fetch(box, **settings, **query)        
+        ds = product.fetch(box, **settings, **query)   
+        
+    # Rechunk if smallest chunk is less than 10
+    if ((len(ds.x) % 2000) <= 10) or ((len(ds.y) % 2000) <= 10):
+        ds = ds.chunk({'x': 3200, 'y': 3200})
+
+    # Extract boolean mask
+    mask = odc.algo.enum_to_bool(ds.fmask,
+                                 categories=['nodata', 'cloud', 'shadow', 'snow'])
+
+    # Close mask to remove small holes in cloud, open mask to
+    # remove narrow false positive cloud, then dilate
+    mask_cleaned = odc.algo.mask_cleanup(mask=mask,
+                                         filter={
+                                             'closing': 2,
+                                             'opening': 10,
+                                             'dilation': 5
+                                         })
+
+    # Add new mask as nodata pixels
+    ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan).drop('fmask')
         
     return ds
 
