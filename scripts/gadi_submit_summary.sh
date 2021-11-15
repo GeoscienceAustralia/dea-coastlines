@@ -6,8 +6,8 @@ do
 
     PBS="#!/bin/bash\n\
     #PBS -N ${output_name}\n\
-    #PBS -o PBS/DEACoastlines_summary_${output_name}.out\n\
-    #PBS -e PBS/DEACoastlines_summary_${output_name}.err\n\
+    #PBS -o scripts/PBS/DEACoastlines_summary_${output_name}.out\n\
+    #PBS -e scripts/PBS/DEACoastlines_summary_${output_name}.err\n\
     #PBS -l storage=gdata/v10+gdata/r78+gdata/xu18+gdata/fk4\n\
     #PBS -P r78\n\
     #PBS -q hugemem\n\
