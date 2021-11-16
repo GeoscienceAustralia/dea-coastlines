@@ -10,13 +10,6 @@
 #       (Bishop-Taylor et al. 2019b; https://doi.org/10.3390/rs11242984)
 #     * Compute rates of coastal change at every 30 m along Australia's 
 #       non-rocky coastlines using linear regression
-#
-# Compatability:
-#
-#     module use /g/data/v10/public/modules/modulefiles
-#     module load dea/20200713
-#     pip install --user ruptures
-#     pip install --user git+https://github.com/mattijn/topojson/
 
 
 import os
@@ -26,7 +19,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import topojson as tp
-# import ruptures as rpt
 import geopandas as gpd
 from scipy import stats
 from affine import Affine
