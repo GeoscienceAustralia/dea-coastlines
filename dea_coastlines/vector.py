@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import topojson as tp
-import ruptures as rpt
+# import ruptures as rpt
 import geopandas as gpd
 from scipy import stats
 from affine import Affine
@@ -53,7 +53,8 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
   
-def load_rasters(raster_version, 
+def load_rasters(path,
+                 raster_version, 
                  study_area, 
                  water_index='mndwi'):
     
@@ -64,6 +65,8 @@ def load_rasters(raster_version,
     
     Parameters:
     -----------
+    path : string
+        A string giving the directory containing raster outputs.
     raster_version : string
         A string giving the unique DEA Coastlines analysis version
         (e.g. 'v0.3.0') used to load raster files.
@@ -101,19 +104,20 @@ def load_rasters(raster_version,
         for layer_name in [f'{water_index}', 'tide_m', 'count', 'stdev']:
 
             # Get paths of files that match pattern
-            paths = glob.glob(f'output_data/{study_area}_{raster_version}/' \
+            paths = glob.glob(f'{path}/{raster_version}/' \
+                              f'{study_area}_{raster_version}/' \
                               f'*_{layer_name}{layer_type}')
 
             # Test if data was returned
             if len(paths) == 0:
                 raise ValueError(f"No rasters found for grid cell {study_area} "
                                  f"(raster version '{raster_version}'). Verify that "
-                                 f"`deacoastlines_generation.py` has been run "
+                                 f"`raster.py` has been run "
                                  "for this grid cell.")
 
             # Create variable used for time axis
             time_var = xr.Variable('year', 
-                                   [int(i.split('/')[2][0:4]) for i in paths])
+                                   [int(i.split('/')[-1][0:4]) for i in paths])
 
             # Import data
             layer_da = xr.concat([xr.open_rasterio(i) for i in paths], 
@@ -332,7 +336,7 @@ def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
     """
 
     # First, break boolean array into unique, discrete regions/blobs
-    blobs = xr.apply_ufunc(label, ds, None, 1, False, 1)
+    blobs = xr.apply_ufunc(label, ds, 1, False, 1)
 
     # Get blob ID for each tidal modelling point
     x = xr.DataArray(tide_points_gdf.geometry.x, dims='z')

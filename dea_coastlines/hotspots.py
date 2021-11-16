@@ -24,7 +24,7 @@ import pandas as pd
 from rtree import index
 from tqdm.auto import tqdm
 
-import deacoastlines_statistics as deacl_stats
+import dea_coastlines.vector
 
 
 def points_in_poly(points, polygons):
@@ -133,14 +133,14 @@ def main(argv=None):
     
     if coastlines:
         print('Combining annual shorelines')
-        os.system(f'ogrmerge.py -o DEACoastlines_annualshorelines_{summary_version}.shp '
-                  f'output_data/*/vectors/shapefiles/contours_*_{vector_version}_'
+        os.system(f'ogrmerge.py -o ../data/processed/DEACoastlines_annualshorelines_{summary_version}.shp '
+                  f'../data/interim/vector/{vector_version}/*/annualshorelines_*_{vector_version}_'
                   f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
         
     if statistics:
         print('Combining rates of change statistics')
-        os.system(f'ogrmerge.py -o DEACoastlines_ratesofchange_{summary_version}.shp '
-                  f'output_data/*/vectors/shapefiles/stats_*_{vector_version}_'
+        os.system(f'ogrmerge.py -o ../data/processed/DEACoastlines_ratesofchange_{summary_version}.shp '
+                  f'../data/interim/vector/{vector_version}/*/ratesofchange_*_{vector_version}_'
                   f'mndwi_{threshold}.shp -single -overwrite_ds -t_srs EPSG:3577')
     
     if summary:
@@ -163,9 +163,9 @@ def main(argv=None):
                         .set_index('year'))
 
         # Extract summary points
-        summary_gdf = deacl_stats.points_on_line(contours_gdf, 
-                                                 index='2020', 
-                                                 distance=summary)
+        summary_gdf = dea_coastlines.vector.points_on_line(contours_gdf, 
+                                                           index='2019', 
+                                                           distance=summary)
         
         # Drop low observations from rates
         stats_gdf = stats_gdf.loc[stats_gdf.valid_obs > 25]
