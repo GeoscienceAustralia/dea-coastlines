@@ -41,14 +41,19 @@ from skimage.morphology import disk, square
 from skimage.morphology import remove_small_objects
 from datacube.utils.cog import write_cog
 
+import click
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+# Hide Pandas warnings
+pd.options.mode.chained_assignment = None
 
   
 def load_rasters(path,
                  raster_version, 
                  study_area, 
-                 water_index='mndwi'):
+                 water_index='mndwi',
+                 start_year=1988):
     
     """
     Loads DEA Coastlines water index (e.g. 'MNDWI'), 'tide_m', 'count',
@@ -69,6 +74,9 @@ def load_rasters(path,
         A string giving the name of the water index to load. Defaults
         to 'mndwi', which will load raster files produced using the
         Modified Normalised Difference Water Index.
+    start_year : integer, optional
+        The first annual layer to include in the analysis. Defaults to
+        1988.
 
     Returns:
     --------
@@ -123,7 +131,7 @@ def load_rasters(path,
         layer_ds = xr.merge(da_list).squeeze('band', drop=True)
         layer_ds = layer_ds.assign_attrs(layer_da.attrs)
         layer_ds.attrs['transform'] = Affine(*layer_ds.transform)
-        layer_ds = layer_ds.sel(year=slice(1988, None))
+        layer_ds = layer_ds.sel(year=slice(start_year, None))
 
         # Append to list
         ds_list.append(layer_ds)
@@ -1229,7 +1237,7 @@ def calculate_regressions(points_gdf,
     # Compute coastal change rates by linearly regressing annual movements vs. time
     print(f'Comparing annual movements with time')
     rate_out = (points_subset
-                .apply(lambda row: change_regress(y_vals=row.values.astype(np.float),
+                .apply(lambda row: change_regress(y_vals=row.values.astype(float),
                                                   x_vals=x_years,
                                                   x_labels=x_years), axis=1))
     points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
@@ -1247,7 +1255,7 @@ def calculate_regressions(points_gdf,
 
         # Compute stats for each row
         ci_out = (points_subset
-                  .apply(lambda row: change_regress(y_vals=row.values[:-2].astype(np.float), 
+                  .apply(lambda row: change_regress(y_vals=row.values[:-2].astype(float), 
                                                     x_vals=climate_subset[ci].values, 
                                                     x_labels=x_years,
                                                     detrend_params=(row.slope, row.intercept)), axis=1))
@@ -1434,51 +1442,70 @@ def contour_certainty(contours_gdf,
     
     return contours_gdf
 
-    
-def main(argv=None):
-    
-    #########
-    # Setup #
-    #########
 
-    if argv is None:
+@click.command()
+@click.option('--study_area', 
+              type=str, 
+              required=True, 
+              help='A string providing a unique ID of an analysis '
+              'gridcell that will be used to run the analysis. This '
+              'should match a row in the "id" column of the provided '
+              'analysis gridcell vector file.')
+@click.option('--raster_version', 
+              type=str, 
+              required=True, 
+              help='A unique string proving a name that will be used '
+              'for output raster directories and files. This can be '
+              'used to version different analysis outputs.')
+@click.option('--vector_version', 
+              type=str, 
+              help='A unique string proving a name that will be used '
+              'for output vector directories and files. This allows '
+              'multiple versions of vector files to be generated '
+              'from the same input raster data, e.g. for testing '
+              'different water index thresholds or indices. If '
+              'not provided, this will default to the string provided '
+              'to "--raster_version".')
+@click.option('--water_index', 
+              type=str,
+              default='mndwi', 
+              help='A string giving the name of the computed water '
+              'index to use for shoreline extraction. '
+              'Defaults to "mndwi".')
+@click.option('--index_threshold', 
+              type=float,
+              default=0.00, 
+              help='The water index threshold used to extract '
+              'subpixel precision shorelines. Defaults to 0.00.')
+@click.option('--baseline_year', 
+              type=str, 
+              default='2020', 
+              help='The annual shoreline used to generate the '
+              'rates of change point statistics. This is typically '
+              'the most recent annual shoreline in the dataset.')    
+def generate_vectors(study_area, 
+                     raster_version, 
+                     vector_version, 
+                     water_index,
+                     index_threshold,
+                     baseline_year):    
 
-        argv = sys.argv
-        print(sys.argv)
+    ###############################
+    # Load DEA Coastlines rasters #
+    ###############################    
 
-    # If no user arguments provided
-    if len(argv) < 3:
+    yearly_ds, gapfill_ds = load_rasters(path='data/interim/raster',
+                                         raster_version=raster_version,
+                                         study_area=study_area,
+                                         water_index=water_index)
 
-        str_usage = "You must specify a study area ID, raster_version and vector_version"
-        print(str_usage)
-        sys.exit()
-        
-    # Set study area and raster version for analysis
-    study_area = int(argv[1])
-    raster_version = str(argv[2])    
-    
-    # Use vector version if available, else use raster version for vector outputs
-    try:
-        vector_version = str(argv[3])    
-    except:
+    # Create output vector folder using supplied vector version string; 
+    # if no vector version is provided, copy this from raster version
+    if vector_version is None:
         vector_version = raster_version
-        
-    # Set params
-    water_index = 'mndwi'
-    index_threshold = 0.00
-    baseline_year = '2020'
-
-    ###############################
-    # Load DEA CoastLines rasters #
-    ###############################
-    
-    # Load yearly and gapfill data
-    yearly_ds, gapfill_ds = load_rasters(raster_version, 
-                                         study_area, 
-                                         water_index)
-    # Create output vector folder
-    output_dir = f'output_data/{study_area}_{raster_version}/vectors'
-    os.makedirs(f'{output_dir}/shapefiles', exist_ok=True)
+    output_dir = f'data/interim/vector/{vector_version}/' \
+                 f'{study_area}_{vector_version}'
+    os.makedirs(output_dir, exist_ok=True)
 
     ####################
     # Load vector data #
@@ -1491,30 +1518,30 @@ def main(argv=None):
                          crs=yearly_ds.crs)
 
     # Rocky shore mask
-    smartline_gdf = (gpd.read_file('input_data/Smartline.gdb', 
+    smartline_gdf = (gpd.read_file('data/raw/Smartline.gdb', 
                                    bbox=bbox)
                      .to_crs(yearly_ds.crs))
 
     # Tide points
-    tide_points_gdf = (gpd.read_file('input_data/tide_points_coastal.geojson', 
+    tide_points_gdf = (gpd.read_file('data/raw/tide_points_coastal.geojson', 
                                 bbox=bbox)
                        .to_crs(yearly_ds.crs))
 
     # Study area polygon
-    studyarea_path = 'input_data/50km_albers_grid_clipped.geojson'
-    # studyarea_path = 'input_data/50km_albers_grid_coralislands.geojson'
-    comp_gdf = (gpd.read_file(studyarea_path, bbox=bbox)
-                .set_index('id')
-                .to_crs(str(yearly_ds.crs)))
-
-    # Mask to study area
-    study_area_poly = comp_gdf.loc[study_area]
+    studyarea_path = 'data/raw/50km_albers_grid_clipped.geojson'
+    gridcell_gdf = (gpd.read_file(studyarea_path, bbox=bbox)
+                    .set_index('id')
+                    .to_crs(str(yearly_ds.crs)))
+    gridcell_gdf.index = gridcell_gdf.index.astype(str)
+    gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
 
     # Load climate indices
-    climate_df = load_climate_data(index='soi_local', 
-                                   years=(1988, int(baseline_year)), 
-                                   annual=True,
-                                   detrend=True)
+    climate_df = load_climate_data(
+        index='soi',
+        years=(yearly_ds.year.min().item(), 
+               yearly_ds.year.max().item()),
+        annual=True,
+        detrend=True)
 
     ##############################
     # Extract shoreline contours #
@@ -1522,8 +1549,8 @@ def main(argv=None):
 
     # Generate waterbody mask
     waterbody_mask = waterbody_masking(
-        input_data='input_data/SurfaceHydrologyPolygonsRegional.gdb',
-        modification_data='input_data/estuary_mask_modifications.geojson',
+        input_data='data/raw/SurfaceHydrologyPolygonsRegional.gdb',
+        modification_data='data/raw/estuary_mask_modifications.geojson',
         bbox=bbox,
         yearly_ds=yearly_ds)
 
@@ -1535,7 +1562,7 @@ def main(argv=None):
         index_threshold, 
         waterbody_mask, 
         tide_points_gdf,
-        output_path=f'output_data/{study_area}_{raster_version}')
+        output_path=output_dir)
 
     # Extract contours
     contours_gdf = subpixel_contours(
@@ -1549,10 +1576,14 @@ def main(argv=None):
     ######################    
 
     # Extract statistics modelling points along baseline contour
-    points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
+    points_gdf = points_on_line(contours_gdf, 
+                                baseline_year, 
+                                distance=30)
 
     # Clip to remove rocky shoreline points
-    points_gdf = rocky_shores_clip(points_gdf, smartline_gdf, buffer=50)
+    points_gdf = rocky_shores_clip(points_gdf, 
+                                   smartline_gdf, 
+                                   buffer=50)
     
     # If any points remain after rocky shoreline clip
     if points_gdf is not None:
@@ -1570,9 +1601,10 @@ def main(argv=None):
                                            contours_gdf,
                                            climate_df)
         
-        # Add count and span of valid obs, Shoreline Change Envelope (SCE), 
-        # Net Shoreline Movement (NSM) and Max/Min years
-        stats_list = ['valid_obs', 'valid_span', 'sce', 'nsm', 'max_year', 'min_year']
+        # Add count and span of valid obs, Shoreline Change Envelope 
+        # (SCE), Net Shoreline Movement (NSM) and Max/Min years
+        stats_list = ['valid_obs', 'valid_span', 'sce', 
+                      'nsm', 'max_year', 'min_year']
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x), axis=1)
         
@@ -1597,16 +1629,15 @@ def main(argv=None):
             col_schema = schema_dict.items()
             
             # Clip stats to study area extent
-            stats_path = f'{output_dir}/stats_{study_area}_{vector_version}_' \
-                         f'{water_index}_{index_threshold:.2f}'
-            points_gdf = points_gdf[points_gdf.intersects(study_area_poly['geometry'])]
+            stats_path = f'{output_dir}/ratesofchange_{study_area}_' \
+                         f'{vector_version}_{water_index}_{index_threshold:.2f}'
+            points_gdf = points_gdf[points_gdf.intersects(gridcell_gdf.geometry.item())]
 
             # Export to GeoJSON
             points_gdf.to_crs('EPSG:4326').to_file(f'{stats_path}.geojson', 
                                                    driver='GeoJSON')
 
             # Export as ESRI shapefiles
-            stats_path = stats_path.replace('vectors', 'vectors/shapefiles')
             points_gdf.to_file(f'{stats_path}.shp',
                                schema={'properties': col_schema,
                                        'geometry': 'Point'})
@@ -1616,25 +1647,23 @@ def main(argv=None):
     ###################    
     
     # Assign certainty to contours based on underlying masks
-    contours_gdf = contour_certainty(
-        contours_gdf=contours_gdf, 
-        output_path=f'output_data/{study_area}_{raster_version}')
-    
+    contours_gdf = contour_certainty(contours_gdf,
+                                     output_path=output_dir)
+
     # Add maturity details
     contours_gdf['maturity'] = 'final'
     contours_gdf.loc[contours_gdf.index == baseline_year, 'maturity'] = 'interim'
 
     # Clip annual shoreline contours to study area extent
-    contour_path = f'{output_dir}/contours_{study_area}_{vector_version}_' \
+    contour_path = f'{output_dir}/annualshorelines_{study_area}_{vector_version}_' \
                    f'{water_index}_{index_threshold:.2f}'
-    contours_gdf['geometry'] = contours_gdf.intersection(study_area_poly['geometry'])
+    contours_gdf['geometry'] = contours_gdf.intersection(gridcell_gdf.geometry.item())
     contours_gdf.reset_index().to_crs('EPSG:4326').to_file(f'{contour_path}.geojson', 
                                                            driver='GeoJSON')
 
     # Export stats and contours as ESRI shapefiles
-    contour_path = contour_path.replace('vectors', 'vectors/shapefiles')
     contours_gdf.reset_index().to_file(f'{contour_path}.shp')
 
 
 if __name__ == "__main__":
-    main()
+    generate_vectors()
