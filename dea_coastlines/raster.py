@@ -516,8 +516,8 @@ def export_annual_gapfill(ds,
               'for output raster directories and files. This can be '
               'used to version different analysis outputs.')
 @click.option('--start_year', 
-              type=int, 
-              default=1987, 
+              type=str, 
+              default='1987', 
               help='The first year used to load data. Note that this '
               'should buffer the desired temporal extent of the '
               'analysis by one year to allow sufficient data for '
@@ -525,8 +525,8 @@ def export_annual_gapfill(ds,
               '`--start_year 1987` to extract a shoreline timeseries '
               'that commences in 1988.')
 @click.option('--end_year', 
-              type=int, 
-              default=2021, 
+              type=str, 
+              default='2021', 
               help='The last year used to load data. Note that this '
               'should buffer the desired temporal extent of the '
               'analysis by one year to allow sufficient data for '
@@ -538,6 +538,7 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
     #####################################
     # Connect to datacube, Dask cluster #
     #####################################
+
 
     # Connect to datacube    
     dc = datacube.Datacube(app='DEACoastlines')
@@ -566,7 +567,7 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
     # Create query
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {'geopolygon': geopoly.buffer(0.05),
-             'time': (str(start_year), str(end_year)),
+             'time': (start_year, end_year),
              'dask_chunks': {'time': 1, 'x': 3000, 'y': 3000}}
 
     # Load virtual product    
