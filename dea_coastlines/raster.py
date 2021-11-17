@@ -20,6 +20,7 @@
 import os
 import mock
 import otps
+import pytz
 import datacube
 import datetime
 import odc.algo
@@ -140,7 +141,72 @@ def load_mndwi(dc,
     return ds.drop('fmask')
 
 
-def model_tides(ds, points_gdf, extent_buffer=0.05):
+def otps_tides(lats, lons, times, timezone=None):
+    """
+    Model tide heights for one or more locations and times using the 
+    OTPS TPXO8 tidal model.    
+    
+    Parameters:
+    -----------
+    lats, lons : numeric or list of numeric values
+        One or more latitudes and longitude coordinates used to define
+        the location at which to model tides.
+    times : datetime.datetime or list of datetime.datetimes
+        One or more `datatime.datetime` objects providing the times at
+        which to model tides. By default these are assumed to be in UTC
+        time; if this is not the case, use `timezone` below.
+    timezone : string, optional
+        If provided `datatime.datetime`s are not in UTC times, use this
+        parameter to declare a timezone. E.g. to model tides for times 
+        expressed in local time at Darwin, Australia, provide 
+        `timezone='Australia/Darwin'`. Defaults to `None`, which assumes
+        provided times are UTC. This is used to convert all times to UTC
+        using the `pytz` module. For a full list of timezones, run:
+        `import pytz; pytz.all_timezones`.
+        
+    Returns:
+    --------
+    tidepoints_df : pandas.DataFrame
+        An `pandas.DataFrame` with a "time" index, "lat" and "lon"
+        columns, and a "tide_m" column giving tide heights at each 
+        point location.
+    """    
+
+    # Convert to list if provided as individual values
+    if not isinstance(lats, list):
+        lats = [lats]
+    if not isinstance(lons, list):
+        lons = [lons]
+    if not isinstance(times, list):
+        times = [times]
+
+    # If a timezone is provided, localise the input times then
+    # standardise to UTC times
+    if timezone:
+        times = [
+            pytz.timezone(timezone).localize(time).astimezone(pytz.utc)
+            for time in times
+        ]
+        
+    # Create list of lat/lon/time scenarios to model tides
+    observed_timepoints = [otps.TimePoint(lon, lat, time) 
+                           for time in times
+                           for lon, lat in zip(lons, lats)]
+
+    # Model tides for each lat/lon/time
+    observed_predictedtides = otps.predict_tide(observed_timepoints)
+
+    # Output results into pandas.DataFrame
+    tidepoints_df = pd.DataFrame([(i.timepoint.timestamp, 
+                                   i.timepoint.lon, 
+                                   i.timepoint.lat, 
+                                   i.tide_m) for i in observed_predictedtides], 
+                                 columns=['time', 'lon', 'lat', 'tide_m']) 
+    
+    return tidepoints_df.set_index('time')
+
+
+def model_tide_points(ds, points_gdf, extent_buffer=0.05):
     """
     Takes an xarray.Dataset (`ds`), extracts a subset of tide modelling 
     points from a geopandas.GeoDataFrame based on`ds`'s extent, then 
@@ -180,27 +246,17 @@ def model_tides(ds, points_gdf, extent_buffer=0.05):
     subset_gdf = points_gdf[points_gdf.geometry.intersects(buffered)]
 
     # Extract lon, lat from tides, and time from satellite data
-    x_vals = subset_gdf.geometry.x
-    y_vals = subset_gdf.geometry.y
+    x_vals = subset_gdf.geometry.x.tolist()
+    y_vals = subset_gdf.geometry.y.tolist()
     observed_datetimes = ds.time.data.astype('M8[s]').astype('O').tolist()
 
-    # Create list of lat/lon/time scenarios to model
-    observed_timepoints = [otps.TimePoint(lon, lat, date) 
-                           for date in observed_datetimes
-                           for lon, lat in zip(x_vals, y_vals)]
-
-    # Model tides for each scenario
-    observed_predictedtides = otps.predict_tide(observed_timepoints)
-
-    # Output results into pandas.DataFrame
-    tidepoints_df = pd.DataFrame([(i.timepoint.timestamp, 
-                                   i.timepoint.lon, 
-                                   i.timepoint.lat, 
-                                   i.tide_m) for i in observed_predictedtides], 
-                                 columns=['time', 'lon', 'lat', 'tide_m']) 
+    # Model tides for each coordinate and time
+    tidepoints_df = otps_tides(lats=y_vals, 
+                               lons=x_vals, 
+                               times=observed_datetimes)
 
     # Convert data to spatial geopandas.GeoDataFrame
-    tidepoints_gdf = gpd.GeoDataFrame(data={'time': tidepoints_df.time, 
+    tidepoints_gdf = gpd.GeoDataFrame(data={'time': tidepoints_df.index, 
                                             'tide_m': tidepoints_df.tide_m}, 
                                       geometry=gpd.points_from_xy(tidepoints_df.lon, 
                                                                   tidepoints_df.lat), 
@@ -539,7 +595,6 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
     # Connect to datacube, Dask cluster #
     #####################################
 
-
     # Connect to datacube    
     dc = datacube.Datacube(app='DEACoastlines')
     
@@ -586,7 +641,7 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
     # geopandas.GeoDataFrame with a "time" index (matching every time 
     # step in our Landsat data), and a "tide_m" column giving the tide 
     # heights at each point location at that time.
-    tidepoints_gdf = model_tides(ds, points_gdf)
+    tidepoints_gdf = model_tide_points(ds, points_gdf)
     
     # Test if there is data and skip rest of the analysis if not
     if tidepoints_gdf.geometry.unique().shape[0] <= 1:
