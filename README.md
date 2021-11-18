@@ -52,7 +52,7 @@ The code currently runs on the [Digital Earth Australia Sandbox](https://docs.de
 
 #### Python modules
 
-Code in this repository is included in the `dea_coastlines` Python package which contains three main modules that are intended to be run in the following order:
+Code in this repository is included in the `dea_coastlines` Python package which contains three main modules. These are intended to be run in the following order:
 
 1. [`dea_coastlines.raster`](dea_coastlines/raster.py): This module conducts raster generation for DEA Coastlines. This analysis is processed on individual study area tiles to minimuse peak memory usage.
 
