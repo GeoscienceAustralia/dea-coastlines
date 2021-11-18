@@ -1448,15 +1448,18 @@ def contour_certainty(contours_gdf,
               type=str, 
               required=True, 
               help='A string providing a unique ID of an analysis '
-              'gridcell that will be used to run the analysis. This '
+              'gridcell that was previously used to generate raster '
+              'files. This is used to identify the raster files that '
+              'will be used as inputs for shoreline extraction, and '
               'should match a row in the "id" column of the provided '
               'analysis gridcell vector file.')
 @click.option('--raster_version', 
               type=str, 
               required=True, 
-              help='A unique string proving a name that will be used '
-              'for output raster directories and files. This can be '
-              'used to version different analysis outputs.')
+              help='A unique string providing a name that was used '
+              'to generate raster files. This is used to identify the '
+              'raster files that will be used as inputs for shoreline '
+              'extraction.')
 @click.option('--vector_version', 
               type=str, 
               help='A unique string proving a name that will be used '
@@ -1464,8 +1467,8 @@ def contour_certainty(contours_gdf,
               'multiple versions of vector files to be generated '
               'from the same input raster data, e.g. for testing '
               'different water index thresholds or indices. If '
-              'not provided, this will default to the string provided '
-              'to "--raster_version".')
+              'not provided, this will default to the same string '
+              'supplied to "--raster_version".')
 @click.option('--water_index', 
               type=str,
               default='mndwi', 
