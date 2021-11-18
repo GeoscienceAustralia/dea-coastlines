@@ -681,12 +681,8 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
                           tide_cutoff_min, 
                           tide_cutoff_max)    
     
-    ##################
-    # Run statistics #
-    ##################
-    
-    # Once all rasters have been generated, compute contours and statistics
-#     os.system(f'python /g/data/r78/DEACoastlines/deacoastlines_statistics.py {study_area} {raster_version} {vector_version}')
+    # Close dask client
+    client.close()
     
         
 if __name__ == "__main__":
