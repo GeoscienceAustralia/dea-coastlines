@@ -2,7 +2,7 @@
 
 # Digital Earth Australia Coastlines
 
-[![DOI](https://img.shields.io/badge/DOI-10.26186/116268-0e7fbf.svg)](https://doi.org/10.26186/116268)
+[![DOI](https://img.shields.io/badge/DOI-10.1016/j.rse.2021.112734-0e7fbf.svg)](https://doi.org/10.1016/j.rse.2021.112734)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **Access:** [Explore DEA Coastlines on the interactive Digital Earth Australia Maps platform](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1)
@@ -34,91 +34,88 @@ The ability to map shoreline positions for each year provides valuable insights 
 
 ## Table of contents
 * [Repository code](#repository-code)
-    * [Digital Earth Australia Notebooks repository](#digital-earth-australia-notebooks-repository)
-* [Data access](#data-access)
-    * [Digital Earth Australia Maps](#digital-earth-australia-maps)
+    * [Python modules](#python-modules)
+    * [Jupyter notebooks](#jupyter-notebooks)
+    * [Command-line interface](#command-line-interface)
+* [DEA Coastlines dataset](#dea-coastlines-dataset)
+    * [Data download](#data-download)
+    * [Interactive map](#interactive-map)
     * [Loading DEA Coastlines data from the Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
     * [Loading DEA Coastlines data from the Web Feature Service (WFS) using R](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-r)
-* [DEA Coastlines dataset](#dea-coastlines-dataset)
-    * [Annual shorelines](#annual-shorelines)
-    * [Rates of change statistics](#rates-of-change-statistics)
-    * [Coastal change hotspots](#coastal-change-hotspots)
-* [Caveats and limitations](#caveats-and-limitations)
 * [References](#references)
 
 ---
 
 ## Repository code
 The code in this repository is built on the [Digital Earth Australia](https://docs.dea.ga.gov.au/) implementation of the [Open Data Cube](https://www.opendatacube.org/) software for accessing, managing, and analyzing large quantities of Earth observation (EO) data. 
-The software currently runs on [Australia's National Computational Infrastructure (NCI)](https://nci.org.au/). 
-Instructions for setting up an account on the NCI's Virtual Desktop Infrastructure or Gadi supercomputer [can be found here](https://docs.dea.ga.gov.au/setup/NCI/README.html).
+The code currently runs on the [Digital Earth Australia Sandbox](https://docs.dea.ga.gov.au/setup/Sandbox/sandbox.html) infrastructure.
 
-This repository contains three main scripts (and corresponding Jupyter notebooks) that are intended to be run in the following order:
+#### Python modules
 
-1. [`deacoastlines_generation.py`](deacoastlines_generation.py)/[`DEACoastlines_generation.ipynb`](DEACoastlines_generation.ipynb): This code conducts raster generation for DEA Coastlines:
+Code in this repository is included in the `dea_coastlines` Python package which contains three main modules that are intended to be run in the following order:
+
+1. [`dea_coastlines.raster`](dea_coastlines/raster.py): This module conducts raster generation for DEA Coastlines. This analysis is processed on individual study area tiles to minimuse peak memory usage.
 
     * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
-    * Convert each satellite image into a remote sensing water index (MNDWI)
+    * Convert each satellite image into a remote sensing water index (e.g. MNDWI)
     * For each satellite image, model ocean tides into a 2 x 2 km grid based on exact time of image acquisition
     * Interpolate tide heights into spatial extent of image stack
     * Mask out high and low tide pixels by removing all observations acquired outside of 50 percent of the observed tidal range centered over mean sea level
     * Combine tidally-masked data into annual median composites from 1988 to the present representing the shoreline at approximately mean sea level
 
-2. [`deacoastlines_statistics.py`](deacoastlines_statistics.py)/[`DEACoastlines_statistics.ipynb`](DEACoastlines_statistics.ipynb): This code conducts vector subpixel coastline extraction:
+2. [`dea_coastlines.vector`](dea_coastlines/vector.py): This module conducts vector subpixel coastline extraction and rates of change statistics calculation. This analysis is processed on individual study area tiles to minimuse peak memory usage.
 
     * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
     * Extract shoreline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
     * Compute rates of coastal change at every 30 m along Australia's non-rocky coastline using linear regression
   
-3. [`deacoastlines_summary.py`](deacoastlines_summary.py): This script combines individual datasets into continental DEA Coastlines layers:
+3. [`dea_coastlines.continental`](dea_coastlines/continental.py): This module combines tiled layers into seamless continental-scale vector files:
 
-    * Combines output shoreline and rates of change statistics point vectors into single continental datasets
+    * Combines multiple output shoreline and rates of change statistics point vectors into single continental datasets
     * Aggregates this data to produce a moving window coastal change hotspot dataset that summarises coastal change at regional and continental scale.
 
-#### Digital Earth Australia Notebooks repository
+#### Jupyter notebooks
 
-An additional Jupyter notebook that provides useful tools for loading and analysing DEA Coastlines data can be found on the [DEA Notebooks repository](https://github.com/GeoscienceAustralia/dea-notebooks):
 
-* [Introduction to DEA Coastlines](https://github.com/GeoscienceAustralia/dea-notebooks/blob/develop/DEA_datasets/DEA_Coastlines.ipynb):
 
-    * Loading DEA Coastlines data in a Jupyter notebook or Python using the DEA Coastlines Web Feature Service (WFS)
-    * Interactively drawing a transect across DEA Coastlines annual shorelines and generating a plot of coastal change through time
-    * Interactively plotting the distribution of retreating and growing coastlines within a selected region
+#### Command-line interface
 
-This notebook is also available on the interactive [DEA Sandbox learning and analysis environment](https://github.com/GeoscienceAustralia/dea-notebooks) for easy access via a web browser.
+These three modules have a command-line interface that can be used to automate each stage of the analysis. For example:
+```
+python dea_coastlines/raster.py --study_area 1 --raster_version v1.0.0 --start_year 1987 --end_year 2021
+python dea_coastlines/vector.py --study_area 1 --raster_version v1.0.0 --baseline_year 2020
+python dea_coastlines/continental.py --vector_version v1.0.0 --shorelines True --ratesofchange True --hotspots True
+```
+For help on using these command line tools, run:
+```
+python dea_coastlines/raster.py --help
+python dea_coastlines/vector.py --help
+python dea_coastlines/continental.py --help
+```
 
 ---
 
-## Data access
+## DEA Coastlines dataset
 
-### Digital Earth Australia Maps
+> _For the most up-to-date product metadata, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
 
-To explore DEA Coastlines on the interactive Digital Earth Australia Maps platform, visit the link below:
+### Data access
 
-[https://maps.dea.ga.gov.au/#share=s-DEACoastlines](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1)
+#### Data download
 
-To add DEA Coastlines to DEA Maps manually:
+To download DEA Coastlines data for the entire Australian coastline, visit the "Access" tab of the [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines#access) and follow the instructions under "Access notes". Data is available in two formats:
 
-1. Open DEA Maps: http://maps.dea.ga.gov.au/ 
-2. Select `Explore map data` on the top-left. 
-3. Select `Sea, ocean and coast > DEA > DEA Coastlines`
-4. Click blue 'Add to the map' button on top-right. 
+* GeoPackage (recommended): suitable for QGIS; includes built-in symbology for easier interpretation
+* ESRI Shapefiles: suitable for ArcMap and QGIS
 
-By default, the map will show hotspots of coastal change at continental scale. 
-Red dots represent retreating coastlines (e.g. erosion), while blue dots indicate seaward growth. The larger the dots and the brighter the colour, the more coastal change that is occurring at the location. 
+#### Interactive map
 
-More detailed rates of change will be displayed as you zoom in. 
-To view a time series chart of how an area of coastline has changed over time, click on any labelled point (press "Expand" on the pop-up for more detail):
+To explore DEA Coastlines on an interactive map, visit the [Digital Earth Australia Maps platform](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1).
 
 ![Zooming to annual rates of change and plotting chart in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_1.gif)
 
-Zoom in further to view individual annual shorelines: 
 
-![Zooming to annual coastlines in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_2.gif)
- 
-> Note: To view a DEA Coastlines layer that is not currently visible (e.g. rates of change statistics at full zoom), each layer can be added to the map individually from the `Coastal > Digital Earth Australia Coastlines > Supplementary data` directory.
-
-### Loading DEA Coastlines data from the Web Feature Service (WFS) using Python
+#### Loading DEA Coastlines data from the Web Feature Service (WFS) using Python
 
 DEA Coastlines data can be loaded directly in a Python script or Jupyter Notebook using the DEA Coastlines Web Feature Service (WFS) and `geopandas`:
 
@@ -179,90 +176,8 @@ deacl_statistics = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&ve
   sf::st_set_crs(3577)
 ```
 
----
-
-## DEA Coastlines dataset
-
-> _For the most up-to-date product metadata, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
-
-The **DEA Coastlines** product contains three layers:
-
-### Annual shorelines
-Annual shoreline vectors from 1988 to the present that represent the median or ‘typical’ position of the coastline at approximately mean sea level tide (0 m AHD) for each year.
-   * Semi-transparent coastlines have low certainty due to either few non-cloudy satellite observations, poor tidal modelling performance, or aerosol issues (see [Caveats and limitations](#caveats-and-limitations))
-
-![DEA Coastlines annual coastlines layer](visualisation/images/DEACoastlines_annualcoastlines.JPG)
-
-### Rates of change statistics
-A point dataset providing robust rates of coastal change statistics for every 30 m along Australia’s non-rocky (clastic) coastlines.
-The most recent 2019 coastline is used as a baseline for measuring rates of change.
-
-![DEA Coastlines rates of change layer](visualisation/images/DEACoastlines_ratesofchange.JPG)
-
-On the [interactive DEA Coastlines web map](https://maps.dea.ga.gov.au/#share=s-DEACoastlines&playStory=1), points are shown for locations with statistically significant rates of change only (p-value < 0.01, see `sig_time` below). 
-Each point shows annual rates of change (in metres per year; see `rate_time` below), and an estimate of uncertainty in brackets (95% confidence interval; see `se_time`). 
-For example, there is a 95% chance that a point with a label **-10.0 m (±1.0 m)** has an erosion rate between -9.0 and -11.0 metres per year.
-
-The rates of change statistics dataset contains the following attribute columns that can be accessed by clicking on labelled points in the web map: 
-
-##### Annual shoreline distances
-   * `dist_1990`, `dist_1991` etc: Annual shoreline positions/distances (in metres) relative to the 2019 baseline shoreline. Negative values indicate that an annual shoreline was located inland of the 2019 baseline shoreline.    
-   
-##### Rates of change statistics
-   * `rate_time`: Annual rates of change (in metres per year) calculated by linearly regressing all annual shoreline distances against time. Negative values indicate retreat, while positive values indicate growth. 
-   * `sig_time`: Significance (p-value) of the linear relationship between annual shoreline distances and time. Small values (e.g. p-value < 0.01 or 0.05) may indicate a coastline is undergoing consistent coastal change through time. 
-   * `se_time`: Standard error (in metres) of the linear relationship between annual shoreline distances and time. This can be used to generate confidence intervals around the rate of change given by `rate_time` (e.g. 95% confidence interval = `se_time * 1.96`)
-   * `outl_time`: Individual annual shorelines are noisy estimators of coastline position that can be influenced by environmental conditions (e.g. clouds, breaking waves, sea spray) or modelling issues (e.g. poor tidal modelling results or limited clear satellite observations). To obtain robust rates of change, outlying years are excluded using a robust MAD outlier detection algorithm, and recorded in this column.
-   
-##### Climate driver statistics
-   * `rate_soi`: The slope of any linear relationship between annual shoreline distances and the Southern Oscillation Index or SOI (in metres change per unit of SOI). Negative values indicate that shorelines have historically retreated during La Niña years. This comparison is made after first de-trending both the annual SOI values and annual shoreline distances to remove any trends of chronic shoreline growth or retreat. Please note: this comparison was made against SOI data from [NOAA](https://www.ncdc.noaa.gov/teleconnections/enso/indicators/soi/) which does not apply a standard scaling factor to SOI values unlike Australia's [BOM](http://www.bom.gov.au/climate/glossary/soi.shtml). Divide `rate_soi` and `se_soi` values by 10 to get rates of coastal change per increase in BOM-scaled SOI values.
-   * `sig_soi`: Significance (p-value) of the linear relationship between annual shoreline distances and SOI. 
-   * `se_soi`: Standard error (in metres) of the linear relationship between annual shoreline distances and SOI.
-   * `outl_soi`: A list of any years excluded from the SOI regression by the robust outlier detection algorithm.
-
-##### Other derived statistics
-   * `retreat`, `growth`: True/False columns indicating whether a shoreline was retreating (i.e. moving inland) or growing (i.e. moving seaward) based on the `rate_time` column.
-   * `sce`: Shoreline Change Envelope (SCE). A measure of the maximum change or variability across all annual shorelines, calculated by computing the maximum distance between any two annual coastlines (excluding outliers).
-   * `nsm`: Net Shoreline Movement (NSM). The distance between the oldest (1988) and most recent (2019) annual shoreline (excluding outliers). Negative values indicate the shoreline retreated between the oldest and most recent shoreline; positive values indicate growth.
-   * `max_year`, `min_year`: The year that annual shorelines were at their maximum (i.e. located furthest towards the ocean) and their minimum (i.e. located furthest inland) respectively (excluding outliers).
-   * `breaks`: An experimental list of any shorelines identified as non-linear breakpoints in the time series. This can be useful for verifying that a significant trend is indeed linear, or identifying areas of rapid non-linear change (e.g. associated with coastal development or management).
-
-### Coastal change hotspots
-A point layer giving the average rate of change (in metres per year) for significant statistics points within a moving 5 km window along the coastline. This is useful for visualising regional or continental-scale patterns of coastal change. 
-
-![DEA Coastlines coastal change hotspots](visualisation/images/DEACoastlines_hotspots.JPG)
-
----
-
-## Caveats and limitations
-> _For the most up-to-date information about caveats and limitations, visit the official [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines-landsat)_
-
-
-#### Annual shorelines
-* Annual shorelines from DEA Coastlines summarise the median (i.e. "dominant") position of the coastline throughout the entire year, corrected to a consistent tide height (0 m AMSL). Annual shorelines will therefore not reflect shorter-term coastal variability, for example changes in shoreline position between low and high tide, seasonal effects, or short-lived influences of individual storms. This means that these annual shorelines will show lower variability than the true range of coastal variability observed along the Australian coastline.
-
-#### Rates of change statistics
-* Rates of change statistics may be inaccurate or invalid for some complex mouthbars, or other coastal environments undergoing rapid non-linear change through time. In these regions, it is advisable to visually assess the underlying annual shoreline data when interpreting rates of change to ensure these values are fit-for-purpose. Regions significantly affected by this issue include:
-    * Cambridge Gulf, Western Australia
-    * Joseph Bonaparte Gulf, Western Australia/Northern Territory
-    
-#### Data quality issues
-* Annual shorelines may be less accurate in regions with complex tidal dynamics or large tidal ranges, and low-lying intertidal flats where small tidal modelling errors can lead to large horizontal offsets in coastline positions. Annual shoreline accuracy in intertidal environments may also be reduced by the influence of wet muddy substrate or intertidal vegetation, which can make it difficult to extract a single unambiguous shoreline (Bishop-Taylor et al. 2019a, 2019b). It is anticipated that future versions of this product will show improved results due to integrating more advanced methods for waterline detection in intertidal regions, and through improvements in tidal modelling methods. Regions significantly affected by intertidal issues include:
-    * The Pilbara coast, Western Australia from Onslow to Pardoo
-    * The Mackay region, Queensland from Proserpine to Broad Sound
-    * The upper Spencer Gulf, South Australia from Port Broughton to Port Augusta
-    * Western Port Bay, Victoria from Tooradin to Pioneer Bay
-    * Hunter Island Group, Tasmania from Woolnorth to Perkins Island
-    * Moreton Bay, Queensland from Sandstone Bay to Wellington Point
-* Shorelines may be noisier and more difficult to interpret in regions with low availability of satellite observations caused by persistent cloud cover. In these regions it can be difficult to obtain the minimum number of clear satellite observations required to generate clean, noise-free annual shorelines. Affected regions include:
-    * South-western Tasmania from Macquarie Heads to Southport
-* In some urban locations, the spectra of bright white buildings located near the coastline may be inadvertently confused with water, causing a land-ward offset from true shoreline positions. 
-* Some areas of extremely dark and persistent shadows (e.g. steep coastal cliffs across southern Australia) may be inadvertently mapped as water, resulting in a landward offset from true shoreline positions. 
-* 1991 and 1992 shorelines are currently affected by aerosol-related issues caused by the 1991 Mount Pinatubo eruption. These shorelines should be interpreted with care, particularly across northern Australia. 
-
-#### Validation approach
-* To compare annual shorelines to validation datasets, multiple validation observations in a year were combined into a single median measurement of shoreline position. In the case where only a single validation observation was taken for a year, this single observation may not be reflective of typical shoreline conditions across the entire year period. Because of this, validation results are expected to be more reliable for validation datasets with multiple observations per year.
-* The current validation approach was biased strongly towards Australia's south-western, southern and south-eastern coastlines due to the availability of historical coastal monitoring data. This bias prevented us from including more complex intertidal environments in our validation, which is likely to have inflated the accuracy of our results due to issues outlined above.
+#### Jupyter Notebook
+An [Introduction to DEA Coastlines](https://docs.dea.ga.gov.au/notebooks/DEA_datasets/DEA_Coastlines.html) Jupyter notebook providing additional useful tools for loading and analysing DEA Coastlines data can be found on the [DEA Notebooks repository](https://github.com/GeoscienceAustralia/dea-notebooks). This notebook is available on the interactive [DEA Sandbox learning and analysis environment](https://docs.dea.ga.gov.au/setup/Sandbox/sandbox.html) for easy access via a web browser.
 
 ---
 
