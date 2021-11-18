@@ -75,18 +75,18 @@ Code in this repository is included in the `dea_coastlines` Python package which
     * Aggregates this data to produce a moving window coastal change hotspot dataset that summarises coastal change at regional and continental scale.
 
 #### Jupyter notebooks
-
+An interactive walk-through of each step of the tiled raster and vector DEA Coastlines workflow is provided in the following Jupyter Notebooks. These notebooks can be used to assist in prototyping or troubleshooting:
+* [DEA Coastlines raster generation](notebooks/DEACoastlines_generation_raster.ipynb)
+* [DEA Coastlines vector generation](notebooks/DEACoastlines_generation_vector.ipynb)
 
 
 #### Command-line interface
 
-These three modules have a command-line interface that can be used to automate each stage of the analysis. For example:
-```
-python dea_coastlines/raster.py --study_area 1 --raster_version v1.0.0 --start_year 1987 --end_year 2021
-python dea_coastlines/vector.py --study_area 1 --raster_version v1.0.0 --baseline_year 2020
-python dea_coastlines/continental.py --vector_version v1.0.0 --shorelines True --ratesofchange True --hotspots True
-```
-For help on using these command line tools, run:
+These three modules have a command-line interface that can be used to automate each stage of the analysis. An example of these tools is provided in the following Jupyter Notebook:
+* [DEA Coastlines generation using command line tools](notebooks/DEACoastlines_generation_CLI.ipynb)
+
+
+For help using these command line tools, run:
 ```
 python dea_coastlines/raster.py --help
 python dea_coastlines/vector.py --help
