@@ -247,7 +247,7 @@ def continental_layers(vector_version, continental_version, water_index,
                               'rate_soi'] = 0
 
         # Clip to 50 m rates to remove extreme outliers
-        ratesofchange_gdf['rate_time'] = ratsesofchange_gdf.rate_time.clip(
+        ratesofchange_gdf['rate_time'] = ratesofchange_gdf.rate_time.clip(
             -50, 50)
 
         #####################
