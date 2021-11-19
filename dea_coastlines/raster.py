@@ -44,13 +44,13 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def load_mndwi(dc, 
-               query,
-               yaml_path, 
-               product_name='ls_nbart_mndwi'):
+def load_water_index(dc, 
+                     query,
+                     yaml_path, 
+                     product_name='ls_nbart_mndwi'):
     """
     This function uses virtual products to load data from GA Collection 
-    3 Landsat 5, 7 and 8, calculate custom remote sensing indices, and 
+    3 Landsat 5, 7 and 8, calculate a custom remote sensing index, and 
     return the data as a single xarray.Dataset.
     
     To minimise resampling effects and maintain the highest data 
@@ -123,12 +123,13 @@ def load_mndwi(dc,
         ds = product.fetch(box, **settings, **query)   
         
     # Rechunk if smallest chunk is less than 10
-    if ((len(ds.x) % 2000) <= 10) or ((len(ds.y) % 2000) <= 10):
+    if ((len(ds.x) % 3000) <= 10) or ((len(ds.y) % 3000) <= 10):
         ds = ds.chunk({'x': 3200, 'y': 3200})
 
     # Extract boolean mask
     mask = odc.algo.enum_to_bool(ds.fmask,
-                                 categories=['nodata', 'cloud', 'shadow', 'snow'])
+                                 categories=['nodata', 'cloud', 
+                                             'shadow', 'snow'])
 
     # Close mask to remove small holes in cloud, open mask to
     # remove narrow false positive cloud, then dilate
@@ -628,10 +629,10 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
              'dask_chunks': {'time': 1, 'x': 3000, 'y': 3000}}
 
     # Load virtual product    
-    ds = load_mndwi(
+    ds = load_water_index(
         dc,
         query,
-        yaml_path='../configs/virtual_product_ga_landsat.yaml',
+        yaml_path='configs/virtual_product_dea_landsat.yaml',
         product_name='ls_nbart_mndwi')
 
     ###################
