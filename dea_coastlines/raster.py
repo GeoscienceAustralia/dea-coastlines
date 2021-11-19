@@ -18,7 +18,6 @@
 #       mean sea level (0 m AHD)
 
 import os
-import mock
 import otps
 import pytz
 import datacube
@@ -76,6 +75,7 @@ def load_mndwi(dc,
         An `xarray.Dataset` containing a time series of water index
         data (e.g. MNDWI) for the provided datacube query
     """
+    import mock
     
     def custom_native_geobox(ds, measurements=None, basis=None):
         """
@@ -629,7 +629,7 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
     ds = load_mndwi(
         dc,
         query,
-        yaml_path='configs/deacoastlines_virtual_products_v1.0.0.yaml',
+        yaml_path='../configs/virtual_product_ga_landsat.yaml',
         product_name='ls_nbart_mndwi')
 
     ###################
