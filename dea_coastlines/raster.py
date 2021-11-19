@@ -34,6 +34,8 @@ from shapely.geometry import shape
 from datacube.utils.cog import write_cog
 from datacube.utils.geometry import Geometry
 from datacube.virtual import catalog_from_file, construct
+
+# Load dea-tools funcs
 from dea_tools.spatial import interpolate_2d
 from dea_tools.dask import create_local_dask_cluster
 
