@@ -1,0 +1,192 @@
+about: Catalog of virtual products for loading Landsat USGS Collection 2 products
+products:
+
+    # Landsat 8 USGS Collection 2 Tier 1 data, rescaled using scaling factors and
+    # masked to remove nodata
+    ls8_sr_scaled:
+        recipe:
+            &ls8_sr_scaled
+            transform: expressions
+            input:
+                product: ls8_sr
+                measurements: [blue, green, red, nir, swir_1, swir_2, pixel_quality]
+                collection_category: 'T1'
+                group_by: solar_day
+            output:
+                 blue:
+                     formula: 2.75e-5 * blue - 0.2
+                     dtype: float32
+                 green:
+                     formula: 2.75e-5 * green - 0.2
+                     dtype: float32
+                 red: 
+                     formula: 2.75e-5 * red - 0.2
+                     dtype: float32
+                 nir: 
+                     formula: 2.75e-5 * nir - 0.2
+                     dtype: float32
+                 swir_1: 
+                     formula: 2.75e-5 * swir_1 - 0.2
+                     dtype: float32
+                 swir_2: 
+                     formula: 2.75e-5 * swir_2 - 0.2
+                     dtype: float32
+                 pixel_quality: pixel_quality
+
+    # Landsat 7 USGS Collection 2 Tier 1 data, rescaled using scaling factors and
+    # masked to remove nodata    
+    ls7_sr_scaled:
+        recipe:
+            &ls7_sr_scaled
+            transform: expressions
+            input:
+                product: ls7_sr
+                measurements: [blue, green, red, nir, swir_1, swir_2, pixel_quality]
+                collection_category: 'T1'
+                group_by: solar_day
+            output:
+                 blue:
+                     formula: 2.75e-5 * blue - 0.2
+                     dtype: float32
+                 green:
+                     formula: 2.75e-5 * green - 0.2
+                     dtype: float32
+                 red: 
+                     formula: 2.75e-5 * red - 0.2
+                     dtype: float32
+                 nir: 
+                     formula: 2.75e-5 * nir - 0.2
+                     dtype: float32
+                 swir_1: 
+                     formula: 2.75e-5 * swir_1 - 0.2
+                     dtype: float32
+                 swir_2: 
+                     formula: 2.75e-5 * swir_2 - 0.2
+                     dtype: float32
+                 pixel_quality: pixel_quality
+
+    # Landsat 5 USGS Collection 2 Tier 1 data, rescaled using scaling factors and
+    # masked to remove nodata
+    ls5_sr_scaled:
+        recipe:
+            &ls5_sr_scaled
+            transform: expressions
+            input:
+                product: ls5_sr
+                measurements: [blue, green, red, nir, swir_1, swir_2, pixel_quality]
+                collection_category: 'T1'
+                group_by: solar_day
+            output:
+                 blue:
+                     formula: 2.75e-5 * blue - 0.2
+                     dtype: float32
+                 green:
+                     formula: 2.75e-5 * green - 0.2
+                     dtype: float32
+                 red: 
+                     formula: 2.75e-5 * red - 0.2
+                     dtype: float32
+                 nir: 
+                     formula: 2.75e-5 * nir - 0.2
+                     dtype: float32
+                 swir_1: 
+                     formula: 2.75e-5 * swir_1 - 0.2
+                     dtype: float32
+                 swir_2: 
+                     formula: 2.75e-5 * swir_2 - 0.2
+                     dtype: float32
+                 pixel_quality: pixel_quality
+
+    # Landsat 8 USGS Collection 2 Tier 1 data, harmonised for compatibility with 
+    # Landsat 7 ETM+ using empirical corrections from Flood 2014
+    # (https://www.mdpi.com/2072-4292/6/9/7952/htm)
+    ls8_sr_harmonised:
+        recipe:
+            &ls8_sr_harmonised
+            transform: expressions
+            input: *ls8_sr_scaled
+            output:
+                 blue:
+                     formula: 0.00041 + 0.97470 * blue
+                     dtype: float32
+                 green:
+                     formula: 0.00289 + 0.99779 * green
+                     dtype: float32
+                 red: 
+                     formula: 0.00274 + 1.00446 * red
+                     dtype: float32
+                 nir: 
+                     formula: 0.00004 + 0.98906 * nir
+                     dtype: float32
+                 swir_1: 
+                     formula: 0.00256 + 0.99467 * swir_1
+                     dtype: float32
+                 swir_2: 
+                     formula: -0.00327 + 1.02551 * swir_2
+                     dtype: float32
+                 pixel_quality: pixel_quality   
+
+    # Combined Landsat 5, 7 and 8 USGS Collection 2 Tier 1 data, rescaled 
+    # using scaling factors and masked to remove nodata
+    ls_sr_scaled:
+         recipe:
+             &ls_sr_scaled
+             transform: expressions
+             input:
+                 collate:
+                     - *ls5_sr_scaled
+                     - *ls7_sr_scaled
+                     - *ls8_sr_scaled
+             output: 
+                 blue: blue
+                 green: green
+                 red: red
+                 nir: nir
+                 swir_1: swir_1
+                 swir_2: swir_2
+                 pixel_quality: pixel_quality 
+
+    # Combined Landsat 5, 7 and 8 USGS Collection 2 Tier 1 data, rescaled 
+    # using scaling factors and masked to remove nodata. Landsat 8 data 
+    # harmonised for compatibility with Landsat 7 ETM+ using empirical 
+    # corrections from Flood 2014 (https://www.mdpi.com/2072-4292/6/9/7952/htm)
+    ls_sr_harmonised:
+         recipe:
+             &ls_sr_harmonised
+             transform: expressions
+             input:
+                 collate:
+                     - *ls5_sr_scaled
+                     - *ls7_sr_scaled
+                     - *ls8_sr_harmonised
+             output: 
+                 blue: blue
+                 green: green
+                 red: red
+                 nir: nir
+                 swir_1: swir_1
+                 swir_2: swir_2
+                 pixel_quality: pixel_quality 
+
+    # Combined Landsat 5, 7 and 8 USGS Collection 2 data, converted to MNDWI
+    ls_mndwi:
+         recipe:
+             transform: expressions
+             input: *ls_sr_scaled  
+             output:
+                 pixel_quality: pixel_quality
+                 mndwi:
+                    formula: (green - swir_1) / (green + swir_1)       
+
+    # Combined Landsat 5, 7 and 8 USGS Collection 2 data, converted to  MNDWI. 
+    # Landsat 8 data harmonised for compatibility with Landsat 7 ETM+ using 
+    # empirical corrections from Flood 2014 
+    # (https://www.mdpi.com/2072-4292/6/9/7952/htm)
+    ls_mndwi_harmonised:
+         recipe:
+             transform: expressions
+             input: *ls_sr_harmonised
+             output:
+                 pixel_quality: pixel_quality
+                 mndwi:
+                    formula: (green - swir_1) / (green + swir_1)
