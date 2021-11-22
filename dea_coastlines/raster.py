@@ -20,6 +20,7 @@
 import os
 import otps
 import pytz
+import yaml
 import datacube
 import datetime
 import odc.algo
@@ -42,6 +43,15 @@ from dea_tools.dask import create_local_dask_cluster
 import click
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
+def load_config(config_path):
+    """
+    Loads a YAML config file and returns data as a nested dictionary.
+    """
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config
 
 
 def load_water_index(dc, 
@@ -561,6 +571,12 @@ def export_annual_gapfill(ds,
 
 
 @click.command()
+@click.option('--config_path', 
+              type=str, 
+              required=True, 
+              help='Path to the YAML config file defining inputs to '
+              'use for this analysis. These are typically located in '
+              'the `dea-coastlines/configs/` directory.')
 @click.option('--study_area', 
               type=str, 
               required=True, 
@@ -592,7 +608,11 @@ def export_annual_gapfill(ds,
               'gapfilling low data pixels. For example, set '
               '`--end_year 2021` to extract a shoreline timeseries '
               'that finishes in the year 2020.')
-def generate_rasters(study_area, raster_version, start_year, end_year):    
+def generate_rasters(config_path,
+                     study_area,
+                     raster_version,
+                     start_year,
+                     end_year):    
     
     #####################################
     # Connect to datacube, Dask cluster #
@@ -602,17 +622,20 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
     dc = datacube.Datacube(app='DEACoastlines')
     
     # Create local dask client for parallelisation
-    client = create_local_dask_cluster(return_client=True)   
+    client = create_local_dask_cluster(return_client=True)
+    
+    # Load analysis params from config file
+    config = load_config(config_path=config_path)
 
     ###########################
     # Load supplementary data #
     ###########################
 
     # Tide points are used to model tides across the extent of the satellite data
-    points_gdf = gpd.read_file('data/raw/tide_points_coastal.geojson')
+    points_gdf = gpd.read_file(config['Input files']['coastal_points_path'])
 
     # Albers grid cells used to process the analysis
-    gridcell_gdf = (gpd.read_file('data/raw/50km_albers_grid_clipped.geojson')
+    gridcell_gdf = (gpd.read_file(config['Input files']['coastal_grid_path'])
                     .to_crs(epsg=4326)
                     .set_index('id'))
     gridcell_gdf.index = gridcell_gdf.index.astype(str)
@@ -632,8 +655,8 @@ def generate_rasters(study_area, raster_version, start_year, end_year):
     ds = load_water_index(
         dc,
         query,
-        yaml_path='configs/virtual_product_dea_landsat.yaml',
-        product_name='ls_nbart_mndwi')
+        yaml_path=config['Virtual product']['virtual_product_path'],
+        product_name=config['Virtual product']['virtual_product_name'])
 
     ###################
     # Tidal modelling #

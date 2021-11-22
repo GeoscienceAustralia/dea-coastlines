@@ -15,6 +15,8 @@
 import os
 import sys
 import glob
+import click
+import warnings
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -44,11 +46,11 @@ from datacube.utils.cog import write_cog
 # Load dea-tools funcs
 from dea_tools.spatial import subpixel_contours
 
-import click
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+# Import DEA Coastlines code
+import raster
 
-# Hide Pandas warnings
+# Hide warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.mode.chained_assignment = None
 
   
@@ -1048,7 +1050,7 @@ def calculate_regressions(points_gdf,
     return points_gdf.loc[:, [*reg_cols, *dist_years, 'geometry']]
 
 
-def all_time_stats(x, col='dist_'):
+def all_time_stats(x, col='dist_', initial_year=1988):
     """
     Apply any statistics that apply to the entire set of annual 
     distance/movement values. This currently includes:
@@ -1061,11 +1063,11 @@ def all_time_stats(x, col='dist_'):
              calculated by computing the maximum distance between any 
              two annual coastlines (excluding outliers).
         nsm: Net Shoreline Movement (NSM). The distance between the 
-             oldest (1988) and most recent (2019) annual coastlines 
-             (excluding outliers). Negative values indicate the 
-             shoreline retreated between the oldest and most recent 
-             coastline; positive values indicate growth.
-        max_year, min_year: The year that annual coastlines were at 
+             oldest and most recent annual shorelines (excluding 
+             outliers). Negative values indicate the shoreline retreated
+             between the oldest and most recent shoreline; positive 
+             values indicate growth.
+        max_year, min_year: The year that annual shorelines were at 
              their maximum (i.e. located furthest towards the ocean) and
              their minimum (i.e. located furthest inland) respectively 
              (excluding outliers). 
@@ -1078,6 +1080,11 @@ def all_time_stats(x, col='dist_'):
     col : string, optional
         A string giving the prefix used for all annual distance/
         movement values. The default is 'dist_'.
+    initial_year : int, optional
+        An optional integer giving the first year of data to use when
+        calculating statistics. This can be useful when data from early
+        in the satellite timeseries is less reliable than more recent
+        data, e.g. in regions with sparse Landsat 5 satellite coverage.
         
     Returns:
     --------
@@ -1085,27 +1092,29 @@ def all_time_stats(x, col='dist_'):
     """
 
     # Select date columns only
-    to_keep = x.index.str.contains(col)
+    year_cols = x.index.str.contains(col)
+    subset = x.loc[year_cols].astype(float) 
+
+    # Restrict to requested initial year
+    subset.index = subset.index.str.lstrip('dist_').astype(int)
+    subset = subset.loc[initial_year:]
 
     # Identify outlier years to drop from calculation
-    to_drop = [f'{col}{i}' for i in x.outl_time.split(" ") if len(i) > 0]
-
-    # Return matching subset of data
-    subset_outl = x.loc[to_keep].astype(float) 
-    subset_nooutl = subset_outl.drop(to_drop) 
+    to_drop = [int(i) for i in x.outl_time.split(" ") if len(i) > 0]    
+    subset_nooutl = subset.drop(to_drop, errors='ignore') 
 
     # Calculate SCE range, NSM and max/min year 
     # Since NSM is the most recent shoreline minus the oldest shoreline,
     # we can calculate this by simply inverting the 1988 distance value
     # (i.e. 0 - X) if it exists in the data
     stats_dict = {'valid_obs': subset_nooutl.shape[0],
-                  'valid_span': (int(subset_nooutl.index[-1][-4:]) - 
-                                 int(subset_nooutl.index[0][-4:]) + 1),
+                  'valid_span': (subset_nooutl.index[-1] - 
+                                 subset_nooutl.index[0] + 1),
                   'sce': subset_nooutl.max() - subset_nooutl.min(),
-                  'nsm': -(subset_nooutl.loc[f'{col}1988'] if 
-                          f'{col}1988' in subset_nooutl else np.nan),
-                  'max_year': int(subset_nooutl.idxmax()[-4:]),
-                  'min_year': int(subset_nooutl.idxmin()[-4:])}
+                  'nsm': -(subset_nooutl.loc[initial_year] if initial_year 
+                           in subset_nooutl else np.nan),
+                  'max_year': subset_nooutl.idxmax(),
+                  'min_year': subset_nooutl.idxmin()}
     
     return pd.Series(stats_dict)
 
@@ -1217,6 +1226,12 @@ def contour_certainty(contours_gdf,
 
 
 @click.command()
+@click.option('--config_path', 
+              type=str, 
+              required=True, 
+              help='Path to the YAML config file defining inputs to '
+              'use for this analysis. These are typically located in '
+              'the `dea-coastlines/configs/` directory.')
 @click.option('--study_area', 
               type=str, 
               required=True, 
@@ -1259,16 +1274,20 @@ def contour_certainty(contours_gdf,
               help='The annual shoreline used to generate the '
               'rates of change point statistics. This is typically '
               'the most recent annual shoreline in the dataset.')    
-def generate_vectors(study_area, 
-                     raster_version, 
-                     vector_version, 
+def generate_vectors(config_path,
+                     study_area,
+                     raster_version,
+                     vector_version,
                      water_index,
                      index_threshold,
-                     baseline_year):    
+                     baseline_year):  
 
     ###############################
     # Load DEA Coastlines rasters #
-    ###############################    
+    ###############################  
+    
+    # Load analysis params from config file
+    config = raster.load_config(config_path=config_path)
 
     yearly_ds, gapfill_ds = load_rasters(path='data/interim/raster',
                                          raster_version=raster_version,
@@ -1293,19 +1312,14 @@ def generate_vectors(study_area,
                                            transform=yearly_ds.transform)), 
                          crs=yearly_ds.crs)
 
-    # Rocky shore mask
-    smartline_gdf = (gpd.read_file('data/raw/Smartline.gdb', 
-                                   bbox=bbox)
-                     .to_crs(yearly_ds.crs))
-
     # Tide points
-    tide_points_gdf = (gpd.read_file('data/raw/tide_points_coastal.geojson', 
+    tide_points_gdf = (gpd.read_file(config['Input files']['coastal_points_path'], 
                                 bbox=bbox)
                        .to_crs(yearly_ds.crs))
 
     # Study area polygon
-    studyarea_path = 'data/raw/50km_albers_grid_clipped.geojson'
-    gridcell_gdf = (gpd.read_file(studyarea_path, bbox=bbox)
+    gridcell_gdf = (gpd.read_file(config['Input files']['coastal_grid_path'], 
+                                  bbox=bbox)
                     .set_index('id')
                     .to_crs(str(yearly_ds.crs)))
     gridcell_gdf.index = gridcell_gdf.index.astype(str)
@@ -1322,13 +1336,21 @@ def generate_vectors(study_area,
     ##############################
     # Extract shoreline contours #
     ##############################
+   
+    # If a waterbody mask is provided, use this to remove non-coastal
+    # waterbodies and estuaries from the dataset. If not, use empty mask
+    if config['Input files']['waterbody_mask_path']:
 
-    # Generate waterbody mask
-    waterbody_mask = waterbody_masking(
-        input_data='data/raw/SurfaceHydrologyPolygonsRegional.gdb',
-        modification_data='data/raw/estuary_mask_modifications.geojson',
-        bbox=bbox,
-        yearly_ds=yearly_ds)
+        # Generate waterbody mask
+        print('Generating waterbody mask')
+        waterbody_mask = waterbody_masking(
+            input_data=config['Input files']['waterbody_mask_path'],
+            modification_data=config['Input files']['waterbody_modifications_path'],
+            bbox=bbox,
+            yearly_ds=yearly_ds)
+
+    else:
+        waterbody_mask = np.full(yearly_ds.geobox.shape, True, dtype=bool)
 
     # Mask dataset to focus on coastal zone only
     masked_ds = contours_preprocess(
@@ -1355,11 +1377,19 @@ def generate_vectors(study_area,
     points_gdf = points_on_line(contours_gdf, 
                                 baseline_year, 
                                 distance=30)
+    
+    # If a rocky mask is provided, use this to clip data
+    if config['Input files']['coastal_classification_path']:
 
-    # Clip to remove rocky shoreline points
-    points_gdf = rocky_shores_clip(points_gdf, 
-                                   smartline_gdf, 
-                                   buffer=50)
+        # Import coastline classification
+        print('Clipping to non-rocky shorelines')
+        coastal_classification_gdf = (gpd.read_file(
+            config['Input files']['coastal_classification_path'],
+            bbox=bbox).to_crs(yearly_ds.crs))
+
+        # Clip to remove rocky shoreline points
+        points_gdf = rocky_shores_clip(
+            points_gdf, coastal_classification_gdf, buffer=50)    
     
     # If any points remain after rocky shoreline clip
     if points_gdf is not None:
@@ -1382,7 +1412,7 @@ def generate_vectors(study_area,
         stats_list = ['valid_obs', 'valid_span', 'sce', 
                       'nsm', 'max_year', 'min_year']
         points_gdf[stats_list] = points_gdf.apply(
-            lambda x: all_time_stats(x), axis=1)
+            lambda x: all_time_stats(x, initial_year=1988), axis=1)
         
         ################
         # Export stats #
