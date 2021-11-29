@@ -135,23 +135,38 @@ def load_water_index(dc,
     # Rechunk if smallest chunk is less than 10
     if ((len(ds.x) % 3000) <= 10) or ((len(ds.y) % 3000) <= 10):
         ds = ds.chunk({'x': 3200, 'y': 3200})
-
-    # Extract boolean mask
-    mask = odc.algo.enum_to_bool(ds.fmask,
-                                 categories=['nodata', 'cloud', 
-                                             'shadow', 'snow'])
-
-    # Close mask to remove small holes in cloud, open mask to
-    # remove narrow false positive cloud, then dilate
-    mask_cleaned = odc.algo.mask_cleanup(mask=mask,
-                                         mask_filters=[('closing', 2), 
-                                                       ('opening', 10), 
-                                                       ('dilation', 5)])
-
-    # Add new mask as nodata pixels
-    ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan)
         
-    return ds.drop('fmask')
+    if 'fmask' in ds:
+
+        # Extract boolean mask
+        mask = odc.algo.enum_to_bool(ds.fmask,
+                                     categories=['nodata', 'cloud', 
+                                                 'shadow', 'snow'])
+        
+        # Close mask to remove small holes in cloud, open mask to
+        # remove narrow false positive cloud, then dilate
+        mask_cleaned = odc.algo.mask_cleanup(mask=mask,
+                                             mask_filters=[('closing', 2), 
+                                                           ('opening', 10), 
+                                                           ('dilation', 5)])
+
+        # Add new mask as nodata pixels
+        ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan).drop('fmask')
+    
+    elif 'pixel_quality' in ds:        
+        
+        # Identify pixels that are either cloud, cloud shadow or nodata
+        from datacube.storage.masking import make_mask
+        nodata = make_mask(ds['pixel_quality'], nodata=True)
+        mask = (make_mask(ds['pixel_quality'], cloud='high_confidence') |
+                make_mask(ds['pixel_quality'], cloud_shadow='high_confidence') | nodata)   
+        
+        # Apply opening
+        mask_cleaned = odc.algo.mask_cleanup(mask, 
+                                             mask_filters=[('opening', 20)])
+        ds = ds.where(~mask_cleaned & ~nodata).drop('pixel_quality')      
+        
+    return ds
 
 
 def otps_tides(lats, lons, times, timezone=None):
