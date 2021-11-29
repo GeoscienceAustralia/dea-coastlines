@@ -47,7 +47,7 @@ from datacube.utils.cog import write_cog
 from dea_tools.spatial import subpixel_contours
 
 # Import DEA Coastlines code
-import raster
+import dea_coastlines.raster
 
 # Hide warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -172,7 +172,7 @@ def load_climate_data(index='soi_local',
     # Climate index dict
     index_urls = {
         'soi_local': {
-            'url': '/g/data/r78/DEACoastlines/input_data/soi.long.data',
+            'url': '/data/raw/soi.long.data',
             'footer': 9,
             'nodata': -99.99
         },
