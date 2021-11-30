@@ -54,7 +54,7 @@ The code currently runs on the [Digital Earth Australia Sandbox](https://docs.de
 
 Code in this repository is included in the `dea_coastlines` Python package which contains three main modules. These are intended to be run in the following order:
 
-1. [`dea_coastlines.raster`](dea_coastlines/raster.py): This module conducts raster generation for DEA Coastlines. This analysis is processed on individual study area tiles to minimuse peak memory usage.
+1. [`dea_coastlines.raster`](dea_coastlines/raster.py): This module conducts raster generation for DEA Coastlines. This analysis is processed on individual study area tiles to minimise peak memory usage.
 
     * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
     * Convert each satellite image into a remote sensing water index (e.g. MNDWI)
@@ -63,22 +63,16 @@ Code in this repository is included in the `dea_coastlines` Python package which
     * Mask out high and low tide pixels by removing all observations acquired outside of 50 percent of the observed tidal range centered over mean sea level
     * Combine tidally-masked data into annual median composites from 1988 to the present representing the shoreline at approximately mean sea level
 
-2. [`dea_coastlines.vector`](dea_coastlines/vector.py): This module conducts vector subpixel coastline extraction and rates of change statistics calculation. This analysis is processed on individual study area tiles to minimuse peak memory usage.
+2. [`dea_coastlines.vector`](dea_coastlines/vector.py): This module conducts vector subpixel coastline extraction and rates of change statistics calculation. This analysis is processed on individual study area tiles to minimise peak memory usage.
 
     * Apply morphological extraction algorithms to mask annual median composite rasters to a valid coastal region
-    * Extract shoreline vectors using subpixel waterline extraction (Bishop-Taylor et al. 2019b)
+    * Extract shoreline vectors using subpixel waterline extraction ([Bishop-Taylor et al. 2019b](https://doi.org/10.3390/rs11242984))
     * Compute rates of coastal change at every 30 m along Australia's non-rocky coastline using linear regression
   
 3. [`dea_coastlines.continental`](dea_coastlines/continental.py): This module combines tiled layers into seamless continental-scale vector files:
 
     * Combines multiple output shoreline and rates of change statistics point vectors into single continental datasets
     * Aggregates this data to produce a moving window coastal change hotspot dataset that summarises coastal change at regional and continental scale.
-
-#### Jupyter notebooks
-An interactive walk-through of each step of the tiled raster and vector DEA Coastlines workflow is provided in the following Jupyter Notebooks. These notebooks can be used to assist in prototyping or troubleshooting:
-* [DEA Coastlines raster generation](notebooks/DEACoastlines_generation_raster.ipynb)
-* [DEA Coastlines vector generation](notebooks/DEACoastlines_generation_vector.ipynb)
-
 
 #### Command-line interface
 
@@ -92,6 +86,11 @@ python -m dea_coastlines.raster --help
 python -m dea_coastlines.vector --help
 python -m dea_coastlines.continental --help
 ```
+
+#### Jupyter notebooks
+An interactive walk-through of each step of the tiled raster and vector DEA Coastlines workflow is provided in the following Jupyter Notebooks. These notebooks can be used to assist in prototyping or troubleshooting:
+* [DEA Coastlines raster generation](notebooks/DEACoastlines_generation_raster.ipynb)
+* [DEA Coastlines vector generation](notebooks/DEACoastlines_generation_vector.ipynb)
 
 ---
 
