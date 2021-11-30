@@ -355,9 +355,7 @@ def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
     # of each shoreline to ensure contour extraction accurately
     # seperates land and water spectra
     if dilation:
-        ocean_mask = xr.apply_ufunc(binary_dilation, 
-                                    ocean_mask, 
-                                    disk(dilation))
+        ocean_mask = xr.apply_ufunc(binary_dilation, ocean_mask, disk(dilation))
 
     return ocean_mask
 
@@ -1002,7 +1000,7 @@ def calculate_regressions(points_gdf, contours_gdf, climate_df):
     points_subset = points_gdf[dist_years]
     climate_subset = climate_df.loc[x_years, :]
 
-    # Compute coastal change rates by linearly regressing annual 
+    # Compute coastal change rates by linearly regressing annual
     # movements vs. time
     print(f'Comparing annual movements with time')
     rate_out = (points_subset.apply(lambda row: change_regress(
@@ -1015,9 +1013,9 @@ def calculate_regressions(points_gdf, contours_gdf, climate_df):
     # used to temporally de-trend annual distances
     points_subset[['slope', 'intercept']] = rate_out[['slope', 'intercept']]
 
-    # Identify possible relationships between climate indices and 
-    # coastal change by linearly regressing climate indices against 
-    # annual movements. Significant results indicate that annual 
+    # Identify possible relationships between climate indices and
+    # coastal change by linearly regressing climate indices against
+    # annual movements. Significant results indicate that annual
     # movements may be influenced by climate phenomena
     for ci in climate_subset:
 
@@ -1393,9 +1391,7 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
                                       baseline_year, water_index)
 
         # Calculate regressions
-        points_gdf = calculate_regressions(points_gdf, 
-                                           contours_gdf, 
-                                           climate_df)
+        points_gdf = calculate_regressions(points_gdf, contours_gdf, climate_df)
 
         # Add count and span of valid obs, Shoreline Change Envelope
         # (SCE), Net Shoreline Movement (NSM) and Max/Min years
@@ -1430,9 +1426,9 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
             col_schema = schema_dict.items()
 
             # Clip stats to study area extent
-            stats_path = f'{output_dir}/ratesofchange_' \ 
-                         f'{study_area}_{vector_version}_' \
-                         f'{water_index}_{index_threshold:.2f}'
+            stats_path = f'{output_dir}/ratesofchange_' \
+                        f'{study_area}_{vector_version}_' \
+                        f'{water_index}_{index_threshold:.2f}'
             points_gdf = points_gdf[points_gdf.intersects(
                 gridcell_gdf.geometry.item())]
 
