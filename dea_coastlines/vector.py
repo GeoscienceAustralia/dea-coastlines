@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code conducts vector subpixel shoreline extraction for DEA 
+# This code conducts vector subpixel shoreline extraction for DEA
 # Coastlines:
-# 
-#     * Apply morphological extraction algorithms to mask annual median 
+#
+#     * Apply morphological extraction algorithms to mask annual median
 #       composite rasters to a valid coastal region
-#     * Extract waterline vectors using subpixel waterline extraction 
+#     * Extract waterline vectors using subpixel waterline extraction
 #       (Bishop-Taylor et al. 2019b; https://doi.org/10.3390/rs11242984)
-#     * Compute rates of coastal change at every 30 m along Australia's 
+#     * Compute rates of coastal change at every 30 m along Australia's
 #       non-rocky coastlines using linear regression
-
 
 import os
 import sys
@@ -53,13 +52,12 @@ from dea_coastlines import raster
 warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.mode.chained_assignment = None
 
-  
+
 def load_rasters(path,
                  raster_version,
                  study_area,
                  water_index='mndwi',
                  start_year=1988):
-    
     """
     Loads DEA Coastlines water index (e.g. 'MNDWI'), 'tide_m', 'count',
     and 'stdev' rasters for both annual and three-year gapfill data
@@ -96,7 +94,6 @@ def load_rasters(path,
         onward.
         
     """
-    
 
     # List to hold output Datasets
     ds_list = []
@@ -115,18 +112,19 @@ def load_rasters(path,
 
             # Test if data was returned
             if len(paths) == 0:
-                raise ValueError(f"No rasters found for grid cell {study_area} "
-                                 f"(raster version '{raster_version}'). Verify that "
-                                 f"`raster.py` has been run "
-                                 "for this grid cell.")
+                raise ValueError(
+                    f"No rasters found for grid cell {study_area} "
+                    f"(raster version '{raster_version}'). Verify that "
+                    f"`raster.py` has been run "
+                    "for this grid cell.")
 
             # Create variable used for time axis
-            time_var = xr.Variable('year', 
+            time_var = xr.Variable('year',
                                    [int(i.split('/')[-1][0:4]) for i in paths])
 
             # Import data
-            layer_da = xr.concat([xr.open_rasterio(i) for i in paths], 
-                                  dim=time_var)
+            layer_da = xr.concat([xr.open_rasterio(i) for i in paths],
+                                 dim=time_var)
             layer_da.name = f'{layer_name}'
 
             # Append to file
@@ -140,15 +138,14 @@ def load_rasters(path,
 
         # Append to list
         ds_list.append(layer_ds)
-    
+
     return ds_list
 
 
-def load_climate_data(index='soi_local', 
-                      years=(1988, 2020), 
-                      annual=True, 
+def load_climate_data(index='soi_local',
+                      years=(1988, 2020),
+                      annual=True,
                       detrend=True):
-    
     """
     Load climate index timeseries data from https://psl.noaa.gov,
     and optionally clip to a time range and aggregate by year.
@@ -168,7 +165,7 @@ def load_climate_data(index='soi_local',
     --------
     climate_df : A pandas.DataFrame containing climate index timeseries. 
     """
-    
+
     # Climate index dict
     index_urls = {
         'soi_local': {
@@ -177,14 +174,20 @@ def load_climate_data(index='soi_local',
             'nodata': -99.99
         },
         'soi': {
-            'url': 'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/soi.long.data',
-            'footer': 9,
-            'nodata': -99.99
+            'url':
+                'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/soi.long.data',
+            'footer':
+                9,
+            'nodata':
+                -99.99
         },
         'pdo': {
-            'url': 'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/pdo.long.data',
-            'footer': 12,
-            'nodata': -9.90
+            'url':
+                'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/pdo.long.data',
+            'footer':
+                12,
+            'nodata':
+                -9.90
         }
     }
 
@@ -204,31 +207,27 @@ def load_climate_data(index='soi_local',
                                                var_name='month',
                                                value_name=index[:3])
     climate_df = climate_df.sort_values(['year', 'month'])
-    
+
     # Annual means
     if annual:
         climate_df = climate_df.groupby('year').mean()
-    
+
     # Clip to years
     if years:
         first_year, last_year = years
         climate_df = climate_df.query("@first_year <= year <= @last_year")
-        
+
     # Detrend
     if detrend:
-        index_regress = stats.linregress(x=climate_df.index, 
-                                         y=climate_df[index[:3]]) 
-        climate_df.iloc[:, 0] = climate_df.iloc[:, 0] - (index_regress.slope * 
-                      climate_df.index + 
-                      index_regress.intercept)
+        index_regress = stats.linregress(x=climate_df.index,
+                                         y=climate_df[index[:3]])
+        climate_df.iloc[:, 0] = climate_df.iloc[:, 0] - (
+            index_regress.slope * climate_df.index + index_regress.intercept)
 
     return climate_df
 
 
-def waterbody_masking(input_data,
-                      modification_data,
-                      bbox,
-                      yearly_ds):
+def waterbody_masking(input_data, modification_data, bbox, yearly_ds):
     """
     Generates a raster mask for DEACoastlines based on the 
     SurfaceHydrologyPolygonsRegional.gdb dataset, and a vector 
@@ -273,11 +272,10 @@ def waterbody_masking(input_data,
     # Restrict to coastal features
     lakes_bool = ((waterbody_gdf.FEATURETYPE == 'Lake') &
                   (waterbody_gdf.PERENNIALITY == 'Perennial'))
-    other_bool = waterbody_gdf.FEATURETYPE.isin(['Aquaculture Area', 
-                                                 'Estuary', 
-                                                 'Watercourse Area', 
-                                                 'Salt Evaporator', 
-                                                 'Settling Pond'])
+    other_bool = waterbody_gdf.FEATURETYPE.isin([
+        'Aquaculture Area', 'Estuary', 'Watercourse Area', 'Salt Evaporator',
+        'Settling Pond'
+    ])
     waterbody_gdf = waterbody_gdf[lakes_bool | other_bool]
 
     # Load in modification dataset and select features to remove/add
@@ -288,14 +286,16 @@ def waterbody_masking(input_data,
     # Remove and add features
     if len(to_remove.index) > 0:
         if len(waterbody_gdf.index) > 0:
-            waterbody_gdf = gpd.overlay(waterbody_gdf, to_remove, how='difference')        
+            waterbody_gdf = gpd.overlay(waterbody_gdf,
+                                        to_remove,
+                                        how='difference')
     if len(to_add.index) > 0:
         if len(waterbody_gdf.index) > 0:
             waterbody_gdf = gpd.overlay(waterbody_gdf, to_add, how='union')
         else:
             waterbody_gdf = to_add
-        
-    # Rasterize waterbody polygons into a numpy mask. The try-except catches 
+
+    # Rasterize waterbody polygons into a numpy mask. The try-except catches
     # cases where no waterbody polygons exist in the study area
     try:
         waterbody_mask = rasterize(shapes=waterbody_gdf['geometry'],
@@ -304,7 +304,7 @@ def waterbody_masking(input_data,
                                    all_touched=True).astype(bool)
     except:
         waterbody_mask = np.full(yearly_ds.geobox.shape, False, dtype=bool)
-        
+
     return waterbody_mask
 
 
@@ -355,9 +355,7 @@ def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
     # of each shoreline to ensure contour extraction accurately
     # seperates land and water spectra
     if dilation:
-        ocean_mask = xr.apply_ufunc(binary_dilation, 
-                                    ocean_mask, 
-                                    disk(dilation))
+        ocean_mask = xr.apply_ufunc(binary_dilation, ocean_mask, disk(dilation))
 
     return ocean_mask
 
@@ -432,53 +430,51 @@ def temporal_masking(ds):
         located within the `dilation` distance of land in at least 
         one neighbouring timestep.
     """
-    
+
     def _noncontiguous(labels, intensity):
-        
+
         # For each blob of land, obtain whether it intersected with land in
         # any neighbouring timestep
         region_props = regionprops(labels.values,
                                    intensity_image=intensity.values)
         contiguous = [i.label for i in region_props if i.max_intensity == 0]
-        
+
         # Filter array to only contiguous land
         noncontiguous_array = np.isin(labels, contiguous)
-        
+
         # Return as xr.DataArray
         return xr.DataArray(~noncontiguous_array,
                             coords=labels.coords,
                             dims=labels.dims)
-    
 
     # Label independent groups of pixels in each timestep in the array
     labelled_ds = xr.apply_ufunc(label, ds, None, 0,
                                  dask='parallelized').rename('labels')
 
-    # Check if a pixel was neighboured by land in either the 
+    # Check if a pixel was neighboured by land in either the
     # previous or subsequent timestep by shifting array in both directions
-    masked_neighbours = (ds.shift(year = -1, fill_value=False) | 
-                         ds.shift(year = 1, fill_value=False)).astype(int).rename('neighbours')
+    masked_neighbours = (ds.shift(year=-1, fill_value=False) | ds.shift(
+        year=1, fill_value=False)).astype(int).rename('neighbours')
 
     # Merge both into an xr.Dataset
     label_neighbour_ds = xr.merge([labelled_ds, masked_neighbours])
 
     # Apply continguity test to each year to obtain pixels that are
     # contiguous (spatially connected to) to land in the previous or subsequent timestep
-    temporal_mask = label_neighbour_ds.groupby(
-        'year').apply(lambda x: _noncontiguous(labels=x.labels,
-                                               intensity=x.neighbours))
+    temporal_mask = label_neighbour_ds.groupby('year').apply(
+        lambda x: _noncontiguous(labels=x.labels, intensity=x.neighbours))
 
     return temporal_mask
 
 
-def contours_preprocess(yearly_ds, 
+def contours_preprocess(yearly_ds,
                         gapfill_ds,
-                        water_index, 
-                        index_threshold, 
-                        waterbody_mask, 
+                        water_index,
+                        index_threshold,
+                        waterbody_mask,
                         tide_points_gdf,
                         output_path,
-                        buffer_pixels=50):  
+                        buffer_pixels=50):
     """
     Prepares and preprocesses DEA Coastlines raster data to restrict the
     analysis to coastal shorelines, and extract data that is used to
@@ -536,13 +532,13 @@ def contours_preprocess(yearly_ds,
         as an input to subpixel waterline extraction.
     
     """
-    
+
     # Flag nodata pixels
     nodata = yearly_ds[water_index].isnull()
 
-    # Identify pixels with less than 5 annual observations or > 0.25 
+    # Identify pixels with less than 5 annual observations or > 0.25
     # MNDWI standard deviation in more than half the time series.
-    # Apply binary erosion to isolate large connected areas of 
+    # Apply binary erosion to isolate large connected areas of
     # problematic pixels
     mean_stdev = (yearly_ds['stdev'] > 0.25).where(~nodata).mean(dim='year')
     mean_count = (yearly_ds['count'] < 5).where(~nodata).mean(dim='year')
@@ -555,26 +551,28 @@ def contours_preprocess(yearly_ds,
     # Update nodata layer based on gap-filled data and waterbody array
     nodata = yearly_ds[water_index].isnull() | waterbody_mask
 
-    # Apply water index threshold, restore nodata values back to NaN, 
+    # Apply water index threshold, restore nodata values back to NaN,
     # and assign pixels within waterbody mask to 0 so they are excluded
     thresholded_ds = (yearly_ds[water_index] < index_threshold).where(~nodata)
-    
+
     # Compute temporal mask
     temporal_mask = temporal_masking(thresholded_ds == 1)
 
     # Identify pixels that are land in at least 10% of observations,
     # and use this to generate a coastal buffer
-    all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2  # & temporal_mask
+    all_time = ((thresholded_ds != 0) &
+                temporal_mask).mean(dim='year') >= 0.2  # & temporal_mask
     coastal_mask = coastal_masking(all_time, tide_points_gdf, buffer_pixels)
 
-    # Generate annual masks by selecting only water pixels that are 
+    # Generate annual masks by selecting only water pixels that are
     # directly connected to the ocean in each yearly timestep
-    annual_mask = ((thresholded_ds != 0).groupby('year')
-                    .apply(lambda x: ocean_masking(x, tide_points_gdf, 1, 3)))
+    annual_mask = ((thresholded_ds != 0).groupby('year').apply(
+        lambda x: ocean_masking(x, tide_points_gdf, 1, 3)))
 
     # Keep pixels within both all time coastal buffer and annual mask
-    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask & temporal_mask)  #  & temporal_mask
-    
+    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask &
+                                             temporal_mask)  #  & temporal_mask
+
     # Create raster containg all time mask data
     all_time_mask = np.full(yearly_ds.geobox.shape, 0, dtype='int8')
     all_time_mask[~coastal_mask] = 1
@@ -583,24 +581,26 @@ def contours_preprocess(yearly_ds,
     all_time_mask[waterbody_mask & coastal_mask] = 3
 
     # Export mask raster to assist evaluating results
-    all_time_mask_da = xr.DataArray(data = all_time_mask, 
-                                    coords={'x': yearly_ds.x, 
-                                            'y': yearly_ds.y},
+    all_time_mask_da = xr.DataArray(data=all_time_mask,
+                                    coords={
+                                        'x': yearly_ds.x,
+                                        'y': yearly_ds.y
+                                    },
                                     dims=['y', 'x'],
                                     name='all_time_mask',
                                     attrs=yearly_ds.attrs)
-    write_cog(geo_im=all_time_mask_da, 
-              fname=f'{output_path}/all_time_mask.tif', 
-              blocksize=256, 
+    write_cog(geo_im=all_time_mask_da,
+              fname=f'{output_path}/all_time_mask.tif',
+              blocksize=256,
               overwrite=True)
-    
+
     # Reset attributes and return data
     masked_ds.attrs = yearly_ds.attrs
 
     return masked_ds
 
 
-def points_on_line(gdf, index, distance=30):    
+def points_on_line(gdf, index, distance=30):
     """
     Generates evenly-spaced point features along a specific line feature
     in a `geopandas.GeoDataFrame`.
@@ -624,10 +624,10 @@ def points_on_line(gdf, index, distance=30):
         `distance` along the selected line.
     
     """
-    
+
     # Select individual line to generate points along
-    line_feature = gdf.loc[[index]].geometry    
-    
+    line_feature = gdf.loc[[index]].geometry
+
     # If multiple features are returned, take unary union
     if line_feature.shape[0] > 0:
         line_feature = line_feature.unary_union
@@ -635,10 +635,12 @@ def points_on_line(gdf, index, distance=30):
         line_feature = line_feature.iloc[0]
 
     # Generate points along line and convert to geopandas.GeoDataFrame
-    points_line = [line_feature.interpolate(i) 
-                   for i in range(0, int(line_feature.length), distance)]
+    points_line = [
+        line_feature.interpolate(i)
+        for i in range(0, int(line_feature.length), distance)
+    ]
     points_gdf = gpd.GeoDataFrame(geometry=points_line, crs=gdf.crs)
-    
+
     return points_gdf
 
 
@@ -671,26 +673,18 @@ def rocky_shores_clip(points_gdf, smartline_gdf, buffer=50):
     """
 
     rocky = [
-               'Bedrock breakdown debris (cobbles/boulders)',
-               'Boulder (rock) beach',
-               'Cliff (>5m) (undiff)',
-               'Colluvium (talus) undiff',
-               'Flat boulder deposit (rock) undiff',
-               'Hard bedrock shore',
-               'Hard bedrock shore inferred',
-               'Hard rock cliff (>5m)',
-               'Hard rocky shore platform',
-               'Rocky shore (undiff)',
-               'Rocky shore platform (undiff)',
-               'Sloping hard rock shore',
-               'Sloping rocky shore (undiff)',
-               'Soft `bedrock¿ cliff (>5m)',
-               'Steep boulder talus',
-               'Hard rocky shore platform'
+        'Bedrock breakdown debris (cobbles/boulders)', 'Boulder (rock) beach',
+        'Cliff (>5m) (undiff)', 'Colluvium (talus) undiff',
+        'Flat boulder deposit (rock) undiff', 'Hard bedrock shore',
+        'Hard bedrock shore inferred', 'Hard rock cliff (>5m)',
+        'Hard rocky shore platform', 'Rocky shore (undiff)',
+        'Rocky shore platform (undiff)', 'Sloping hard rock shore',
+        'Sloping rocky shore (undiff)', 'Soft `bedrock¿ cliff (>5m)',
+        'Steep boulder talus', 'Hard rocky shore platform'
     ]
-    
+
     # Identify rocky features
-    rocky_bool = (smartline_gdf.INTERTD1_V.isin(rocky) & 
+    rocky_bool = (smartline_gdf.INTERTD1_V.isin(rocky) &
                   smartline_gdf.INTERTD2_V.isin(rocky + ['Unclassified']))
 
     # Extract rocky vs non-rocky
@@ -704,31 +698,28 @@ def rocky_shores_clip(points_gdf, smartline_gdf, buffer=50):
         # Buffer both features
         rocky_gdf['geometry'] = rocky_gdf.buffer(buffer)
         nonrocky_gdf['geometry'] = nonrocky_gdf.buffer(buffer)
-        rocky_shore_buffer = (gpd.overlay(rocky_gdf, 
-                                          nonrocky_gdf, 
-                                          how='difference')
-                              .geometry
-                              .unary_union)
-        
-        # Keep only non-rocky shore features and reset index         
-        points_gdf = points_gdf[~points_gdf.intersects(rocky_shore_buffer)]        
-        points_gdf = points_gdf.reset_index(drop=True)        
-        
+        rocky_shore_buffer = (gpd.overlay(
+            rocky_gdf, nonrocky_gdf, how='difference').geometry.unary_union)
+
+        # Keep only non-rocky shore features and reset index
+        points_gdf = points_gdf[~points_gdf.intersects(rocky_shore_buffer)]
+        points_gdf = points_gdf.reset_index(drop=True)
+
         return points_gdf
 
     # If no rocky shorelines exist, return the points data as-is
-    elif len(nonrocky_gdf) > 0:          
+    elif len(nonrocky_gdf) > 0:
         return points_gdf
-   
+
     # If no sandy shorelines exist, return nothing
     else:
         return None
 
-    
+
 def annual_movements(points_gdf,
                      contours_gdf,
-                     yearly_ds,                     
-                     baseline_year, 
+                     yearly_ds,
+                     baseline_year,
                      water_index,
                      max_valid_dist=1000):
     """
@@ -773,7 +764,7 @@ def annual_movements(points_gdf,
         towards the ocean.
     """
 
-    # Get array of water index values for baseline time period 
+    # Get array of water index values for baseline time period
     baseline_array = yearly_ds[water_index].sel(year=int(baseline_year))
 
     # Copy baseline point geometry to new column in points dataset
@@ -793,25 +784,24 @@ def annual_movements(points_gdf,
         comp_contour = contours_gdf.loc[[comp_year]].geometry.iloc[0]
 
         # Find nearest point on comparison contour, and add these to points dataset
-        points_gdf[f'p_{comp_year}'] = points_gdf.apply(lambda x: 
-                                                        nearest_points(x.p_baseline, 
-                                                                       comp_contour)[1], 
-                                                        axis=1)
+        points_gdf[f'p_{comp_year}'] = points_gdf.apply(
+            lambda x: nearest_points(x.p_baseline, comp_contour)[1], axis=1)
 
         # Compute distance between baseline and comparison year points and add
         # this distance as a new field named by the current year being analysed
         distances = points_gdf.apply(
             lambda x: x.geometry.distance(x[f'p_{comp_year}']), axis=1)
-        
+
         # Set any value over X m to NaN, and drop any points with
         # less than 50% valid observations
-        points_gdf[f'dist_{comp_year}'] = distances.where(distances < max_valid_dist)
+        points_gdf[f'dist_{comp_year}'] = distances.where(
+            distances < max_valid_dist)
 
-        # Extract comparison array containing water index values for the 
+        # Extract comparison array containing water index values for the
         # current year being analysed
         comp_array = yearly_ds[water_index].sel(year=int(comp_year))
 
-        # Convert baseline and comparison year points to geoseries to allow 
+        # Convert baseline and comparison year points to geoseries to allow
         # easy access to x and y coords
         comp_x_vals = gpd.GeoSeries(points_gdf[f'p_{comp_year}']).x
         comp_y_vals = gpd.GeoSeries(points_gdf[f'p_{comp_year}']).y
@@ -820,25 +810,25 @@ def annual_movements(points_gdf,
         baseline_x_vals = xr.DataArray(baseline_x_vals, dims='z')
         baseline_y_vals = xr.DataArray(baseline_y_vals, dims='z')
         comp_x_vals = xr.DataArray(comp_x_vals, dims='z')
-        comp_y_vals = xr.DataArray(comp_y_vals, dims='z')   
-        points_gdf['index_comp_p1'] = comp_array.interp(x=baseline_x_vals, 
+        comp_y_vals = xr.DataArray(comp_y_vals, dims='z')
+        points_gdf['index_comp_p1'] = comp_array.interp(x=baseline_x_vals,
                                                         y=baseline_y_vals)
-        points_gdf['index_baseline_p2'] = baseline_array.interp(x=comp_x_vals, 
+        points_gdf['index_baseline_p2'] = baseline_array.interp(x=comp_x_vals,
                                                                 y=comp_y_vals)
 
-        # Compute change directionality (negative = located inland, 
-        # positive = located towards the ocean)    
-        points_gdf['loss_gain'] = np.where(points_gdf.index_baseline_p2 > 
-                                           points_gdf.index_comp_p1, 1, -1)
-        points_gdf[f'dist_{comp_year}'] = (points_gdf[f'dist_{comp_year}'] * 
+        # Compute change directionality (negative = located inland,
+        # positive = located towards the ocean)
+        points_gdf['loss_gain'] = np.where(
+            points_gdf.index_baseline_p2 > points_gdf.index_comp_p1, 1, -1)
+        points_gdf[f'dist_{comp_year}'] = (points_gdf[f'dist_{comp_year}'] *
                                            points_gdf.loss_gain)
-  
+
     # Keep required columns
     to_keep = points_gdf.columns.str.contains('dist|geometry')
     points_gdf = points_gdf.loc[:, to_keep]
     points_gdf = points_gdf.assign(**{f'dist_{baseline_year}': 0.0})
     points_gdf = points_gdf.round(2)
-        
+
     return points_gdf
 
 
@@ -871,7 +861,7 @@ def outlier_mad(points, thresh=3.5):
     Statistical Techniques, Edward F. Mykytka, Ph.D., Editor. 
     """
     if len(points.shape) == 1:
-        points = points[:,None]
+        points = points[:, None]
     median = np.median(points, axis=0)
     diff = np.sum((points - median)**2, axis=-1)
     diff = np.sqrt(diff)
@@ -882,14 +872,14 @@ def outlier_mad(points, thresh=3.5):
     return modified_z_score > thresh
 
 
-def change_regress(y_vals, 
-                   x_vals, 
-                   x_labels, 
+def change_regress(y_vals,
+                   x_vals,
+                   x_labels,
                    threshold=3.5,
                    detrend_params=None,
-                   slope_var='slope', 
+                   slope_var='slope',
                    interc_var='intercept',
-                   pvalue_var='pvalue', 
+                   pvalue_var='pvalue',
                    stderr_var='stderr',
                    outliers_var='outliers'):
     """
@@ -932,43 +922,44 @@ def change_regress(y_vals,
         of outliers.
     
     """
-      
+
     # Drop invalid NaN rows
     xy_df = np.vstack([x_vals, y_vals]).T
     valid_bool = ~np.isnan(xy_df).any(axis=1)
     xy_df = xy_df[valid_bool]
     valid_labels = x_labels[valid_bool]
-    
+
     # If detrending parameters are provided, apply these to the data to
     # remove the trend prior to running the regression
     if detrend_params:
-        xy_df[:, 1] = xy_df[:, 1] - (detrend_params[0] * xy_df[:, 0] + detrend_params[1])    
-    
+        xy_df[:, 1] = xy_df[:, 1] - (detrend_params[0] * xy_df[:, 0] +
+                                     detrend_params[1])
+
     # Remove outliers using MAD
     outlier_bool = outlier_mad(xy_df, thresh=threshold)
     xy_df = xy_df[~outlier_bool]
     valid_labels = valid_labels[~outlier_bool]
-    
+
     # Create string of all outliers and invalid NaN rows
-    outlier_set = set(x_labels) - set(valid_labels)    
+    outlier_set = set(x_labels) - set(valid_labels)
     outlier_str = ' '.join(map(str, sorted(outlier_set)))
-        
+
     # Compute linear regression
-    lin_reg = stats.linregress(x=xy_df[:, 0], y=xy_df[:, 1])     
-    
-    # Return slope, p-values and list of outlier years excluded from regression   
-    results_dict = {slope_var:  np.round(lin_reg.slope, 3), 
-                    interc_var: np.round(lin_reg.intercept, 3),
-                    pvalue_var: np.round(lin_reg.pvalue, 3),
-                    stderr_var: np.round(lin_reg.stderr, 3),
-                    outliers_var: outlier_str}
-    
+    lin_reg = stats.linregress(x=xy_df[:, 0], y=xy_df[:, 1])
+
+    # Return slope, p-values and list of outlier years excluded from regression
+    results_dict = {
+        slope_var: np.round(lin_reg.slope, 3),
+        interc_var: np.round(lin_reg.intercept, 3),
+        pvalue_var: np.round(lin_reg.pvalue, 3),
+        stderr_var: np.round(lin_reg.stderr, 3),
+        outliers_var: outlier_str
+    }
+
     return pd.Series(results_dict)
 
 
-def calculate_regressions(points_gdf,
-                          contours_gdf, 
-                          climate_df):
+def calculate_regressions(points_gdf, contours_gdf, climate_df):
     """
     For each rate of change point along the baseline annual coastline, 
     compute linear regression rates of change against both time and
@@ -1005,50 +996,50 @@ def calculate_regressions(points_gdf,
 
     # Restrict climate and points data to years in datasets
     x_years = contours_gdf.index.unique().astype(int).values
-    dist_years = [f'dist_{i}' for i in x_years]  
+    dist_years = [f'dist_{i}' for i in x_years]
     points_subset = points_gdf[dist_years]
     climate_subset = climate_df.loc[x_years, :]
 
     # Compute coastal change rates by linearly regressing annual movements vs. time
     print(f'Comparing annual movements with time')
-    rate_out = (points_subset
-                .apply(lambda row: change_regress(
-                    y_vals=row.values.astype(float),
-                    x_vals=x_years,
-                    x_labels=x_years), axis=1))
-    points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
+    rate_out = (points_subset.apply(lambda row: change_regress(
+        y_vals=row.values.astype(float), x_vals=x_years, x_labels=x_years),
+                                    axis=1))
+    points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time',
+                'outl_time']] = rate_out
 
     # Copy slope and intercept into points_subset so they can be
     # used to temporally de-trend annual distances
     points_subset[['slope', 'intercept']] = rate_out[['slope', 'intercept']]
-    
-    # Identify possible relationships between climate indices and coastal change 
-    # by linearly regressing climate indices against annual movements. Significant 
+
+    # Identify possible relationships between climate indices and coastal change
+    # by linearly regressing climate indices against annual movements. Significant
     # results indicate that annual movements may be influenced by climate phenomena
     for ci in climate_subset:
 
         print(f'Comparing annual movements with {ci}')
 
         # Compute stats for each row
-        ci_out = (points_subset
-                  .apply(lambda row: change_regress(
-                      y_vals=row.values[:-2].astype(float),
-                      x_vals=climate_subset[ci].values,
-                      x_labels=x_years,
-                      detrend_params=(row.slope, row.intercept)), axis=1))
+        ci_out = (points_subset.apply(lambda row: change_regress(
+            y_vals=row.values[:-2].astype(float),
+            x_vals=climate_subset[ci].values,
+            x_labels=x_years,
+            detrend_params=(row.slope, row.intercept)),
+                                      axis=1))
 
-        # Add data as columns  
-        points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}',
-                    f'se_{ci}', f'outl_{ci}']] = ci_out
+        # Add data as columns
+        points_gdf[[
+            f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', f'se_{ci}', f'outl_{ci}'
+        ]] = ci_out
 
     # Set CRS
     points_gdf.crs = contours_gdf.crs
-    
+
     # Custom sorting
-    reg_cols = chain.from_iterable([f'rate_{i}', f'sig_{i}',
-                                    f'se_{i}', f'outl_{i}'] for i in
-                                   ['time', *climate_df.columns])
-    
+    reg_cols = chain.from_iterable(
+        [f'rate_{i}', f'sig_{i}', f'se_{i}', f'outl_{i}']
+        for i in ['time', *climate_df.columns])
+
     return points_gdf.loc[:, [*reg_cols, *dist_years, 'geometry']]
 
 
@@ -1102,29 +1093,32 @@ def all_time_stats(x, col='dist_', initial_year=1988):
     subset = subset.loc[initial_year:]
 
     # Identify outlier years to drop from calculation
-    to_drop = [int(i) for i in x.outl_time.split(" ") if len(i) > 0] 
+    to_drop = [int(i) for i in x.outl_time.split(" ") if len(i) > 0]
     subset_nooutl = subset.drop(to_drop, errors='ignore')
 
-    # Calculate SCE range, NSM and max/min year 
+    # Calculate SCE range, NSM and max/min year
     # Since NSM is the most recent shoreline minus the oldest shoreline,
     # we can calculate this by simply inverting the 1988 distance value
     # (i.e. 0 - X) if it exists in the data
-    stats_dict = {'valid_obs': subset_nooutl.shape[0],
-                  'valid_span': (subset_nooutl.index[-1] -
-                                 subset_nooutl.index[0] + 1),
-                  'sce': subset_nooutl.max() - subset_nooutl.min(),
-                  'nsm': -(subset_nooutl.loc[initial_year] if initial_year
-                           in subset_nooutl else np.nan),
-                  'max_year': subset_nooutl.idxmax(),
-                  'min_year': subset_nooutl.idxmin()}
-    
+    stats_dict = {
+        'valid_obs':
+            subset_nooutl.shape[0],
+        'valid_span': (subset_nooutl.index[-1] - subset_nooutl.index[0] + 1),
+        'sce':
+            subset_nooutl.max() - subset_nooutl.min(),
+        'nsm':
+            -(subset_nooutl.loc[initial_year]
+              if initial_year in subset_nooutl else np.nan),
+        'max_year':
+            subset_nooutl.idxmax(),
+        'min_year':
+            subset_nooutl.idxmin()
+    }
+
     return pd.Series(stats_dict)
 
 
-def contour_certainty(contours_gdf,
-                      output_path,
-                      uncertain_classes=[4, 5]):
-    
+def contour_certainty(contours_gdf, output_path, uncertain_classes=[4, 5]):
     """
     Assigns a new certainty column to each annual shoreline feature
     based on two factors:
@@ -1156,7 +1150,7 @@ def contour_certainty(contours_gdf,
         A `geopandas.GeoDataFrame` of annual coastlines with a new 
         'certainty' column.
     """
-    
+
     def _extract_multiline(row):
 
         if row.geometry.type == 'GeometryCollection':
@@ -1192,9 +1186,11 @@ def contour_certainty(contours_gdf,
     vector_mask['geometry'] = vector_mask.geometry.buffer(0)
 
     # Rename classes
-    vector_mask = vector_mask.rename({0: 'good',
-                                      4: 'tidal issues',
-                                      5: 'insufficient data'})
+    vector_mask = vector_mask.rename({
+        0: 'good',
+        4: 'tidal issues',
+        5: 'insufficient data'
+    })
 
     # Output class list
     class_list = []
@@ -1206,7 +1202,7 @@ def contour_certainty(contours_gdf,
         # Clip to extent and fix invalid GeometryCollections
         vector_class = gpd.clip(contours_gdf, vector_mask.loc[i].geometry)
         vector_class = vector_class.dropna()
-        
+
         if len(vector_class.index) > 0:
             vector_class['geometry'] = gpd.GeoSeries(
                 vector_class.apply(_extract_multiline, axis=1))
@@ -1217,13 +1213,13 @@ def contour_certainty(contours_gdf,
 
     # Combine into a single dataframe
     contours_gdf = pd.concat(class_list)
-    
-    # Finally, set all 1991 and 1992 coastlines north of -23 degrees 
+
+    # Finally, set all 1991 and 1992 coastlines north of -23 degrees
     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
     pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) &
                     (contours_gdf.index.isin(['1991', '1992'])))
     contours_gdf.loc[pinatubo_lat, 'certainty'] = 'aerosol issues'
-    
+
     return contours_gdf
 
 
@@ -1234,7 +1230,7 @@ def contour_certainty(contours_gdf,
               help='Path to the YAML config file defining inputs to '
               'use for this analysis. These are typically located in '
               'the `dea-coastlines/configs/` directory.')
-@click.option('--study_area', 
+@click.option('--study_area',
               type=str,
               required=True,
               help='A string providing a unique ID of an analysis '
@@ -1244,8 +1240,8 @@ def contour_certainty(contours_gdf,
               'should match a row in the "id" column of the provided '
               'analysis gridcell vector file.')
 @click.option('--raster_version',
-              type=str, 
-              required=True, 
+              type=str,
+              required=True,
               help='A unique string providing a name that was used '
               'to generate raster files. This is used to identify the '
               'raster files that will be used as inputs for shoreline '
@@ -1276,18 +1272,13 @@ def contour_certainty(contours_gdf,
               help='The annual shoreline used to generate the '
               'rates of change point statistics. This is typically '
               'the most recent annual shoreline in the dataset.')
-def generate_vectors(config_path,
-                     study_area,
-                     raster_version,
-                     vector_version,
-                     water_index,
-                     index_threshold,
-                     baseline_year):
+def generate_vectors(config_path, study_area, raster_version, vector_version,
+                     water_index, index_threshold, baseline_year):
 
     ###############################
     # Load DEA Coastlines rasters #
-    ###############################  
-    
+    ###############################
+
     # Load analysis params from config file
     config = raster.load_config(config_path=config_path)
 
@@ -1296,7 +1287,7 @@ def generate_vectors(config_path,
                                          study_area=study_area,
                                          water_index=water_index)
 
-    # Create output vector folder using supplied vector version string; 
+    # Create output vector folder using supplied vector version string;
     # if no vector version is provided, copy this from raster version
     if vector_version is None:
         vector_version = raster_version
@@ -1321,24 +1312,22 @@ def generate_vectors(config_path,
 
     # Study area polygon
     gridcell_gdf = (gpd.read_file(config['Input files']['coastal_grid_path'],
-                                  bbox=bbox)
-                    .set_index('id')
-                    .to_crs(str(yearly_ds.crs)))
+                                  bbox=bbox).set_index('id').to_crs(
+                                      str(yearly_ds.crs)))
     gridcell_gdf.index = gridcell_gdf.index.astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
 
     # Load climate indices
-    climate_df = load_climate_data(
-        index='soi',
-        years=(yearly_ds.year.min().item(),
-               yearly_ds.year.max().item()),
-        annual=True,
-        detrend=True)
+    climate_df = load_climate_data(index='soi',
+                                   years=(yearly_ds.year.min().item(),
+                                          yearly_ds.year.max().item()),
+                                   annual=True,
+                                   detrend=True)
 
     ##############################
     # Extract shoreline contours #
     ##############################
-   
+
     # If a waterbody mask is provided, use this to remove non-coastal
     # waterbodies and estuaries from the dataset. If not, use empty mask
     if config['Input files']['waterbody_mask_path']:
@@ -1347,7 +1336,8 @@ def generate_vectors(config_path,
         print('Generating waterbody mask')
         waterbody_mask = waterbody_masking(
             input_data=config['Input files']['waterbody_mask_path'],
-            modification_data=config['Input files']['waterbody_modifications_path'],
+            modification_data=config['Input files']
+            ['waterbody_modifications_path'],
             bbox=bbox,
             yearly_ds=yearly_ds)
 
@@ -1355,31 +1345,27 @@ def generate_vectors(config_path,
         waterbody_mask = np.full(yearly_ds.geobox.shape, True, dtype=bool)
 
     # Mask dataset to focus on coastal zone only
-    masked_ds = contours_preprocess(
-        yearly_ds,
-        gapfill_ds,
-        water_index, 
-        index_threshold,
-        waterbody_mask,
-        tide_points_gdf,
-        output_path=output_dir)
+    masked_ds = contours_preprocess(yearly_ds,
+                                    gapfill_ds,
+                                    water_index,
+                                    index_threshold,
+                                    waterbody_mask,
+                                    tide_points_gdf,
+                                    output_path=output_dir)
 
     # Extract contours
-    contours_gdf = subpixel_contours(
-        da=masked_ds,
-        z_values=index_threshold,
-        min_vertices=10,
-        dim='year').set_index('year')
+    contours_gdf = subpixel_contours(da=masked_ds,
+                                     z_values=index_threshold,
+                                     min_vertices=10,
+                                     dim='year').set_index('year')
 
     ######################
     # Compute statistics #
-    ######################    
+    ######################
 
     # Extract statistics modelling points along baseline contour
-    points_gdf = points_on_line(contours_gdf,
-                                baseline_year,
-                                distance=30)
-    
+    points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
+
     # If a rocky mask is provided, use this to clip data
     if config['Input files']['coastal_classification_path']:
 
@@ -1390,56 +1376,58 @@ def generate_vectors(config_path,
             bbox=bbox).to_crs(yearly_ds.crs))
 
         # Clip to remove rocky shoreline points
-        points_gdf = rocky_shores_clip(
-            points_gdf, coastal_classification_gdf, buffer=50) 
-    
+        points_gdf = rocky_shores_clip(points_gdf,
+                                       coastal_classification_gdf,
+                                       buffer=50)
+
     # If any points remain after rocky shoreline clip
     if points_gdf is not None:
 
-        # Calculate annual coastline movements and residual tide heights 
+        # Calculate annual coastline movements and residual tide heights
         # for every contour compared to the baseline year
-        points_gdf = annual_movements(points_gdf,
-                                      contours_gdf,
-                                      yearly_ds,                           
-                                      baseline_year,
-                                      water_index)
+        points_gdf = annual_movements(points_gdf, contours_gdf, yearly_ds,
+                                      baseline_year, water_index)
 
         # Calculate regressions
-        points_gdf = calculate_regressions(points_gdf,
-                                           contours_gdf,
-                                           climate_df)
-        
-        # Add count and span of valid obs, Shoreline Change Envelope 
+        points_gdf = calculate_regressions(points_gdf, contours_gdf, climate_df)
+
+        # Add count and span of valid obs, Shoreline Change Envelope
         # (SCE), Net Shoreline Movement (NSM) and Max/Min years
-        stats_list = ['valid_obs', 'valid_span', 'sce',
-                      'nsm', 'max_year', 'min_year']
+        stats_list = [
+            'valid_obs', 'valid_span', 'sce', 'nsm', 'max_year', 'min_year'
+        ]
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x, initial_year=1988), axis=1)
-        
+
         ################
         # Export stats #
         ################
 
         if points_gdf is not None:
-            
+
             # Set up scheme to optimise file size
-            schema_dict = {key: 'float:8.2' for key in points_gdf.columns
-                           if key != 'geometry'}
-            schema_dict.update({'sig_time': 'float:8.3',
-                                'outl_time': 'str:80',
-                                'sig_soi': 'float:8.3',
-                                'outl_soi': 'str:80',
-                                'valid_obs': 'int:4',
-                                'valid_span': 'int:4',
-                                'max_year': 'int:4',
-                                'min_year': 'int:4',
-                               })
+            schema_dict = {
+                key: 'float:8.2'
+                for key in points_gdf.columns
+                if key != 'geometry'
+            }
+            schema_dict.update({
+                'sig_time': 'float:8.3',
+                'outl_time': 'str:80',
+                'sig_soi': 'float:8.3',
+                'outl_soi': 'str:80',
+                'valid_obs': 'int:4',
+                'valid_span': 'int:4',
+                'max_year': 'int:4',
+                'min_year': 'int:4',
+            })
             col_schema = schema_dict.items()
-            
+
             # Clip stats to study area extent
             stats_path = f'{output_dir}/ratesofchange_{study_area}_' \
                          f'{vector_version}_{water_index}_{index_threshold:.2f}'
-            points_gdf = points_gdf[points_gdf.intersects(gridcell_gdf.geometry.item())]
+            points_gdf = points_gdf[points_gdf.intersects(
+                gridcell_gdf.geometry.item())]
 
             # Export to GeoJSON
             points_gdf.to_crs('EPSG:4326').to_file(f'{stats_path}.geojson',
@@ -1447,27 +1435,30 @@ def generate_vectors(config_path,
 
             # Export as ESRI shapefiles
             points_gdf.to_file(f'{stats_path}.shp',
-                               schema={'properties': col_schema,
-                                       'geometry': 'Point'})
-    
+                               schema={
+                                   'properties': col_schema,
+                                   'geometry': 'Point'
+                               })
+
     ###################
     # Export contours #
-    ###################    
-    
+    ###################
+
     # Assign certainty to contours based on underlying masks
-    contours_gdf = contour_certainty(contours_gdf,
-                                     output_path=output_dir)
+    contours_gdf = contour_certainty(contours_gdf, output_path=output_dir)
 
     # Add maturity details
     contours_gdf['maturity'] = 'final'
-    contours_gdf.loc[contours_gdf.index == baseline_year, 'maturity'] = 'interim'
+    contours_gdf.loc[contours_gdf.index == baseline_year,
+                     'maturity'] = 'interim'
 
     # Clip annual shoreline contours to study area extent
     contour_path = f'{output_dir}/annualshorelines_{study_area}_{vector_version}_' \
                    f'{water_index}_{index_threshold:.2f}'
-    contours_gdf['geometry'] = contours_gdf.intersection(gridcell_gdf.geometry.item())
-    contours_gdf.reset_index().to_crs('EPSG:4326').to_file(f'{contour_path}.geojson',
-                                                           driver='GeoJSON')
+    contours_gdf['geometry'] = contours_gdf.intersection(
+        gridcell_gdf.geometry.item())
+    contours_gdf.reset_index().to_crs('EPSG:4326').to_file(
+        f'{contour_path}.geojson', driver='GeoJSON')
 
     # Export stats and contours as ESRI shapefiles
     contours_gdf.reset_index().to_file(f'{contour_path}.shp')
