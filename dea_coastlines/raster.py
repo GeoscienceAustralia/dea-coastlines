@@ -160,7 +160,7 @@ def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
         nodata = make_mask(ds['pixel_quality'], nodata=True)
         mask = (make_mask(ds['pixel_quality'],
                           cloud='high_confidence') |
-                make_mask(ds['pixel_quality'], 
+                make_mask(ds['pixel_quality'],
                           cloud_shadow='high_confidence') | nodata)
 
         # Apply opening
