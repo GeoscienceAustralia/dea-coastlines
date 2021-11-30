@@ -26,14 +26,14 @@ def points_in_poly(points, polygons):
     """
     Builds an optimised spatial index using `rtree` to determine the IDs
     of points that fall within each polygon ID.
-    
+
     Parameters:
     -----------
-    points : 
+    points :
         A `geopandas.GeoSeries` or iterable of `shapely` geometry points
-    polygons : 
+    polygons :
         A `geopandas.GeoSeries` or iterable of `shapely` geometry polygons
-    
+
     Returns:
     --------
     A dictionary identifying what point IDs fall within each polygon ID.
@@ -63,27 +63,27 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
     with a specific polygon. This is used to calculate moving
     window statistics after first creating a dictionary of polygons
     and intersecting points using `points_in_poly`.
-    
+
     Parameters:
     -----------
-    key : 
-        The ID of a polygon that will be used to select all 
+    key :
+        The ID of a polygon that will be used to select all
         intersecting points.
     stats_gdf : geopandas.GeoDataFrame
         A `geopandas.GeoDataFrame` containing multiple points which
         will be selected based on whether they match the points linked
         to the specific polygon in `poly_points_dict` requested by `key`.
     poly_points_dict : dict
-        A dictionary identifying what point IDs fall within each polygon 
-        ID. An individual polygon is selected using `key`. 
+        A dictionary identifying what point IDs fall within each polygon
+        ID. An individual polygon is selected using `key`.
     min_n : int, optional
         If less than `min_n` points are returned for a given polygon,
         return None.
-    
+
     Returns:
     --------
     A `pandas.Series` containing statistics based on the points that
-    matched the polygon ID requested by `key`. 
+    matched the polygon ID requested by `key`.
     """
 
     matching_points = stats_gdf.iloc[poly_points_dict[key]]
@@ -175,13 +175,13 @@ def continental_layers(vector_version, continental_version, water_index,
 
     # Setup input and output file paths
     shoreline_paths = f'data/interim/vector/{vector_version}/*/' \
-                  f'annualshorelines_*_{vector_version}_' \
-                  f'{water_index}_{index_threshold}.shp'
-    ratesofchange_paths = f'data/interim/vector/{vector_version}/*/' \
-                      f'ratesofchange_*_{vector_version}_' \
+                      f'annualshorelines_*_{vector_version}_' \
                       f'{water_index}_{index_threshold}.shp'
+    ratesofchange_paths = f'data/interim/vector/{vector_version}/*/' \
+                          f'ratesofchange_*_{vector_version}_' \
+                          f'{water_index}_{index_threshold}.shp'
     continental_shorelines_path = f'data/processed/DEACoastlines_' \
-                              f'annualshorelines_{continental_version}.shp'
+                                  f'annualshorelines_{continental_version}.shp'
     continental_rates_path = f'data/processed/DEACoastlines_' \
                              f'ratesofchange_{continental_version}.shp'
 
@@ -243,7 +243,7 @@ def continental_layers(vector_version, continental_version, water_index,
         # Set nonsignificant rates to 0 m / year
         ratesofchange_gdf.loc[ratesofchange_gdf.sig_time > 0.01,
                               'rate_time'] = 0
-        ratesofchange_gdf.loc[ratesofchange_gdf.sig_soi > 0.01, 
+        ratesofchange_gdf.loc[ratesofchange_gdf.sig_soi > 0.01,
                               'rate_soi'] = 0
 
         # Clip to 50 m rates to remove extreme outliers
@@ -264,8 +264,12 @@ def continental_layers(vector_version, continental_version, water_index,
         print('Calculating mean rates')
         hotspots_gdf[[
             'rate_time', 'rate_soi', 'n'
-        ]] = hotspots_gdf.apply(lambda row: get_matching_data(
-            row.name, ratesofchange_gdf, poly_points_dict, min_n=hotspots / 25),
+        ]] = hotspots_gdf.apply(lambda row:
+                                get_matching_data(
+                                    row.name,
+                                    ratesofchange_gdf,
+                                    poly_points_dict,
+                                    min_n=hotspots / 25),
                                 axis=1)
 
         # Export hotspots to file
