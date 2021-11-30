@@ -47,7 +47,7 @@ from datacube.utils.cog import write_cog
 from dea_tools.spatial import subpixel_contours
 
 # Import DEA Coastlines code
-import dea_coastlines.raster
+from dea_coastlines import raster
 
 # Hide warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
