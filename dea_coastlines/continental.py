@@ -18,8 +18,8 @@ import pandas as pd
 from rtree import index
 from tqdm.auto import tqdm
 
-# Import funcs from dea_coastlines.vector
-import vector
+# Import DEA Coastlines code
+from dea_coastlines import vector
 
 
 def points_in_poly(points, polygons):
