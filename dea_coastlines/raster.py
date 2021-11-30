@@ -158,9 +158,10 @@ def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
         # Identify pixels that are either cloud, cloud shadow or nodata
         from datacube.storage.masking import make_mask
         nodata = make_mask(ds['pixel_quality'], nodata=True)
-        mask = (make_mask(ds['pixel_quality'], cloud='high_confidence') |
-                make_mask(ds['pixel_quality'], cloud_shadow='high_confidence') |
-                nodata)
+        mask = (make_mask(ds['pixel_quality'],
+                          cloud='high_confidence') |
+                make_mask(ds['pixel_quality'], 
+                          cloud_shadow='high_confidence') | nodata)
 
         # Apply opening
         mask_cleaned = odc.algo.mask_cleanup(mask,
@@ -286,12 +287,11 @@ def model_tide_points(ds, points_gdf, extent_buffer=0.05):
                                times=observed_datetimes)
 
     # Convert data to spatial geopandas.GeoDataFrame
-    tidepoints_gdf = gpd.GeoDataFrame(data={
-        'time': tidepoints_df.index,
-        'tide_m': tidepoints_df.tide_m
-    },
+    tidepoints_gdf = gpd.GeoDataFrame(data={'time': tidepoints_df.index,
+                                            'tide_m': tidepoints_df.tide_m},
                                       geometry=gpd.points_from_xy(
-                                          tidepoints_df.lon, tidepoints_df.lat),
+                                          tidepoints_df.lon,
+                                          tidepoints_df.lat),
                                       crs='EPSG:4326')
 
     # Reproject to satellite data CRS

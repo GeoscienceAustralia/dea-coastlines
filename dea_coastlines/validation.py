@@ -1858,7 +1858,7 @@ def deacl_validation(val_path,
         bbox = gpd.GeoSeries(box(minx, miny, maxx, maxy), crs='EPSG:3577')
 
         # Import corresponding waterline contours
-        deacl_gdf = (gpd.read_file(deacl_path, 
+        deacl_gdf = (gpd.read_file(deacl_path,
                                   bbox=bbox.buffer(100))
                      .to_crs('EPSG:3577')
                      .dissolve('year')
