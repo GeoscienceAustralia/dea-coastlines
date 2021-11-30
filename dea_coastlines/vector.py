@@ -55,8 +55,8 @@ pd.options.mode.chained_assignment = None
 
   
 def load_rasters(path,
-                 raster_version, 
-                 study_area, 
+                 raster_version,
+                 study_area,
                  water_index='mndwi',
                  start_year=1988):
     
@@ -109,8 +109,8 @@ def load_rasters(path,
         for layer_name in [f'{water_index}', 'tide_m', 'count', 'stdev']:
 
             # Get paths of files that match pattern
-            paths = glob.glob(f'{path}/{raster_version}/' \
-                              f'{study_area}_{raster_version}/' \
+            paths = glob.glob(f'{path}/{raster_version}/'
+                              f'{study_area}_{raster_version}/'
                               f'*_{layer_name}{layer_type}')
 
             # Test if data was returned
@@ -1012,9 +1012,10 @@ def calculate_regressions(points_gdf,
     # Compute coastal change rates by linearly regressing annual movements vs. time
     print(f'Comparing annual movements with time')
     rate_out = (points_subset
-                .apply(lambda row: change_regress(y_vals=row.values.astype(float),
-                                                  x_vals=x_years,
-                                                  x_labels=x_years), axis=1))
+                .apply(lambda row: change_regress(
+                    y_vals=row.values.astype(float),
+                    x_vals=x_years,
+                    x_labels=x_years), axis=1))
     points_gdf[['rate_time', 'incpt_time', 'sig_time', 'se_time', 'outl_time']] = rate_out
 
     # Copy slope and intercept into points_subset so they can be
@@ -1030,22 +1031,23 @@ def calculate_regressions(points_gdf,
 
         # Compute stats for each row
         ci_out = (points_subset
-                  .apply(lambda row: change_regress(y_vals=row.values[:-2].astype(float), 
-                                                    x_vals=climate_subset[ci].values, 
-                                                    x_labels=x_years,
-                                                    detrend_params=(row.slope, row.intercept)), axis=1))
+                  .apply(lambda row: change_regress(
+                      y_vals=row.values[:-2].astype(float),
+                      x_vals=climate_subset[ci].values,
+                      x_labels=x_years,
+                      detrend_params=(row.slope, row.intercept)), axis=1))
 
         # Add data as columns  
-        points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', 
+        points_gdf[[f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}',
                     f'se_{ci}', f'outl_{ci}']] = ci_out
 
     # Set CRS
     points_gdf.crs = contours_gdf.crs
     
     # Custom sorting
-    reg_cols = chain.from_iterable([f'rate_{i}', f'sig_{i}', 
-                                    f'se_{i}', f'outl_{i}'] for i in 
-                                   ['time', *climate_df.columns]) 
+    reg_cols = chain.from_iterable([f'rate_{i}', f'sig_{i}',
+                                    f'se_{i}', f'outl_{i}'] for i in
+                                   ['time', *climate_df.columns])
     
     return points_gdf.loc[:, [*reg_cols, *dist_years, 'geometry']]
 
@@ -1093,25 +1095,25 @@ def all_time_stats(x, col='dist_', initial_year=1988):
 
     # Select date columns only
     year_cols = x.index.str.contains(col)
-    subset = x.loc[year_cols].astype(float) 
+    subset = x.loc[year_cols].astype(float)
 
     # Restrict to requested initial year
     subset.index = subset.index.str.lstrip('dist_').astype(int)
     subset = subset.loc[initial_year:]
 
     # Identify outlier years to drop from calculation
-    to_drop = [int(i) for i in x.outl_time.split(" ") if len(i) > 0]    
-    subset_nooutl = subset.drop(to_drop, errors='ignore') 
+    to_drop = [int(i) for i in x.outl_time.split(" ") if len(i) > 0] 
+    subset_nooutl = subset.drop(to_drop, errors='ignore')
 
     # Calculate SCE range, NSM and max/min year 
     # Since NSM is the most recent shoreline minus the oldest shoreline,
     # we can calculate this by simply inverting the 1988 distance value
     # (i.e. 0 - X) if it exists in the data
     stats_dict = {'valid_obs': subset_nooutl.shape[0],
-                  'valid_span': (subset_nooutl.index[-1] - 
+                  'valid_span': (subset_nooutl.index[-1] -
                                  subset_nooutl.index[0] + 1),
                   'sce': subset_nooutl.max() - subset_nooutl.min(),
-                  'nsm': -(subset_nooutl.loc[initial_year] if initial_year 
+                  'nsm': -(subset_nooutl.loc[initial_year] if initial_year
                            in subset_nooutl else np.nan),
                   'max_year': subset_nooutl.idxmax(),
                   'min_year': subset_nooutl.idxmin()}
@@ -1119,8 +1121,8 @@ def all_time_stats(x, col='dist_', initial_year=1988):
     return pd.Series(stats_dict)
 
 
-def contour_certainty(contours_gdf, 
-                      output_path, 
+def contour_certainty(contours_gdf,
+                      output_path,
                       uncertain_classes=[4, 5]):
     
     """
@@ -1190,9 +1192,9 @@ def contour_certainty(contours_gdf,
     vector_mask['geometry'] = vector_mask.geometry.buffer(0)
 
     # Rename classes
-    vector_mask = vector_mask.rename({0: 'good', 
-                                      4: 'tidal issues', 
-                                      5: 'insufficient data'})    
+    vector_mask = vector_mask.rename({0: 'good',
+                                      4: 'tidal issues',
+                                      5: 'insufficient data'})
 
     # Output class list
     class_list = []
@@ -1218,7 +1220,7 @@ def contour_certainty(contours_gdf,
     
     # Finally, set all 1991 and 1992 coastlines north of -23 degrees 
     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
-    pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) & 
+    pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) &
                     (contours_gdf.index.isin(['1991', '1992'])))
     contours_gdf.loc[pinatubo_lat, 'certainty'] = 'aerosol issues'
     
@@ -1226,30 +1228,30 @@ def contour_certainty(contours_gdf,
 
 
 @click.command()
-@click.option('--config_path', 
-              type=str, 
-              required=True, 
+@click.option('--config_path',
+              type=str,
+              required=True,
               help='Path to the YAML config file defining inputs to '
               'use for this analysis. These are typically located in '
               'the `dea-coastlines/configs/` directory.')
 @click.option('--study_area', 
-              type=str, 
-              required=True, 
+              type=str,
+              required=True,
               help='A string providing a unique ID of an analysis '
               'gridcell that was previously used to generate raster '
               'files. This is used to identify the raster files that '
               'will be used as inputs for shoreline extraction, and '
               'should match a row in the "id" column of the provided '
               'analysis gridcell vector file.')
-@click.option('--raster_version', 
+@click.option('--raster_version',
               type=str, 
               required=True, 
               help='A unique string providing a name that was used '
               'to generate raster files. This is used to identify the '
               'raster files that will be used as inputs for shoreline '
               'extraction.')
-@click.option('--vector_version', 
-              type=str, 
+@click.option('--vector_version',
+              type=str,
               help='A unique string proving a name that will be used '
               'for output vector directories and files. This allows '
               'multiple versions of vector files to be generated '
@@ -1257,30 +1259,30 @@ def contour_certainty(contours_gdf,
               'different water index thresholds or indices. If '
               'not provided, this will default to the same string '
               'supplied to "--raster_version".')
-@click.option('--water_index', 
+@click.option('--water_index',
               type=str,
-              default='mndwi', 
+              default='mndwi',
               help='A string giving the name of the computed water '
               'index to use for shoreline extraction. '
               'Defaults to "mndwi".')
-@click.option('--index_threshold', 
+@click.option('--index_threshold',
               type=float,
-              default=0.00, 
+              default=0.00,
               help='The water index threshold used to extract '
               'subpixel precision shorelines. Defaults to 0.00.')
-@click.option('--baseline_year', 
-              type=str, 
-              default='2020', 
+@click.option('--baseline_year',
+              type=str,
+              default='2020',
               help='The annual shoreline used to generate the '
               'rates of change point statistics. This is typically '
-              'the most recent annual shoreline in the dataset.')    
+              'the most recent annual shoreline in the dataset.')
 def generate_vectors(config_path,
                      study_area,
                      raster_version,
                      vector_version,
                      water_index,
                      index_threshold,
-                     baseline_year):  
+                     baseline_year):
 
     ###############################
     # Load DEA Coastlines rasters #
@@ -1307,18 +1309,18 @@ def generate_vectors(config_path,
     ####################
 
     # Get bounding box to load data for
-    bbox = gpd.GeoSeries(box(*array_bounds(height=yearly_ds.sizes['y'], 
-                                           width=yearly_ds.sizes['x'], 
-                                           transform=yearly_ds.transform)), 
+    bbox = gpd.GeoSeries(box(*array_bounds(height=yearly_ds.sizes['y'],
+                                           width=yearly_ds.sizes['x'],
+                                           transform=yearly_ds.transform)),
                          crs=yearly_ds.crs)
 
     # Tide points
-    tide_points_gdf = (gpd.read_file(config['Input files']['coastal_points_path'], 
-                                bbox=bbox)
-                       .to_crs(yearly_ds.crs))
+    tide_points_gdf = (gpd.read_file(
+        config['Input files']['coastal_points_path'],
+        bbox=bbox).to_crs(yearly_ds.crs))
 
     # Study area polygon
-    gridcell_gdf = (gpd.read_file(config['Input files']['coastal_grid_path'], 
+    gridcell_gdf = (gpd.read_file(config['Input files']['coastal_grid_path'],
                                   bbox=bbox)
                     .set_index('id')
                     .to_crs(str(yearly_ds.crs)))
@@ -1328,7 +1330,7 @@ def generate_vectors(config_path,
     # Load climate indices
     climate_df = load_climate_data(
         index='soi',
-        years=(yearly_ds.year.min().item(), 
+        years=(yearly_ds.year.min().item(),
                yearly_ds.year.max().item()),
         annual=True,
         detrend=True)
@@ -1357,8 +1359,8 @@ def generate_vectors(config_path,
         yearly_ds,
         gapfill_ds,
         water_index, 
-        index_threshold, 
-        waterbody_mask, 
+        index_threshold,
+        waterbody_mask,
         tide_points_gdf,
         output_path=output_dir)
 
@@ -1374,8 +1376,8 @@ def generate_vectors(config_path,
     ######################    
 
     # Extract statistics modelling points along baseline contour
-    points_gdf = points_on_line(contours_gdf, 
-                                baseline_year, 
+    points_gdf = points_on_line(contours_gdf,
+                                baseline_year,
                                 distance=30)
     
     # If a rocky mask is provided, use this to clip data
@@ -1389,7 +1391,7 @@ def generate_vectors(config_path,
 
         # Clip to remove rocky shoreline points
         points_gdf = rocky_shores_clip(
-            points_gdf, coastal_classification_gdf, buffer=50)    
+            points_gdf, coastal_classification_gdf, buffer=50) 
     
     # If any points remain after rocky shoreline clip
     if points_gdf is not None:
@@ -1398,7 +1400,7 @@ def generate_vectors(config_path,
         # for every contour compared to the baseline year
         points_gdf = annual_movements(points_gdf,
                                       contours_gdf,
-                                      yearly_ds,                                     
+                                      yearly_ds,                           
                                       baseline_year,
                                       water_index)
 
@@ -1409,7 +1411,7 @@ def generate_vectors(config_path,
         
         # Add count and span of valid obs, Shoreline Change Envelope 
         # (SCE), Net Shoreline Movement (NSM) and Max/Min years
-        stats_list = ['valid_obs', 'valid_span', 'sce', 
+        stats_list = ['valid_obs', 'valid_span', 'sce',
                       'nsm', 'max_year', 'min_year']
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x, initial_year=1988), axis=1)
@@ -1440,7 +1442,7 @@ def generate_vectors(config_path,
             points_gdf = points_gdf[points_gdf.intersects(gridcell_gdf.geometry.item())]
 
             # Export to GeoJSON
-            points_gdf.to_crs('EPSG:4326').to_file(f'{stats_path}.geojson', 
+            points_gdf.to_crs('EPSG:4326').to_file(f'{stats_path}.geojson',
                                                    driver='GeoJSON')
 
             # Export as ESRI shapefiles
@@ -1464,7 +1466,7 @@ def generate_vectors(config_path,
     contour_path = f'{output_dir}/annualshorelines_{study_area}_{vector_version}_' \
                    f'{water_index}_{index_threshold:.2f}'
     contours_gdf['geometry'] = contours_gdf.intersection(gridcell_gdf.geometry.item())
-    contours_gdf.reset_index().to_crs('EPSG:4326').to_file(f'{contour_path}.geojson', 
+    contours_gdf.reset_index().to_crs('EPSG:4326').to_file(f'{contour_path}.geojson',
                                                            driver='GeoJSON')
 
     # Export stats and contours as ESRI shapefiles
