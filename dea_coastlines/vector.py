@@ -355,7 +355,9 @@ def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
     # of each shoreline to ensure contour extraction accurately
     # seperates land and water spectra
     if dilation:
-        ocean_mask = xr.apply_ufunc(binary_dilation, ocean_mask, disk(dilation))
+        ocean_mask = xr.apply_ufunc(binary_dilation, 
+                                    ocean_mask, 
+                                    disk(dilation))
 
     return ocean_mask
 
@@ -571,7 +573,7 @@ def contours_preprocess(yearly_ds,
 
     # Keep pixels within both all time coastal buffer and annual mask
     masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask &
-                                             temporal_mask)  #  & temporal_mask
+                                             temporal_mask)
 
     # Create raster containg all time mask data
     all_time_mask = np.full(yearly_ds.geobox.shape, 0, dtype='int8')
@@ -1000,7 +1002,8 @@ def calculate_regressions(points_gdf, contours_gdf, climate_df):
     points_subset = points_gdf[dist_years]
     climate_subset = climate_df.loc[x_years, :]
 
-    # Compute coastal change rates by linearly regressing annual movements vs. time
+    # Compute coastal change rates by linearly regressing annual 
+    # movements vs. time
     print(f'Comparing annual movements with time')
     rate_out = (points_subset.apply(lambda row: change_regress(
         y_vals=row.values.astype(float), x_vals=x_years, x_labels=x_years),
@@ -1012,9 +1015,10 @@ def calculate_regressions(points_gdf, contours_gdf, climate_df):
     # used to temporally de-trend annual distances
     points_subset[['slope', 'intercept']] = rate_out[['slope', 'intercept']]
 
-    # Identify possible relationships between climate indices and coastal change
-    # by linearly regressing climate indices against annual movements. Significant
-    # results indicate that annual movements may be influenced by climate phenomena
+    # Identify possible relationships between climate indices and 
+    # coastal change by linearly regressing climate indices against 
+    # annual movements. Significant results indicate that annual 
+    # movements may be influenced by climate phenomena
     for ci in climate_subset:
 
         print(f'Comparing annual movements with {ci}')
@@ -1055,14 +1059,14 @@ def all_time_stats(x, col='dist_', initial_year=1988):
              change or variability across all annual coastlines, 
              calculated by computing the maximum distance between any 
              two annual coastlines (excluding outliers).
-        nsm: Net Shoreline Movement (NSM). The distance between the 
-             oldest and most recent annual shorelines (excluding 
+        nsm: Net Shoreline Movement (NSM). The distance between the
+             oldest and most recent annual shorelines (excluding
              outliers). Negative values indicate the shoreline retreated
-             between the oldest and most recent shoreline; positive 
+             between the oldest and most recent shoreline; positive
              values indicate growth.
-        max_year, min_year: The year that annual shorelines were at 
+        max_year, min_year: The year that annual shorelines were at
              their maximum (i.e. located furthest towards the ocean) and
-             their minimum (i.e. located furthest inland) respectively 
+             their minimum (i.e. located furthest inland) respectively
              (excluding outliers). 
     
     Parameters:
@@ -1389,7 +1393,9 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
                                       baseline_year, water_index)
 
         # Calculate regressions
-        points_gdf = calculate_regressions(points_gdf, contours_gdf, climate_df)
+        points_gdf = calculate_regressions(points_gdf, 
+                                           contours_gdf, 
+                                           climate_df)
 
         # Add count and span of valid obs, Shoreline Change Envelope
         # (SCE), Net Shoreline Movement (NSM) and Max/Min years
@@ -1424,8 +1430,9 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
             col_schema = schema_dict.items()
 
             # Clip stats to study area extent
-            stats_path = f'{output_dir}/ratesofchange_{study_area}_' \
-                         f'{vector_version}_{water_index}_{index_threshold:.2f}'
+            stats_path = f'{output_dir}/ratesofchange_' \ 
+                         f'{study_area}_{vector_version}_' \
+                         f'{water_index}_{index_threshold:.2f}'
             points_gdf = points_gdf[points_gdf.intersects(
                 gridcell_gdf.geometry.item())]
 
@@ -1453,7 +1460,8 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
                      'maturity'] = 'interim'
 
     # Clip annual shoreline contours to study area extent
-    contour_path = f'{output_dir}/annualshorelines_{study_area}_{vector_version}_' \
+    contour_path = f'{output_dir}/annualshorelines_' \
+                   f'{study_area}_{vector_version}_' \
                    f'{water_index}_{index_threshold:.2f}'
     contours_gdf['geometry'] = contours_gdf.intersection(
         gridcell_gdf.geometry.item())
