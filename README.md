@@ -88,9 +88,9 @@ These three modules have a command-line interface that can be used to automate e
 
 For help using these command line tools, run:
 ```
-python dea_coastlines/raster.py --help
-python dea_coastlines/vector.py --help
-python dea_coastlines/continental.py --help
+python -m dea_coastlines.raster --help
+python -m dea_coastlines.vector --help
+python -m dea_coastlines.continental --help
 ```
 
 ---
