@@ -1,0 +1,9 @@
+Virtual product:
+    virtual_product_path: configs/dea_virtual_product_landsat.yaml
+    virtual_product_name: ls_nbart_mndwi
+Input files:
+    coastal_grid_path: data/raw/50km_coastal_grid_dea.geojson
+    coastal_points_path: data/raw/2km_coastal_points_dea.geojson
+    coastal_classification_path: data/raw/Smartline.gdb
+    waterbody_mask_path: data/raw/SurfaceHydrologyPolygonsRegional.gdb
+    waterbody_modifications_path: data/raw/estuary_mask_modifications.geojson

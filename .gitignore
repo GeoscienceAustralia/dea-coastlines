@@ -1,40 +1,9 @@
-# Ignore shapefiles
-*.dbf
-*.fix
-*.prj
-*.qix
-*.cpg
-*.shp
-*.shx
+# Ignore all
+*.*
 
-# Ignore geodatabase
-*.gdb
-
-# Ignore rasters
-*.tif
-*.tiff
-*.jpeg
-*.jpg
-*.JPG
-*.png
-*.PNG
-
-# Ignore QGIS projects
-*.qgz
-*.qgs
-
-# Ignore directories
-output_data/*
-packages/*
-PBS/*
-validation/input_data/*
-validation/output_data/*
-validation/figures/*
-validation/*.csv
-
-# Others
-dask-worker-space/*
-*.ipynb_checkpoints/
-*__pycache__
-.gitignore~
-
+# Except for
+!*.py
+!*.ipynb
+!*.sh
+!*.yaml
+!*.gitignore
