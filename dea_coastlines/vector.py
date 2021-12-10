@@ -103,7 +103,7 @@ def load_rasters(path,
         # List to hold output DataArrays
         da_list = []
 
-        for layer_name in [f'{water_index}', 'tide_m', 'count', 'stdev']:
+        for layer_name in [f'{water_index}', 'tide_m', 'temp', 'count', 'stdev']:
 
             # Get paths of files that match pattern
             paths = glob.glob(f'{path}/{raster_version}/'
@@ -562,9 +562,19 @@ def contours_preprocess(yearly_ds,
 
     # Identify pixels that are land in at least 10% of observations,
     # and use this to generate a coastal buffer
-    all_time = ((thresholded_ds != 0) &
+#     temperature_mask = ((yearly_ds.temp < 23).mean(dim='year') > 0.5)
+    all_time = ((thresholded_ds != 0) & #(~temperature_mask) &
                 temporal_mask).mean(dim='year') >= 0.2  # & temporal_mask
-    coastal_mask = coastal_masking(all_time, tide_points_gdf, buffer_pixels)
+    
+    import odc.algo
+    import datacube
+    dc = datacube.Datacube()
+    landcover = dc.load(product='esa_worldcover', like=yearly_ds.geobox)
+    landcover_water = landcover.classification.isin([0, 80]).squeeze(dim='time')
+    landcover_water = odc.algo.mask_cleanup(landcover_water, mask_filters=[('erosion', 20)])
+
+    coastal_mask = coastal_masking(all_time.where(~landcover_water, False), 
+                                   tide_points_gdf, buffer_pixels)
 
     # Generate annual masks by selecting only water pixels that are
     # directly connected to the ocean in each yearly timestep
@@ -1289,7 +1299,8 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
     yearly_ds, gapfill_ds = load_rasters(path='data/interim/raster',
                                          raster_version=raster_version,
                                          study_area=study_area,
-                                         water_index=water_index)
+                                         water_index=water_index,
+                                         start_year=2000)
 
     # Create output vector folder using supplied vector version string;
     # if no vector version is provided, copy this from raster version
@@ -1318,7 +1329,7 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
     gridcell_gdf = (gpd.read_file(config['Input files']['coastal_grid_path'],
                                   bbox=bbox).set_index('id').to_crs(
                                       str(yearly_ds.crs)))
-    gridcell_gdf.index = gridcell_gdf.index.astype(str)
+    gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
 
     # Load climate indices
@@ -1346,8 +1357,8 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
             yearly_ds=yearly_ds)
 
     else:
-        waterbody_mask = np.full(yearly_ds.geobox.shape, True, dtype=bool)
-
+        waterbody_mask = np.full(yearly_ds.geobox.shape, False, dtype=bool)
+        
     # Mask dataset to focus on coastal zone only
     masked_ds = contours_preprocess(yearly_ds,
                                     gapfill_ds,
@@ -1355,7 +1366,8 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
                                     index_threshold,
                                     waterbody_mask,
                                     tide_points_gdf,
-                                    output_path=output_dir)
+                                    output_path=output_dir,
+                                    buffer_pixels=30)
 
     # Extract contours
     contours_gdf = subpixel_contours(da=masked_ds,

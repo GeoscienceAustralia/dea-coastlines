@@ -124,10 +124,7 @@ def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
                         resolution=(-30, 30),
                         align=(15, 15),
                         resampling={
-                            'fmask': 'nearest',
-                            'oa_fmask': 'nearest',
-                            'nbart_contiguity': 'nearest',
-                            'oa_nbart_contiguity': 'nearest',
+                            'pixel_quality': 'nearest',
                             '*': 'cubic'
                         })
         box = product.group(bag, **settings, **query)
@@ -137,36 +134,18 @@ def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
     if ((len(ds.x) % 3000) <= 10) or ((len(ds.y) % 3000) <= 10):
         ds = ds.chunk({'x': 3200, 'y': 3200})
 
-    if 'fmask' in ds:
+    # Identify pixels that are either cloud, cloud shadow or nodata
+    from datacube.utils.masking import make_mask
+    nodata = make_mask(ds['pixel_quality'], nodata=True)
+    mask = (make_mask(ds['pixel_quality'],
+                      cloud='high_confidence') |
+            make_mask(ds['pixel_quality'],
+                      cloud_shadow='high_confidence') | nodata)
 
-        # Extract boolean mask
-        mask = odc.algo.enum_to_bool(
-            ds.fmask, categories=['nodata', 'cloud', 'shadow', 'snow'])
-
-        # Close mask to remove small holes in cloud, open mask to
-        # remove narrow false positive cloud, then dilate
-        mask_cleaned = odc.algo.mask_cleanup(mask=mask,
-                                             mask_filters=[('closing', 2),
-                                                           ('opening', 10),
-                                                           ('dilation', 5)])
-
-        # Add new mask as nodata pixels
-        ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan).drop('fmask')
-
-    elif 'pixel_quality' in ds:
-
-        # Identify pixels that are either cloud, cloud shadow or nodata
-        from datacube.storage.masking import make_mask
-        nodata = make_mask(ds['pixel_quality'], nodata=True)
-        mask = (make_mask(ds['pixel_quality'],
-                          cloud='high_confidence') |
-                make_mask(ds['pixel_quality'],
-                          cloud_shadow='high_confidence') | nodata)
-
-        # Apply opening
-        mask_cleaned = odc.algo.mask_cleanup(mask,
-                                             mask_filters=[('opening', 20)])
-        ds = ds.where(~mask_cleaned & ~nodata).drop('pixel_quality')
+    # Apply opening
+    mask_cleaned = odc.algo.mask_cleanup(mask,
+                                         mask_filters=[('opening', 20)])
+    ds = ds.where(~mask_cleaned & ~nodata).drop('pixel_quality')
 
     return ds
 
@@ -647,7 +626,7 @@ def generate_rasters(config_path, study_area, raster_version, start_year,
     gridcell_gdf = (gpd.read_file(
         config['Input files']['coastal_grid_path']).to_crs(
             epsg=4326).set_index('id'))
-    gridcell_gdf.index = gridcell_gdf.index.astype(str)
+    gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
 
     ################
