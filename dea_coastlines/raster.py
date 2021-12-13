@@ -142,12 +142,13 @@ def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
             make_mask(ds['pixel_quality'],
                       cloud_shadow='high_confidence') | nodata)
 
-    # Apply opening
+    # Apply opening to remove long narrow false positive clouds along
+    # the coastline
     mask_cleaned = odc.algo.mask_cleanup(mask,
                                          mask_filters=[('opening', 20)])
-    ds = ds.where(~mask_cleaned & ~nodata).drop('pixel_quality')
+    ds = ds.where(~mask_cleaned & ~nodata)
 
-    return ds
+    return ds.drop('pixel_quality').drop('temp')
 
 
 def otps_tides(lats, lons, times, timezone=None):

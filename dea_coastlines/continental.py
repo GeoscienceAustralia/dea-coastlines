@@ -237,7 +237,7 @@ def continental_layers(vector_version, continental_version, water_index,
 
         # Drop low observations from rates
         ratesofchange_gdf = ratesofchange_gdf.loc[
-            ratesofchange_gdf.valid_obs > 25]
+            ratesofchange_gdf.valid_obs > 10]
         ratesofchange_gdf = ratesofchange_gdf.reset_index(drop=True)
 
         # Set nonsignificant rates to 0 m / year
