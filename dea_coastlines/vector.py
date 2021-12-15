@@ -410,7 +410,8 @@ def coastal_masking(ds, tide_points_gdf, buffer=50, closing=None):
                                   disk(buffer),
                                   dask='parallelized')
 
-    return coastal_mask
+    # Return coastal mask as 1, and land pixels as 2
+    return coastal_mask.where(coastal_mask, ~all_time_ocean * 2)
 
 
 def temporal_masking(ds):
@@ -574,27 +575,28 @@ def contours_preprocess(yearly_ds,
     temporal_mask = temporal_masking(thresholded_ds == 1)
 
     # Identify pixels that are land in at least 20% of observations,
-    # and use this to generate a coastal buffer
+    # and use this to generate a coastal buffer study area
     all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim='year') >= 0.2
     coastal_mask = coastal_masking(ds=all_time, 
                                    tide_points_gdf=tide_points_gdf, 
                                    buffer=buffer_pixels,
                                    closing=5)
+    
+    # Because the output of `coastal_masking` contains 2 values that
+    # represent pixels inland of the coastal buffer and 1 values in 
+    # the coastal buffer itself, seperate them for further use
+    inland_mask = coastal_mask != 2
+    coastal_mask = coastal_mask == 1
 
     # Generate annual masks by selecting only water pixels that are
-    # directly connected to the ocean in each yearly timestep
-    #
-    # TODO: apply coastal mask before this step to exclude non-contiguous
-    # sections of shoreline being included in outputs. First attempt at
-    # applying this didn't work, as masking by coastal mask before this 
-    # step fails when there are no tidal points in the coastal mask to 
-    # identify ocean vs. non-ocean using `ocean_masking`
+    # directly connected to the ocean in each yearly timestep, and
+    # not within the inland mask
     annual_mask = ((thresholded_ds != 0)
+                   .where(inland_mask)
                    .groupby('year')
                    .apply(lambda x: ocean_masking(x, 
                                                   tide_points_gdf, 
-                                                  1, 3)))    
-
+                                                  1, 3)))
     # Keep pixels within both all time coastal buffer, annual mask 
     # and temporal mask
     masked_ds = yearly_ds[water_index].where(annual_mask & 
@@ -603,7 +605,7 @@ def contours_preprocess(yearly_ds,
 
     # Create raster containg all time mask data
     all_time_mask = np.full(yearly_ds.geobox.shape, 0, dtype='int8')
-    all_time_mask[~coastal_mask] = 1
+    all_time_mask[~(coastal_mask == 1)] = 1
     all_time_mask[persistent_stdev & coastal_mask] = 4
     all_time_mask[persistent_lowobs & coastal_mask] = 5
     all_time_mask[waterbody_mask & coastal_mask] = 3
@@ -987,7 +989,7 @@ def change_regress(y_vals,
     return pd.Series(results_dict)
 
 
-def calculate_regressions(points_gdf, contours_gdf, climate_df):
+def calculate_regressions(points_gdf, contours_gdf):
     """
     For each rate of change point along the baseline annual coastline, 
     compute linear regression rates of change against both time and
@@ -1005,9 +1007,6 @@ def calculate_regressions(points_gdf, contours_gdf, climate_df):
         A `geopandas.GeoDataFrame` containing annual coastlines. This
         is used to ensure that all years in the annual coastlines data
         are included in the regression.
-    climate_df : pandas.DataFrame
-        A dataframe including numeric climate index data for each year
-        in the input `contours_gdf` dataset.
         
     Returns:
     --------
@@ -1026,7 +1025,6 @@ def calculate_regressions(points_gdf, contours_gdf, climate_df):
     x_years = contours_gdf.index.unique().astype(int).values
     dist_years = [f'dist_{i}' for i in x_years]
     points_subset = points_gdf[dist_years]
-    climate_subset = climate_df.loc[x_years, :]
 
     # Compute coastal change rates by linearly regressing annual
     # movements vs. time
@@ -1041,34 +1039,11 @@ def calculate_regressions(points_gdf, contours_gdf, climate_df):
     # used to temporally de-trend annual distances
     points_subset[['slope', 'intercept']] = rate_out[['slope', 'intercept']]
 
-    # Identify possible relationships between climate indices and
-    # coastal change by linearly regressing climate indices against
-    # annual movements. Significant results indicate that annual
-    # movements may be influenced by climate phenomena
-    for ci in climate_subset:
-
-        print(f'Comparing annual movements with {ci}')
-
-        # Compute stats for each row
-        ci_out = (points_subset.apply(lambda row: change_regress(
-            y_vals=row.values[:-2].astype(float),
-            x_vals=climate_subset[ci].values,
-            x_labels=x_years,
-            detrend_params=(row.slope, row.intercept)),
-                                      axis=1))
-
-        # Add data as columns
-        points_gdf[[
-            f'rate_{ci}', f'incpt_{ci}', f'sig_{ci}', f'se_{ci}', f'outl_{ci}'
-        ]] = ci_out
-
     # Set CRS
     points_gdf.crs = contours_gdf.crs
 
     # Custom sorting
-    reg_cols = chain.from_iterable(
-        [f'rate_{i}', f'sig_{i}', f'se_{i}', f'outl_{i}']
-        for i in ['time', *climate_df.columns])
+    reg_cols = ['rate_time', f'sig_time', f'se_time', f'outl_time']
 
     return points_gdf.loc[:, [*reg_cols, *dist_years, 'geometry']]
 
@@ -1348,13 +1323,6 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
 
-    # Load climate indices
-    climate_df = load_climate_data(index='soi',
-                                   years=(yearly_ds.year.min().item(),
-                                          yearly_ds.year.max().item()),
-                                   annual=True,
-                                   detrend=True)
-
     ##############################
     # Extract shoreline contours #
     ##############################
@@ -1422,8 +1390,7 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
 
         # Calculate regressions
         points_gdf = calculate_regressions(points_gdf,
-                                           contours_gdf,
-                                           climate_df)
+                                           contours_gdf)
 
         # Add count and span of valid obs, Shoreline Change Envelope
         # (SCE), Net Shoreline Movement (NSM) and Max/Min years
@@ -1448,8 +1415,6 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
             schema_dict.update({
                 'sig_time': 'float:8.3',
                 'outl_time': 'str:80',
-                'sig_soi': 'float:8.3',
-                'outl_soi': 'str:80',
                 'valid_obs': 'int:4',
                 'valid_span': 'int:4',
                 'max_year': 'int:4',

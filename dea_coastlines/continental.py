@@ -92,7 +92,6 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
 
         return pd.Series([
             matching_points.rate_time.mean(),
-            matching_points.rate_soi.mean(),
             len(matching_points.index)
         ])
 
@@ -145,7 +144,6 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
               'rates of change statistics layers into a single '
               'continental-scale rates of change statistics layer.')
 @click.option('--hotspots',
-              default=False,
               help='The distance (in metres) used to generate a '
               'coastal change hotspots summary layer. This controls '
               'the spacing of each summary point, and the radius used '
@@ -214,6 +212,7 @@ def continental_layers(vector_version, continental_version, water_index,
         if hotspots is True:
             print('Using a default hotspot distance of 2500 m')
             hotspots = 2500
+        hotspots = int(hotspots)
 
         # Load continental shoreline and rates of change data
         try:
@@ -243,8 +242,6 @@ def continental_layers(vector_version, continental_version, water_index,
         # Set nonsignificant rates to 0 m / year
         ratesofchange_gdf.loc[ratesofchange_gdf.sig_time > 0.01,
                               'rate_time'] = 0
-        ratesofchange_gdf.loc[ratesofchange_gdf.sig_soi > 0.01,
-                              'rate_soi'] = 0
 
         # Clip to 50 m rates to remove extreme outliers
         ratesofchange_gdf['rate_time'] = ratesofchange_gdf.rate_time.clip(
@@ -262,15 +259,11 @@ def continental_layers(vector_version, continental_version, water_index,
 
         # Compute mean and number of obs for each polygon
         print('Calculating mean rates')
-        hotspots_gdf[[
-            'rate_time', 'rate_soi', 'n'
-        ]] = hotspots_gdf.apply(lambda row:
-                                get_matching_data(
-                                    row.name,
-                                    ratesofchange_gdf,
-                                    poly_points_dict,
-                                    min_n=hotspots / 25),
-                                axis=1)
+        hotspots_gdf[['rate_time', 'n']] = hotspots_gdf.apply(
+            lambda row: get_matching_data(row.name, 
+                                          ratesofchange_gdf,
+                                          poly_points_dict,
+                                          min_n=hotspots / 25), axis=1)
 
         # Export hotspots to file
         hotspots_gdf.to_file(f'data/processed/DEACoastlines_hotspots_'
