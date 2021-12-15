@@ -29,13 +29,9 @@ The ability to map shoreline positions for each year provides valuable insights 
 ## Table of contents
 * [Repository code](#repository-code)
     * [Python modules](#python-modules)
-    * [Jupyter notebooks](#jupyter-notebooks)
-    * [Command-line interface](#command-line-interface)
-* [DEA Coastlines dataset](#dea-coastlines-dataset)
-    * [Data download](#data-download)
-    * [Interactive map](#interactive-map)
-    * [Loading DEA Coastlines data from the Web Feature Service (WFS) using Python](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
-    * [Loading DEA Coastlines data from the Web Feature Service (WFS) using R](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-r)
+        * [Jupyter notebooks](#jupyter-notebooks)
+    * [Running a DE Africa Coastlines analysis using the command-line interface (CLI)](#running-a-de-africa-coastlines-analysis-using-the-command-line-interface-cli)
+        * [Analysis outputs](#analysis-outputs)
 * [References](#references)
 
 ---
