@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code conducts vector subpixel shoreline extraction for DEA
+# This code conducts vector subpixel shoreline extraction for DE Africa
 # Coastlines:
 #
 #     * Apply morphological extraction algorithms to mask annual median
 #       composite rasters to a valid coastal region
 #     * Extract waterline vectors using subpixel waterline extraction
 #       (Bishop-Taylor et al. 2019b; https://doi.org/10.3390/rs11242984)
-#     * Compute rates of coastal change at every 30 m along Australia's
-#       non-rocky coastlines using linear regression
+#     * Compute rates of coastal change at every 30 m of coastline
+#       using linear regression
 
 import os
 import sys
@@ -69,11 +69,11 @@ def load_rasters(path,
     path : string
         A string giving the directory containing raster outputs.
     raster_version : string
-        A string giving the unique DEA Coastlines analysis version
-        (e.g. 'v0.3.0') used to load raster files.
+        A string giving the unique analysis name (e.g. 'v0.3.0') used 
+        to load raster files.
     study_area : string or int
-        A string giving the study area used to name raster files 
-        (e.g. Albers tile `6931`).
+        A string giving the study area grid cell used to name raster files 
+        (e.g. tile `6931`).
     water_index : string, optional
         A string giving the name of the water index to load. Defaults
         to 'mndwi', which will load raster files produced using the
@@ -85,12 +85,12 @@ def load_rasters(path,
     Returns:
     --------
     yearly_ds : xarray.Dataset
-        An `xarray.Dataset` containing annual DEA CoastLines rasters.
+        An `xarray.Dataset` containing annual input rasters.
         The dataset contains water index (e.g. 'MNDWI'), 'tide_m', 
         'count', and 'stdev' arrays for each year from 1988 onward.
     gapfill_ds : xarray.Dataset
-        An `xarray.Dataset` containing three-year gapfill DEA CoastLines
-        rasters. The dataset contains water index (e.g. 'MNDWI'), 
+        An `xarray.Dataset` containing three-year gapfill rasters. 
+        The dataset contains water index (e.g. 'MNDWI'), 
         'tide_m', 'count', and 'stdev' arrays for each year from 1988 
         onward.
         
@@ -230,7 +230,7 @@ def load_climate_data(index='soi_local',
 
 def waterbody_masking(input_data, modification_data, bbox, yearly_ds):
     """
-    Generates a raster mask for DEACoastlines based on the 
+    Generates a raster mask for DEA Coastlines based on the 
     SurfaceHydrologyPolygonsRegional.gdb dataset, and a vector 
     file containing minor modifications to this dataset (e.g. 
     features to remove or add to the dataset).

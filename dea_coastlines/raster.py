@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code conducts raster generation for DEA Coastlines:
+# This code conducts raster generation for DE Africa Coastlines:
 
 #     * Load stack of all available Landsat 5, 7 and 8 satellite imagery
 #       for a location using ODC Virtual Products
 #     * Convert each satellite image into a remote sensing water index
 #       (MNDWI)
-#     * For each satellite image, model ocean tides into a 2 x 2 km grid
-#       based on exact time of image acquisition
+#     * For each satellite image, model ocean tides into a tide modelling
+#       grid based on exact time of image acquisition
 #     * Interpolate tide heights into spatial extent of image stack
 #     * Mask out high and low tide pixels by removing all observations
 #       acquired outside of 50 percent of the observed tidal range
 #       centered over mean sea level
 #     * Combine tidally-masked data into annual median composites from
-#       1988 to the present representing the coastline at approximately
-#       mean sea level (0 m AHD)
+#       representing the most representative position of the shoreline
+#       at approximately mean sea level tide height each year (0 metres
+#       Above Mean Sea Level).
 
 import os
 import otps
@@ -57,9 +58,9 @@ def load_config(config_path):
 
 def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
     """
-    This function uses virtual products to load data from GA Collection
-    3 Landsat 5, 7 and 8, calculate a custom remote sensing index, and
-    return the data as a single xarray.Dataset.
+    This function uses virtual products to load Landsat 5, 7 and 8 data,
+    calculate a custom remote sensing index, and return the data as a 
+    single xarray.Dataset.
     
     To minimise resampling effects and maintain the highest data
     fidelity required for subpixel coastline extraction, this workflow

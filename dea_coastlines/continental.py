@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code combines individual datasets into continental DEA Coastlines
-# layers:
+# This code combines individual datasets into continental DE Africa
+# Coastlines layers:
 #
 #     * Combines output shorelines and rates of change statistics point
 #       vectors into single continental datasets
@@ -151,7 +151,7 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
               'point. The default is `False` which will not generate a '
               'hotspots layer. If `True` is supplied instead of a '
               'distance value, hotspots will be generated using a '
-              'default distance of 2500 m.')
+              'default distance of 10000 m.')
 @click.option('--baseline_year',
               type=str,
               default='2020',
@@ -178,9 +178,9 @@ def continental_layers(vector_version, continental_version, water_index,
     ratesofchange_paths = f'data/interim/vector/{vector_version}/*/' \
                           f'ratesofchange_*_{vector_version}_' \
                           f'{water_index}_{index_threshold}.shp'
-    continental_shorelines_path = f'data/processed/DEACoastlines_' \
+    continental_shorelines_path = f'data/processed/DEAfricaCoastlines_' \
                                   f'annualshorelines_{continental_version}.shp'
-    continental_rates_path = f'data/processed/DEACoastlines_' \
+    continental_rates_path = f'data/processed/DEAfricaCoastlines_' \
                              f'ratesofchange_{continental_version}.shp'
 
     # Combine annual shorelines into a single continental layer
@@ -208,10 +208,10 @@ def continental_layers(vector_version, continental_version, water_index,
         print('Generating hotspots...')
 
         # If hotspots is provided as True rather than a distance, use
-        # a default distance radius of 2500 m
+        # a default distance radius of 10000 m
         if hotspots is True:
-            print('Using a default hotspot distance of 2500 m')
-            hotspots = 2500
+            print('Using a default hotspot distance of 10000 m')
+            hotspots = 10000
         hotspots = int(hotspots)
 
         # Load continental shoreline and rates of change data
@@ -234,7 +234,7 @@ def continental_layers(vector_version, continental_version, water_index,
                                              index=baseline_year,
                                              distance=hotspots)
 
-        # Drop low observations from rates
+        # Drop low observations (less than 10) from rates
         ratesofchange_gdf = ratesofchange_gdf.loc[
             ratesofchange_gdf.valid_obs > 10]
         ratesofchange_gdf = ratesofchange_gdf.reset_index(drop=True)
@@ -266,7 +266,7 @@ def continental_layers(vector_version, continental_version, water_index,
                                           min_n=hotspots / 25), axis=1)
 
         # Export hotspots to file
-        hotspots_gdf.to_file(f'data/processed/DEACoastlines_hotspots_'
+        hotspots_gdf.to_file(f'data/processed/DEAfricaCoastlines_hotspots_'
                              f'{continental_version}_{hotspots}.shp')
 
 
