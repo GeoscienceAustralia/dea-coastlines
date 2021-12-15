@@ -1,22 +1,26 @@
-![Digital Earth Africa Coastlines](visualisation/images/DEACoastlines_header.gif)
+![Digital Earth Africa Coastlines](https://github.com/digitalearthafrica/deafrica-sandbox-notebooks/raw/main/Supplementary_data/Github_banner.jpg)
 
 # Digital Earth Africa Coastlines
 
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.rse.2021.112734-0e7fbf.svg)](https://doi.org/10.1016/j.rse.2021.112734)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-**License:** The code in this repository is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Digital Earth Australia data is licensed under the [Creative Commons by Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/).
+**License:** The code in this repository is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Digital Earth Africa data is licensed under the [Creative Commons by Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
 **Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastLines/issues/new). For questions or more information about this workflow, email Robbi.BishopTaylor@ga.gov.au.
 
-**Remote Sensing of Environment paper:** 
+**To cite:** 
 > Bishop-Taylor, R., Nanson, R., Sagar, S., Lymburner, L. (2021). Mapping Australia's dynamic coastline at mean sea level using three decades of Landsat imagery. _Remote Sensing of Environment_, 267, 112734. Available: https://doi.org/10.1016/j.rse.2021.112734
+
+> Bishop-Taylor, Robbi, Stephen Sagar, Leo Lymburner, Imam Alam, and Joshua Sixsmith. (2019). Sub-Pixel Waterline Extraction: Characterising Accuracy and Sensitivity to Indices and Spectra. _Remote Sensing_, 11 (24):2984. Available: https://doi.org/10.3390/rs11242984
+
+> Nanson, Rachel, Robbi Bishop-Taylor, Stephen Sagar, and Leo Lymburner. 2021. In press. Geomorphic insights into Australia’s coastal change using a national dataset derived from the multi-decadal Landsat archive. _Estuarine, Coastal and Shelf Science_.
 
 ---
 
-**Digital Earth Africa Coastlines** is a modified implementation of Digital Earth Australia Coastlines, a continental dataset that includes annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
+**Digital Earth Africa Coastlines** is a modified implementation of Digital Earth Australia (DEA) Coastlines, a continental remote sensing method designed to generate annual shorelines and rates of coastal change along the entire Australian coastline from 1988 to the present. 
 
-DEA Coastlines combines satellite data with tidal modelling to map the typical location of the coastline at mean sea level for each year. The product enables trends of coastal erosion and growth to be examined annually at both a local and continental scale, and for patterns of coastal change to be mapped historically and updated regularly as data continues to be acquired. This allows current rates of coastal change to be compared with that observed in previous years or decades. 
+The DEA Coastlines method combines satellite data with tidal modelling to map the typical location of the coastline at mean sea level for each year. The product enables trends of coastal erosion and growth to be examined annually at both a local and continental scale, and for patterns of coastal change to be mapped historically and updated regularly as data continues to be acquired. This allows current rates of coastal change to be compared with that observed in previous years or decades. 
 
 The ability to map shoreline positions for each year provides valuable insights into whether changes to our coastline are the result of particular events or actions, or a process of more gradual change over time. This information can enable scientists, managers and policy makers to assess impacts from the range of drivers impacting our coastlines and potentially assist planning and forecasting for future scenarios. 
 
