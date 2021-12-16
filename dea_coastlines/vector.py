@@ -21,7 +21,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import xarray as xr
-import topojson as tp
+# import topojson as tp
 import geopandas as gpd
 from scipy import stats
 from affine import Affine
@@ -37,6 +37,7 @@ from rasterio.features import rasterize
 from rasterio.transform import array_bounds
 from skimage.measure import label, regionprops
 from skimage.measure import find_contours
+from skimage.morphology import dilation
 from skimage.morphology import binary_opening
 from skimage.morphology import binary_closing
 from skimage.morphology import binary_erosion
@@ -146,170 +147,170 @@ def load_rasters(path,
     return ds_list
 
 
-def load_climate_data(index='soi_local',
-                      years=(1988, 2020),
-                      annual=True,
-                      detrend=True):
-    """
-    Load climate index timeseries data from https://psl.noaa.gov,
-    and optionally clip to a time range and aggregate by year.
+# def load_climate_data(index='soi_local',
+#                       years=(1988, 2020),
+#                       annual=True,
+#                       detrend=True):
+#     """
+#     Load climate index timeseries data from https://psl.noaa.gov,
+#     and optionally clip to a time range and aggregate by year.
     
-    Parameters:
-    -----------
-    index : str
-        A string giving the name of the climate index to load. 
-        Currently supports 'soi', 'soi_local' (pointing to local
-        path on NCI), and 'pdo'
-    years : tuple of floats, optional
-        A tuple giving the first and last year of data to include.
-    annual : bool, optional
-        Whether to aggregate data to annual means.
+#     Parameters:
+#     -----------
+#     index : str
+#         A string giving the name of the climate index to load. 
+#         Currently supports 'soi', 'soi_local' (pointing to local
+#         path on NCI), and 'pdo'
+#     years : tuple of floats, optional
+#         A tuple giving the first and last year of data to include.
+#     annual : bool, optional
+#         Whether to aggregate data to annual means.
         
-    Returns:
-    --------
-    climate_df : A pandas.DataFrame containing climate index timeseries. 
-    """
+#     Returns:
+#     --------
+#     climate_df : A pandas.DataFrame containing climate index timeseries. 
+#     """
 
-    # Climate index dict
-    index_urls = {
-        'soi_local': {
-            'url': '/data/raw/soi.long.data',
-            'footer': 9,
-            'nodata': -99.99
-        },
-        'soi': {
-            'url':
-                'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/soi.long.data',
-            'footer':
-                9,
-            'nodata':
-                -99.99
-        },
-        'pdo': {
-            'url':
-                'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/pdo.long.data',
-            'footer':
-                12,
-            'nodata':
-                -9.90
-        }
-    }
+#     # Climate index dict
+#     index_urls = {
+#         'soi_local': {
+#             'url': '/data/raw/soi.long.data',
+#             'footer': 9,
+#             'nodata': -99.99
+#         },
+#         'soi': {
+#             'url':
+#                 'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/soi.long.data',
+#             'footer':
+#                 9,
+#             'nodata':
+#                 -99.99
+#         },
+#         'pdo': {
+#             'url':
+#                 'https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/pdo.long.data',
+#             'footer':
+#                 12,
+#             'nodata':
+#                 -9.90
+#         }
+#     }
 
-    # Load data
-    climate_df = pd.read_csv(index_urls[index]['url'],
-                             header=None,
-                             delimiter=r'\s+',
-                             skiprows=1,
-                             index_col=0,
-                             skipfooter=index_urls[index]['footer'],
-                             engine='python',
-                             na_values=index_urls[index]['nodata'])
+#     # Load data
+#     climate_df = pd.read_csv(index_urls[index]['url'],
+#                              header=None,
+#                              delimiter=r'\s+',
+#                              skiprows=1,
+#                              index_col=0,
+#                              skipfooter=index_urls[index]['footer'],
+#                              engine='python',
+#                              na_values=index_urls[index]['nodata'])
 
-    # Melt into long format
-    climate_df.index.name = 'year'
-    climate_df = climate_df.reset_index().melt(id_vars='year',
-                                               var_name='month',
-                                               value_name=index[:3])
-    climate_df = climate_df.sort_values(['year', 'month'])
+#     # Melt into long format
+#     climate_df.index.name = 'year'
+#     climate_df = climate_df.reset_index().melt(id_vars='year',
+#                                                var_name='month',
+#                                                value_name=index[:3])
+#     climate_df = climate_df.sort_values(['year', 'month'])
 
-    # Annual means
-    if annual:
-        climate_df = climate_df.groupby('year').mean()
+#     # Annual means
+#     if annual:
+#         climate_df = climate_df.groupby('year').mean()
 
-    # Clip to years
-    if years:
-        first_year, last_year = years
-        climate_df = climate_df.query("@first_year <= year <= @last_year")
+#     # Clip to years
+#     if years:
+#         first_year, last_year = years
+#         climate_df = climate_df.query("@first_year <= year <= @last_year")
 
-    # Detrend
-    if detrend:
-        index_regress = stats.linregress(x=climate_df.index,
-                                         y=climate_df[index[:3]])
-        climate_df.iloc[:, 0] = climate_df.iloc[:, 0] - (
-            index_regress.slope * climate_df.index + index_regress.intercept)
+#     # Detrend
+#     if detrend:
+#         index_regress = stats.linregress(x=climate_df.index,
+#                                          y=climate_df[index[:3]])
+#         climate_df.iloc[:, 0] = climate_df.iloc[:, 0] - (
+#             index_regress.slope * climate_df.index + index_regress.intercept)
 
-    return climate_df
+#     return climate_df
 
 
-def waterbody_masking(input_data, modification_data, bbox, yearly_ds):
-    """
-    Generates a raster mask for DEA Coastlines based on the 
-    SurfaceHydrologyPolygonsRegional.gdb dataset, and a vector 
-    file containing minor modifications to this dataset (e.g. 
-    features to remove or add to the dataset).
+# def waterbody_masking(input_data, modification_data, bbox, yearly_ds):
+#     """
+#     Generates a raster mask for DEA Coastlines based on the 
+#     SurfaceHydrologyPolygonsRegional.gdb dataset, and a vector 
+#     file containing minor modifications to this dataset (e.g. 
+#     features to remove or add to the dataset).
     
-    The mask returns True for perennial 'Lake' features, any 
-    'Aquaculture Area', 'Estuary', 'Watercourse Area', 'Salt 
-    Evaporator', and 'Settling Pond' features. Features of 
-    type 'add' from the modification data file are added to the
-    mask, while features of type 'remove' are removed.
+#     The mask returns True for perennial 'Lake' features, any 
+#     'Aquaculture Area', 'Estuary', 'Watercourse Area', 'Salt 
+#     Evaporator', and 'Settling Pond' features. Features of 
+#     type 'add' from the modification data file are added to the
+#     mask, while features of type 'remove' are removed.
     
-    Parameters:
-    -----------
-    input_data : string
-        A string giving the path to the file containing surface water
-        polygons (e.g. SurfaceHydrologyPolygonsRegional.gdb)
-    modification_data : string
-        A string giving the path to a vector file containing 
-        modifications to the waterbody file. This vector file should
-        contain polygon features with an attribute field 'type'
-        indicating whether the function should 'add' or 'remove' the 
-        feature from the waterbody mask.
-    bbox : geopandas.GeoSeries
-        A `geopandas.GeoSeries` giving the spatial extent to load data 
-        for. This object should include a CRS.
-    yearly_ds : xr.Dataset
-        The annual DEA CoastLines `xarray.Dataset`, used to extract the
-        shape and geotransform so that waterbody features can be 
-        rasterised into the data's extents.
+#     Parameters:
+#     -----------
+#     input_data : string
+#         A string giving the path to the file containing surface water
+#         polygons (e.g. SurfaceHydrologyPolygonsRegional.gdb)
+#     modification_data : string
+#         A string giving the path to a vector file containing 
+#         modifications to the waterbody file. This vector file should
+#         contain polygon features with an attribute field 'type'
+#         indicating whether the function should 'add' or 'remove' the 
+#         feature from the waterbody mask.
+#     bbox : geopandas.GeoSeries
+#         A `geopandas.GeoSeries` giving the spatial extent to load data 
+#         for. This object should include a CRS.
+#     yearly_ds : xr.Dataset
+#         The annual DEA CoastLines `xarray.Dataset`, used to extract the
+#         shape and geotransform so that waterbody features can be 
+#         rasterised into the data's extents.
         
-    Returns:
-    --------
-    waterbody_mask : nd.array
-        An array containing the rasterised surface water features.
+#     Returns:
+#     --------
+#     waterbody_mask : nd.array
+#         An array containing the rasterised surface water features.
     
-    """
+#     """
 
-    # Import SurfaceHydrologyPolygonsRegional data
-    waterbody_gdf = gpd.read_file(input_data, bbox=bbox).to_crs(yearly_ds.crs)
+#     # Import SurfaceHydrologyPolygonsRegional data
+#     waterbody_gdf = gpd.read_file(input_data, bbox=bbox).to_crs(yearly_ds.crs)
 
-    # Restrict to coastal features
-    lakes_bool = ((waterbody_gdf.FEATURETYPE == 'Lake') &
-                  (waterbody_gdf.PERENNIALITY == 'Perennial'))
-    other_bool = waterbody_gdf.FEATURETYPE.isin([
-        'Aquaculture Area', 'Estuary', 'Watercourse Area', 'Salt Evaporator',
-        'Settling Pond'
-    ])
-    waterbody_gdf = waterbody_gdf[lakes_bool | other_bool]
+#     # Restrict to coastal features
+#     lakes_bool = ((waterbody_gdf.FEATURETYPE == 'Lake') &
+#                   (waterbody_gdf.PERENNIALITY == 'Perennial'))
+#     other_bool = waterbody_gdf.FEATURETYPE.isin([
+#         'Aquaculture Area', 'Estuary', 'Watercourse Area', 'Salt Evaporator',
+#         'Settling Pond'
+#     ])
+#     waterbody_gdf = waterbody_gdf[lakes_bool | other_bool]
 
-    # Load in modification dataset and select features to remove/add
-    mod_gdf = gpd.read_file(modification_data, bbox=bbox).to_crs(yearly_ds.crs)
-    to_remove = mod_gdf[mod_gdf['type'] == 'remove']
-    to_add = mod_gdf[mod_gdf['type'] == 'add']
+#     # Load in modification dataset and select features to remove/add
+#     mod_gdf = gpd.read_file(modification_data, bbox=bbox).to_crs(yearly_ds.crs)
+#     to_remove = mod_gdf[mod_gdf['type'] == 'remove']
+#     to_add = mod_gdf[mod_gdf['type'] == 'add']
 
-    # Remove and add features
-    if len(to_remove.index) > 0:
-        if len(waterbody_gdf.index) > 0:
-            waterbody_gdf = gpd.overlay(waterbody_gdf,
-                                        to_remove,
-                                        how='difference')
-    if len(to_add.index) > 0:
-        if len(waterbody_gdf.index) > 0:
-            waterbody_gdf = gpd.overlay(waterbody_gdf, to_add, how='union')
-        else:
-            waterbody_gdf = to_add
+#     # Remove and add features
+#     if len(to_remove.index) > 0:
+#         if len(waterbody_gdf.index) > 0:
+#             waterbody_gdf = gpd.overlay(waterbody_gdf,
+#                                         to_remove,
+#                                         how='difference')
+#     if len(to_add.index) > 0:
+#         if len(waterbody_gdf.index) > 0:
+#             waterbody_gdf = gpd.overlay(waterbody_gdf, to_add, how='union')
+#         else:
+#             waterbody_gdf = to_add
 
-    # Rasterize waterbody polygons into a numpy mask. The try-except catches
-    # cases where no waterbody polygons exist in the study area
-    try:
-        waterbody_mask = rasterize(shapes=waterbody_gdf['geometry'],
-                                   out_shape=yearly_ds.geobox.shape,
-                                   transform=yearly_ds.geobox.transform,
-                                   all_touched=True).astype(bool)
-    except:
-        waterbody_mask = np.full(yearly_ds.geobox.shape, False, dtype=bool)
+#     # Rasterize waterbody polygons into a numpy mask. The try-except catches
+#     # cases where no waterbody polygons exist in the study area
+#     try:
+#         waterbody_mask = rasterize(shapes=waterbody_gdf['geometry'],
+#                                    out_shape=yearly_ds.geobox.shape,
+#                                    transform=yearly_ds.geobox.transform,
+#                                    all_touched=True).astype(bool)
+#     except:
+#         waterbody_mask = np.full(yearly_ds.geobox.shape, False, dtype=bool)
 
-    return waterbody_mask
+#     return waterbody_mask
 
 
 def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
@@ -530,9 +531,17 @@ def certainty_masking(yearly_ds,
     high_stdev = yearly_ds['stdev'] > stdev_threshold
     low_obs = yearly_ds['count'] < obs_threshold
 
-    # Create raster mask
+    # Create raster mask with values of 0 for good data, values of
+    # 1 for tide issues, and values of 2 for insufficient data.
+    # Clean this by sieving to merge small areas of pixels into 
+    # their neighbours
     raster_mask = high_stdev.where(~low_obs, 2).groupby('year').apply(
         lambda x: sieve(x.values.astype(np.int16), size=sieve_size))
+    
+    # Apply greyscale dilation to expand masked pixels to err on 
+    # the side of overclassifying certainty issues
+    raster_mask = raster_mask.groupby('year').apply(
+        lambda x: dilation(x.values, disk(3)))
 
     # Loop through each mask and vectorise
     vector_masks = {}
@@ -541,10 +550,6 @@ def certainty_masking(yearly_ds,
                                    crs=yearly_ds.geobox.crs, 
                                    transform=yearly_ds.geobox.affine,
                                    attribute_col='certainty')
-        
-        ## Simplify topology
-        # topo = tp.Topology(vector_mask, shared_coords=True, prequantize=False)
-        # vector_mask = topo.toposimplify(30).to_gdf()
 
         # Dissolve column and fix geometry
         vector_mask = vector_mask.dissolve('certainty')
@@ -565,7 +570,6 @@ def contours_preprocess(yearly_ds,
                         index_threshold,
                         waterbody_mask,
                         tide_points_gdf,
-                        output_path,
                         buffer_pixels=50):
     """
     Prepares and preprocesses DE Africa Coastlines raster data to 
@@ -656,9 +660,10 @@ def contours_preprocess(yearly_ds,
                                    tide_points_gdf=tide_points_gdf, 
                                    buffer=buffer_pixels,
                                    closing=10)
+        
     
-    # Because the output of `coastal_masking` contains 2 values that
-    # represent pixels inland of the coastal buffer and 1 values in 
+    # Because the output of `coastal_masking` contains values of 2 that
+    # represent pixels inland of the coastal buffer and values of 1 in 
     # the coastal buffer itself, seperate them for further use
     inland_mask = coastal_mask != 2
     coastal_mask = coastal_mask == 1
@@ -672,6 +677,7 @@ def contours_preprocess(yearly_ds,
                    .apply(lambda x: ocean_masking(x, 
                                                   tide_points_gdf, 
                                                   1, 3)))
+    
     # Keep pixels within both all time coastal buffer, annual mask 
     # and temporal mask
     masked_ds = yearly_ds[water_index].where(annual_mask & 
@@ -683,30 +689,6 @@ def contours_preprocess(yearly_ds,
     # about the certainty of each shoreline feature
     certainty_masks = certainty_masking(yearly_ds)
     
-
-#     # Create raster containg all time mask data
-#     all_time_mask = np.full(yearly_ds.geobox.shape, 0, dtype='int8')
-#     all_time_mask[~(coastal_mask == 1)] = 1
-#     all_time_mask[persistent_stdev & coastal_mask] = 4
-#     all_time_mask[persistent_lowobs & coastal_mask] = 5
-#     all_time_mask[waterbody_mask & coastal_mask] = 3
-
-#     # Export mask raster to assist evaluating results
-#     all_time_mask_da = xr.DataArray(data=all_time_mask,
-#                                     coords={
-#                                         'x': yearly_ds.x,
-#                                         'y': yearly_ds.y
-#                                     },
-#                                     dims=['y', 'x'],
-#                                     name='all_time_mask',
-#                                     attrs=yearly_ds.attrs)
-#     write_cog(geo_im=all_time_mask_da,
-#               fname=f'{output_path}/all_time_mask.tif',
-#               blocksize=256,
-#               overwrite=True)
-
-
-
     return masked_ds, certainty_masks
 
 
@@ -754,76 +736,76 @@ def points_on_line(gdf, index, distance=30):
     return points_gdf
 
 
-def rocky_shores_clip(points_gdf, smartline_gdf, buffer=50):
-    """
-    Clips rates of change points to a buffer around non-rocky (clastic)
-    coastlines based on the Smartline dataset.
+# def rocky_shores_clip(points_gdf, smartline_gdf, buffer=50):
+#     """
+#     Clips rates of change points to a buffer around non-rocky (clastic)
+#     coastlines based on the Smartline dataset.
     
-    This processing step aims to be conservative, and preserves any
-    unclassified points or any points that occur next to a non-rocky 
-    shoreline in either the 'INTERTD1_V' or 'INTERTD2_V' Smartline 
-    fields.    
+#     This processing step aims to be conservative, and preserves any
+#     unclassified points or any points that occur next to a non-rocky 
+#     shoreline in either the 'INTERTD1_V' or 'INTERTD2_V' Smartline 
+#     fields.    
     
-    Parameters:
-    -----------
-    points_gdf : geopandas.GeoDataFrame
-        A `geopandas.GeoDataFrame` containing rates of change points.
-    smartline_gdf : geopandas.GeoDataFrame
-        A `geopandas.GeoDataFrame` containing SmartLine data for the
-        study area.
-    buffer : integer or float, optional
-        A number giving the buffer around non-rocky (clastic) shorelines
-        within which to clip rates of change points. Defaults to 50 m.
+#     Parameters:
+#     -----------
+#     points_gdf : geopandas.GeoDataFrame
+#         A `geopandas.GeoDataFrame` containing rates of change points.
+#     smartline_gdf : geopandas.GeoDataFrame
+#         A `geopandas.GeoDataFrame` containing SmartLine data for the
+#         study area.
+#     buffer : integer or float, optional
+#         A number giving the buffer around non-rocky (clastic) shorelines
+#         within which to clip rates of change points. Defaults to 50 m.
         
-    Returns:
-    --------
-    points_gdf : geopandas.GeoDataFrame
-        A `geopandas.GeoDataFrame` containing rates of change points
-        restricted to non-rocky (clastic) coastlines.    
-    """
+#     Returns:
+#     --------
+#     points_gdf : geopandas.GeoDataFrame
+#         A `geopandas.GeoDataFrame` containing rates of change points
+#         restricted to non-rocky (clastic) coastlines.    
+#     """
 
-    rocky = [
-        'Bedrock breakdown debris (cobbles/boulders)', 'Boulder (rock) beach',
-        'Cliff (>5m) (undiff)', 'Colluvium (talus) undiff',
-        'Flat boulder deposit (rock) undiff', 'Hard bedrock shore',
-        'Hard bedrock shore inferred', 'Hard rock cliff (>5m)',
-        'Hard rocky shore platform', 'Rocky shore (undiff)',
-        'Rocky shore platform (undiff)', 'Sloping hard rock shore',
-        'Sloping rocky shore (undiff)', 'Soft `bedrock¿ cliff (>5m)',
-        'Steep boulder talus', 'Hard rocky shore platform'
-    ]
+#     rocky = [
+#         'Bedrock breakdown debris (cobbles/boulders)', 'Boulder (rock) beach',
+#         'Cliff (>5m) (undiff)', 'Colluvium (talus) undiff',
+#         'Flat boulder deposit (rock) undiff', 'Hard bedrock shore',
+#         'Hard bedrock shore inferred', 'Hard rock cliff (>5m)',
+#         'Hard rocky shore platform', 'Rocky shore (undiff)',
+#         'Rocky shore platform (undiff)', 'Sloping hard rock shore',
+#         'Sloping rocky shore (undiff)', 'Soft `bedrock¿ cliff (>5m)',
+#         'Steep boulder talus', 'Hard rocky shore platform'
+#     ]
 
-    # Identify rocky features
-    rocky_bool = (smartline_gdf.INTERTD1_V.isin(rocky) &
-                  smartline_gdf.INTERTD2_V.isin(rocky + ['Unclassified']))
+#     # Identify rocky features
+#     rocky_bool = (smartline_gdf.INTERTD1_V.isin(rocky) &
+#                   smartline_gdf.INTERTD2_V.isin(rocky + ['Unclassified']))
 
-    # Extract rocky vs non-rocky
-    rocky_gdf = smartline_gdf[rocky_bool].copy()
-    nonrocky_gdf = smartline_gdf[~rocky_bool].copy()
+#     # Extract rocky vs non-rocky
+#     rocky_gdf = smartline_gdf[rocky_bool].copy()
+#     nonrocky_gdf = smartline_gdf[~rocky_bool].copy()
 
-    # If both rocky and non-rocky shorelines exist, clip points to remove
-    # rocky shorelines from the stats dataset
-    if (len(rocky_gdf) > 0) & (len(nonrocky_gdf) > 0):
+#     # If both rocky and non-rocky shorelines exist, clip points to remove
+#     # rocky shorelines from the stats dataset
+#     if (len(rocky_gdf) > 0) & (len(nonrocky_gdf) > 0):
 
-        # Buffer both features
-        rocky_gdf['geometry'] = rocky_gdf.buffer(buffer)
-        nonrocky_gdf['geometry'] = nonrocky_gdf.buffer(buffer)
-        rocky_shore_buffer = (gpd.overlay(
-            rocky_gdf, nonrocky_gdf, how='difference').geometry.unary_union)
+#         # Buffer both features
+#         rocky_gdf['geometry'] = rocky_gdf.buffer(buffer)
+#         nonrocky_gdf['geometry'] = nonrocky_gdf.buffer(buffer)
+#         rocky_shore_buffer = (gpd.overlay(
+#             rocky_gdf, nonrocky_gdf, how='difference').geometry.unary_union)
 
-        # Keep only non-rocky shore features and reset index
-        points_gdf = points_gdf[~points_gdf.intersects(rocky_shore_buffer)]
-        points_gdf = points_gdf.reset_index(drop=True)
+#         # Keep only non-rocky shore features and reset index
+#         points_gdf = points_gdf[~points_gdf.intersects(rocky_shore_buffer)]
+#         points_gdf = points_gdf.reset_index(drop=True)
 
-        return points_gdf
+#         return points_gdf
 
-    # If no rocky shorelines exist, return the points data as-is
-    elif len(nonrocky_gdf) > 0:
-        return points_gdf
+#     # If no rocky shorelines exist, return the points data as-is
+#     elif len(nonrocky_gdf) > 0:
+#         return points_gdf
 
-    # If no sandy shorelines exist, return nothing
-    else:
-        return None
+#     # If no sandy shorelines exist, return nothing
+#     else:
+#         return None
 
 
 def annual_movements(points_gdf,
@@ -1203,111 +1185,6 @@ def all_time_stats(x, col='dist_', initial_year=1988):
     return pd.Series(stats_dict)
 
 
-# def contour_certainty(contours_gdf, output_path, uncertain_classes=[4, 5]):
-#     """
-#     Assigns a new certainty column to each annual shoreline feature
-#     based on two factors:
-    
-#     1) Low satellite observations: pixels with less than 5 annual 
-#        observations for more than half of the time series.
-#     2) Tidal modelling issues: MNDWI standard deviation > 0.25 in more 
-#        than half of the time series.
-#     3) 1991 and 1992 coastlines affected by aerosol issues associated 
-#        with the 1991 eruption of Mt Pinatubo
-    
-#     Parameters:
-#     -----------
-#     contours_gdf : geopandas.GeoDataFrame
-#         A `geopandas.GeoDataFrame` containing annual coastlines. This
-#         is used to ensure that all years in the annual coastlines data
-#         are included in the regression.
-#     output_path : string
-#         A string giving the directory where the 'all_time_mask.tif' file 
-#         was generated by the `contours_preprocess` function.
-#     uncertain_classes : list, optional
-#         A list of integers giving the classes in the 'all_time_mask.tif'
-#         to treat as uncertain (e.g. low satellite observations and tidal
-#         modelling issues).
-        
-#     Returns:
-#     --------
-#     contours_gdf : geopandas.GeoDataFrame
-#         A `geopandas.GeoDataFrame` of annual coastlines with a new 
-#         'certainty' column.
-#     """
-
-#     def _extract_multiline(row):
-
-#         if row.geometry.type == 'GeometryCollection':
-#             lines = [g for g in row.geometry.geoms if g.type == 'LineString']
-#             return MultiLineString(lines)
-#         else:
-#             return row.geometry
-
-#     # Read data and restrict to uncertain vs certain classes
-#     all_time_mask = xr.open_rasterio(f'{output_path}/all_time_mask.tif')
-#     uncertain_array = all_time_mask.squeeze().drop('band').data.astype(np.int32)
-#     uncertain_array[~np.isin(uncertain_array, uncertain_classes)] = 0
-
-#     # Remove isolated pixels and vectorise data
-#     uncertain_array = sieve(uncertain_array, size=3)
-#     vectors = shapes(source=uncertain_array,
-#                      transform=all_time_mask.geobox.transform)
-
-#     # Extract the polygon coordinates and values from the list
-#     vectors = list(vectors)
-#     polygons = [shape(polygon) for polygon, value in vectors]
-#     values = [int(value) for polygon, value in vectors]
-
-#     # Create a geopandas dataframe populated with the polygon shapes
-#     vector_mask = gpd.GeoDataFrame(data={'certainty': values},
-#                                    geometry=polygons,
-#                                    crs=all_time_mask.geobox.crs)
-
-#     # Dissolve by class and simplify features to remove hard pixel edges
-#     topo = tp.Topology(vector_mask, shared_coords=True, prequantize=False)
-#     vector_mask = topo.toposimplify(30).to_gdf()
-#     vector_mask = vector_mask.dissolve('certainty')
-#     vector_mask['geometry'] = vector_mask.geometry.buffer(0)
-
-#     # Rename classes
-#     vector_mask = vector_mask.rename({
-#         0: 'good',
-#         4: 'tidal issues',
-#         5: 'insufficient data'
-#     })
-
-#     # Output class list
-#     class_list = []
-
-#     # Iterate through each certainty class in the polygon, clip contours
-#     # to the extent of this class, and assign descriptive class name
-#     for i in vector_mask.index:
-
-#         # Clip to extent and fix invalid GeometryCollections
-#         vector_class = gpd.clip(contours_gdf, vector_mask.loc[i].geometry)
-#         vector_class = vector_class.dropna()
-
-#         if len(vector_class.index) > 0:
-#             vector_class['geometry'] = gpd.GeoSeries(
-#                 vector_class.apply(_extract_multiline, axis=1))
-
-#             # Give name and append to list
-#             vector_class['certainty'] = i
-#             class_list.append(vector_class)
-
-#     # Combine into a single dataframe
-#     contours_gdf = pd.concat(class_list)
-
-#     # Finally, set all 1991 and 1992 coastlines north of -23 degrees
-#     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
-#     pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) &
-#                     (contours_gdf.index.isin(['1991', '1992'])))
-#     contours_gdf.loc[pinatubo_lat, 'certainty'] = 'aerosol issues'
-
-#     return contours_gdf
-
-
 def contour_certainty(contours_gdf, certainty_masks):
     """
     Assigns a new certainty column to each annual shoreline feature 
@@ -1471,13 +1348,12 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
         waterbody_mask = np.full(yearly_ds.geobox.shape, False, dtype=bool)
         
     # Mask dataset to focus on coastal zone only
-    masked_ds = contours_preprocess(yearly_ds,
+    masked_ds, certainty_masks = contours_preprocess(yearly_ds,
                                     gapfill_ds,
                                     water_index,
                                     index_threshold,
                                     waterbody_mask,
                                     tide_points_gdf,
-                                    output_path=output_dir,
                                     buffer_pixels=25)
 
     # Extract contours
@@ -1572,7 +1448,8 @@ def generate_vectors(config_path, study_area, raster_version, vector_version,
     ###################
 
     # Assign certainty to contours based on underlying masks
-    contours_gdf = contour_certainty(contours_gdf, output_path=output_dir)
+    contours_gdf = contour_certainty(contours_gdf, 
+                                     certainty_masks)
 
     # Add maturity details
     contours_gdf['maturity'] = 'final'
