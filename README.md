@@ -108,3 +108,5 @@ Bishop-Taylor, R., Sagar, S., Lymburner, L., & Beaman, R. J. (2019a). Between th
 Bishop-Taylor, R., Sagar, S., Lymburner, L., Alam, I., & Sixsmith, J. (2019b). Sub-pixel waterline extraction: Characterising accuracy and sensitivity to indices and spectra. _Remote Sensing_, 11(24), 2984. Available: https://doi.org/10.3390/rs11242984
 
 Sagar, S., Roberts, D., Bala, B., & Lymburner, L. (2017). Extracting the intertidal extent and topography of the Australian coastline from a 28 year time series of Landsat observations. _Remote Sensing of Environment_, 195, 153-169. Available: https://doi.org/10.1016/j.rse.2017.04.009
+
+Nanson, R., Bishop-Taylor, R., Sagar, S., Lymburner, L. (2021). In press. Geomorphic insights into Australia’s coastal change using a national dataset derived from the multi-decadal Landsat archive. _Estuarine, Coastal and Shelf Science_.
