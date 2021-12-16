@@ -35,6 +35,7 @@ from collections import Counter
 from shapely.geometry import shape
 from datacube.utils.cog import write_cog
 from datacube.utils.geometry import Geometry
+from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file, construct
 
 # Load dea-tools funcs
@@ -136,7 +137,6 @@ def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
         ds = ds.chunk({'x': 3200, 'y': 3200})
 
     # Identify pixels that are either cloud, cloud shadow or nodata
-    from datacube.utils.masking import make_mask
     nodata = make_mask(ds['pixel_quality'], nodata=True)
     mask = (make_mask(ds['pixel_quality'],
                       cloud='high_confidence') |
@@ -144,12 +144,21 @@ def load_water_index(dc, query, yaml_path, product_name='ls_nbart_mndwi'):
                       cloud_shadow='high_confidence') | nodata)
 
     # Apply opening to remove long narrow false positive clouds along
-    # the coastline
+    # the coastline, then dilate to restore cloud edges
     mask_cleaned = odc.algo.mask_cleanup(mask,
-                                         mask_filters=[('opening', 20)])
+                                         mask_filters=[('opening', 20), 
+                                                       ('dilation', 5)])
     ds = ds.where(~mask_cleaned & ~nodata)
+    
+    # Mask any invalid pixel values outside of 0 and 1
+    green_bool = (ds.green >= 0) & (ds.green <= 1)
+    swir_bool = (ds.swir_1 >= 0) & (ds.swir_1 <= 1)
+    ds = ds.where(green_bool & swir_bool)
+    
+    # Compute MNDWI
+    ds[['mndwi']] = (ds.green - ds.swir_1) / (ds.green + ds.swir_1)
 
-    return ds.drop('pixel_quality').drop('temp')
+    return ds[['mndwi']]
 
 
 def otps_tides(lats, lons, times, timezone=None):

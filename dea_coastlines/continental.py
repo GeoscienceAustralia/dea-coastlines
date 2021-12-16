@@ -170,6 +170,8 @@ def continental_layers(vector_version, continental_version, water_index,
     # version
     if continental_version is None:
         continental_version = vector_version
+    output_dir = f'data/processed/{continental_version}'    
+    os.makedirs(output_dir, exist_ok=True)
 
     # Setup input and output file paths
     shoreline_paths = f'data/interim/vector/{vector_version}/*/' \
@@ -178,9 +180,9 @@ def continental_layers(vector_version, continental_version, water_index,
     ratesofchange_paths = f'data/interim/vector/{vector_version}/*/' \
                           f'ratesofchange_*_{vector_version}_' \
                           f'{water_index}_{index_threshold}.shp'
-    continental_shorelines_path = f'data/processed/DEAfricaCoastlines_' \
+    continental_shorelines_path = f'{output_dir}/DEAfricaCoastlines_' \
                                   f'annualshorelines_{continental_version}.shp'
-    continental_rates_path = f'data/processed/DEAfricaCoastlines_' \
+    continental_rates_path = f'{output_dir}/DEAfricaCoastlines_' \
                              f'ratesofchange_{continental_version}.shp'
 
     # Combine annual shorelines into a single continental layer
@@ -266,7 +268,7 @@ def continental_layers(vector_version, continental_version, water_index,
                                           min_n=hotspots / 25), axis=1)
 
         # Export hotspots to file
-        hotspots_gdf.to_file(f'data/processed/DEAfricaCoastlines_hotspots_'
+        hotspots_gdf.to_file(f'{output_dir}/DEAfricaCoastlines_hotspots_'
                              f'{continental_version}_{hotspots}.shp')
 
 

@@ -93,9 +93,9 @@ data/interim/vector/{unique_analysis_name}/{unique_analysis_name}_{study_area_na
 
 Once all study area grid cells have been processed, these are combined into continental-scale output vector files using [`dea_coastlines.continental`](dea_coastlines/continental.py). These final outputs are exported to:
 ```
-data/processed/DEAfricaCoastlines_annualshorelines_{unique_analysis_name}.shp
-data/processed/DEAfricaCoastlines_ratesofchange_{unique_analysis_name}.shp
-data/processed/DEAfricaCoastlines_hotspots_{unique_analysis_name}.shp
+data/processed/{unique_analysis_name}/DEAfricaCoastlines_annualshorelines_{unique_analysis_name}.shp
+data/processed/{unique_analysis_name}/DEAfricaCoastlines_ratesofchange_{unique_analysis_name}.shp
+data/processed/{unique_analysis_name}/DEAfricaCoastlines_hotspots_{unique_analysis_name}_{hotspot_radius}.shp
 ```
 
 ---
