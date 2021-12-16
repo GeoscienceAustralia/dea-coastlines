@@ -15,6 +15,8 @@ import os
 import sys
 import glob
 import click
+import odc.algo
+import datacube
 import warnings
 import numpy as np
 import pandas as pd
@@ -45,6 +47,7 @@ from datacube.utils.cog import write_cog
 
 # Load dea-tools funcs
 from dea_tools.spatial import subpixel_contours
+from dea_tools.spatial import xr_vectorize
 
 # Import DEA Coastlines code
 from dea_coastlines import raster
@@ -476,18 +479,60 @@ def temporal_masking(ds):
     return temporal_mask
 
 
-def certainty_masking(yearly_ds):
+def certainty_masking(yearly_ds, 
+                      obs_threshold=5, 
+                      stdev_threshold=0.25, 
+                      sieve_size=128):
+    """
+    Generate annual vector polygon masks containing information
+    about the certainty of each extracted shoreline feature.
+    These masks are used to assign each shoreline feature with
+    important certainty information to flag potential issues with 
+    the data.
     
-    from dea_tools.spatial import xr_vectorize
-    from rasterio.features import sieve
+    Parameters:
+    -----------
+    yearly_ds : xarray.Dataset
+        An `xarray.Dataset` containing annual DE Africa Coastlines 
+        rasters.    
+    obs_threshold : int, optional
+        The minimum number of post-gapfilling Landsat observations
+        required for an extracted shoreline to be considered good 
+        quality. Annual shorelines based on low numbers of 
+        observations can be noisy due to the influence of 
+        environmental noise like unmasked cloud, sea spray, white 
+        water etc. Defaults to 5.
+    stdev_threshold : float, optional
+        The maximum MNDWI standard deviation required for a 
+        post-gapfilled Landsat observation to be considered good 
+        quality. Annual shorelines based on MNDWI with a high 
+        standard deviation can indicate that the tidal modelling 
+        process did not adequately remove the influence of tide.
+        For more information, refer to BIshop-Taylor et al. 2021
+        (https://doi.org/10.1016/j.rse.2021.112734). 
+        Defaults to 0.25.
+    sieve_size : int, optional
+        To reduce the complexity of the output masks, they are 
+        first cleaned using `rasterio.features.sieve` to replace
+        small areas of pixels with the values of their larger
+        neighbours. This parameter sets the minimum polygon size
+        to retain in this process. Defaults to 128.
+        
+    Returns:
+    --------
+    vector_masks : dictionary of geopandas.GeoDataFrames
+        A dictionary with year (as an str) as the key, and vector
+        data as a `geopandas.GeoDataFrame` for each year in the
+        analysis.         
+    """
     
     # Identify problematic pixels
-    high_stdev = yearly_ds['stdev'] > 0.25
-    low_obs = yearly_ds['count'] < 5
+    high_stdev = yearly_ds['stdev'] > stdev_threshold
+    low_obs = yearly_ds['count'] < obs_threshold
 
     # Create raster mask
     raster_mask = high_stdev.where(~low_obs, 2).groupby('year').apply(
-        lambda x: sieve(x.values.astype(np.int16), size=256))
+        lambda x: sieve(x.values.astype(np.int16), size=sieve_size))
 
     # Loop through each mask and vectorise
     vector_masks = {}
@@ -523,9 +568,9 @@ def contours_preprocess(yearly_ds,
                         output_path,
                         buffer_pixels=50):
     """
-    Prepares and preprocesses DEA Coastlines raster data to restrict the
-    analysis to coastal shorelines, and extract data that is used to
-    assess the certainty of extracted shorelines.
+    Prepares and preprocesses DE Africa Coastlines raster data to 
+    restrict the analysis to coastal shorelines, and extract data 
+    that is used to assess the certainty of extracted shorelines.
     
     This function:
     
@@ -542,9 +587,9 @@ def contours_preprocess(yearly_ds,
     Parameters:
     -----------
     yearly_ds : xarray.Dataset
-        An `xarray.Dataset` containing annual DEA Coastlines rasters.
+        An `xarray.Dataset` containing annual DE Africa Coastlines rasters.
     gapfill_ds : xarray.Dataset
-        An `xarray.Dataset` containing three-year gapfill DEA Coastlines
+        An `xarray.Dataset` containing three-year gapfill DE Africa Coastlines
         rasters. 
     water_index : string
         A string giving the name of the water index included in the 
@@ -559,9 +604,9 @@ def contours_preprocess(yearly_ds,
         Spatial points located within the ocean. These points are used
         by the `mask_ocean` to ensure that all coastlines are directly 
         connected to the ocean. These may be obtained from the tidal 
-        modelling points used in the raster generation part of the DEA 
-        CoastLines analysis, as these are guaranteed to be located in 
-        coastal or marine waters.
+        modelling points used in the raster generation part of the DE 
+        Africa CoastLines analysis, as these are guaranteed to be 
+        located in coastal or marine waters.
     output_path : string
         A string giving the directory into which output all time mask 
         raster will be written.
@@ -576,21 +621,11 @@ def contours_preprocess(yearly_ds,
     masked_ds : xarray.Dataset
         A dataset containing water index data for each annual timestep
         that has been masked to the coastal zone. This can then be used
-        as an input to subpixel waterline extraction.
-    
+        as an input to subpixel waterline extraction.    
     """
 
     # Flag nodata pixels
     nodata = yearly_ds[water_index].isnull()
-
-    # Identify pixels with less than 5 annual observations or > 0.25
-    # MNDWI standard deviation in more than half the time series.
-    # Apply binary erosion to isolate large connected areas of
-    # problematic pixels
-    mean_stdev = (yearly_ds['stdev'] > 0.25).where(~nodata).mean(dim='year')
-    mean_count = (yearly_ds['count'] < 5).where(~nodata).mean(dim='year')
-    persistent_stdev = binary_erosion(mean_stdev > 0.5, selem=disk(2))
-    persistent_lowobs = binary_erosion(mean_count > 0.5, selem=disk(2))
 
     # Remove low obs pixels and replace with 3-year gapfill
     yearly_ds = yearly_ds.where(yearly_ds['count'] > 5, gapfill_ds)
@@ -601,12 +636,14 @@ def contours_preprocess(yearly_ds,
     # Apply water index threshold
     thresholded_ds = (yearly_ds[water_index] < index_threshold)
     
-    import odc.algo
-    import datacube
-    dc = datacube.Datacube()
-    landcover = dc.load(product='esa_worldcover', like=yearly_ds.geobox)
+    # To remove aerosol-based noise over open water, apply an additional
+    # mask based on the ESA World Cover dataset, loading persistent water
+    # then shrinking this to ensure only deep water pixels are included
+    landcover = datacube.Datacube().load(product='esa_worldcover', 
+                                         like=yearly_ds.geobox)
     landcover_water = landcover.classification.isin([0, 80]).squeeze(dim='time')
-    landcover_water = odc.algo.mask_cleanup(landcover_water, mask_filters=[('erosion', 20)])
+    landcover_water = odc.algo.mask_cleanup(landcover_water, 
+                                            mask_filters=[('erosion', 20)])
     thresholded_ds = thresholded_ds.where(~landcover_water, False).where(~nodata)
     
     # Compute temporal mask
@@ -1272,7 +1309,31 @@ def all_time_stats(x, col='dist_', initial_year=1988):
 
 
 def contour_certainty(contours_gdf, certainty_masks):
+    """
+    Assigns a new certainty column to each annual shoreline feature 
+    to identify features affected by:
+    
+    1) Low satellite observations: annual shorelines based on less than 
+       5 annual observations after gapfilling
+    2) Tidal modelling issues or unstable MNDWI composites: annual 
+       shorelines based on MNDWI with a standard deviation > 0.25 
+    
+    Parameters:
+    -----------
+    contours_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing annual shorelines.
+    certainty_masks : dictionary
+        A dictionary of annual certainty mask vector features, as 
+        generated by `dea_coastlines.contours_preprocess`.
+        
+    Returns:
+    --------
+    contours_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing annual shorelines with
+        a new "certainty" column/field.
+    """
 
+    # Loop through each annual shoreline and attribute data with certainty
     out_list = []
     for year, _ in contours_gdf.iterrows():
 
