@@ -11,46 +11,43 @@
 #     * Compute rates of coastal change at every 30 m of coastline
 #       using linear regression
 
+# Standard library
 import os
 import sys
 import glob
-import click
-import odc.algo
-import datacube
 import warnings
+from itertools import chain
+
+# Third party
+import click
 import numpy as np
 import pandas as pd
 import xarray as xr
-# import topojson as tp
 import geopandas as gpd
 from scipy import stats
 from affine import Affine
-from itertools import chain
-from shapely.geometry import shape
 from shapely.geometry import box
-from shapely.geometry import LineString
-from shapely.geometry import MultiLineString
 from shapely.ops import nearest_points
-from rasterio.features import shapes
-from rasterio.features import sieve
-from rasterio.features import rasterize
+from rasterio.features import shapes, sieve, rasterize
 from rasterio.transform import array_bounds
 from skimage.measure import label, regionprops
-from skimage.measure import find_contours
-from skimage.morphology import dilation
-from skimage.morphology import binary_opening
-from skimage.morphology import binary_closing
-from skimage.morphology import binary_erosion
-from skimage.morphology import binary_dilation
-from skimage.morphology import disk, square
-from skimage.morphology import remove_small_objects
-from datacube.utils.cog import write_cog
+from skimage.morphology import (
+    dilation,
+    binary_opening,
+    binary_closing,
+    binary_erosion,
+    binary_dilation,
+    disk,
+)
 
-# Load dea-tools funcs
+# Datacube and dea-tools funcs
+import datacube
+import odc.algo
+from datacube.utils.cog import write_cog
 from dea_tools.spatial import subpixel_contours
 from dea_tools.spatial import xr_vectorize
 
-# Import DEA Coastlines code
+# DEA Coastlines code
 from dea_coastlines import raster
 
 # Hide warnings

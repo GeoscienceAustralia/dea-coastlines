@@ -18,33 +18,36 @@
 #       at approximately mean sea level tide height each year (0 metres
 #       Above Mean Sea Level).
 
+# Standard library
 import os
+import datetime
+import warnings
+import multiprocessing
+from functools import partial
+from collections import Counter
+
+# Third party
 import otps
 import pytz
 import yaml
-import datacube
-import datetime
-import odc.algo
-import multiprocessing
+import click
 import numpy as np
 import xarray as xr
 import pandas as pd
 import geopandas as gpd
-from functools import partial
-from collections import Counter
 from shapely.geometry import shape
+
+# Datacube and dea-tools funcs
+import datacube
+import odc.algo
 from datacube.utils.cog import write_cog
 from datacube.utils.geometry import Geometry
 from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file, construct
-
-# Load dea-tools funcs
 from dea_tools.spatial import interpolate_2d
 from dea_tools.dask import create_local_dask_cluster
 
-import click
-import warnings
-
+# Hide warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -417,7 +420,7 @@ def load_tidal_subset(year_ds, tide_cutoff_min, tide_cutoff_max):
 
     # Print status
     year = year_ds.time[0].dt.year.item()
-    print(f'Processing {year}')
+    print(f'Processing {year}', end='\r')
 
     # Determine what pixels were acquired in selected tide range, and
     # drop time-steps without any relevant pixels to reduce data to load

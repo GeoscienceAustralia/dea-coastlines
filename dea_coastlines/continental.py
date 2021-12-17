@@ -9,16 +9,19 @@
 #     * Aggregates this data to produce moving window hotspot datasets
 #       that summarise coastal change at regional and continental scale.
 
+# Standard library
 import os
 import sys
+
+# Third party
 import click
 import fiona
-import geopandas as gpd
 import pandas as pd
+import geopandas as gpd
 from rtree import index
 from tqdm.auto import tqdm
 
-# Import DEA Coastlines code
+# DEA Coastlines code
 from dea_coastlines import vector
 
 
@@ -195,14 +198,14 @@ def continental_layers(vector_version, continental_version, water_index,
         print('Combining annual shorelines...')
         os.system(f'ogrmerge.py -o '
                   f'{continental_shorelines_path} {shoreline_paths} '
-                  f'-single -overwrite_ds -t_srs EPSG:3577')
+                  f'-single -overwrite_ds -t_srs EPSG:6933')
 
     # Combine rates of change stats points into single continental layer
     if ratesofchange:
         print('Combining rates of change statistics...')
         os.system(f'ogrmerge.py '
                   f'-o {continental_rates_path} {ratesofchange_paths} '
-                  f'-single -overwrite_ds -t_srs EPSG:3577')
+                  f'-single -overwrite_ds -t_srs EPSG:6933')
 
     # Generate hotspot points that provide regional/continental summary
     # of hotspots of coastal erosion and growth
