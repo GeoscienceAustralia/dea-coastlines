@@ -28,6 +28,7 @@ The ability to map shoreline positions for each year provides valuable insights 
 
 ## Table of contents
 * [Repository code](#repository-code)
+    * [Getting started](#getting-started)
     * [Python modules](#python-modules)
         * [Jupyter notebooks](#jupyter-notebooks)
     * [Running a DE Africa Coastlines analysis using the command-line interface (CLI)](#running-a-de-africa-coastlines-analysis-using-the-command-line-interface-cli)
@@ -39,6 +40,13 @@ The ability to map shoreline positions for each year provides valuable insights 
 ## Repository code
 The code in this repository is built on the Digital Earth Africa implementation of the [Open Data Cube](https://www.opendatacube.org/) software for accessing, managing, and analyzing large quantities of Earth observation (EO) data. 
 The code currently runs on the [Digital Earth Africa Sandbox](https://sandbox.digitalearth.africa/) infrastructure.
+
+#### Getting started
+Clone the `deafrica` branch of the `dea-coastlines` reposity:
+```
+git clone -b deafrica https://github.com/GeoscienceAustralia/dea-coastlines.git
+
+```
 
 #### Python modules
 
