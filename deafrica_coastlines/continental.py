@@ -22,7 +22,7 @@ from rtree import index
 from tqdm.auto import tqdm
 
 # DEA Coastlines code
-from dea_coastlines import vector
+from deafrica_coastlines import vector
 
 
 def points_in_poly(points, polygons):

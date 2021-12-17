@@ -420,7 +420,7 @@ def load_tidal_subset(year_ds, tide_cutoff_min, tide_cutoff_max):
 
     # Print status
     year = year_ds.time[0].dt.year.item()
-    print(f'Processing {year}', end='\r')
+    print(f'Processing {year:<80}', end='\r')
 
     # Determine what pixels were acquired in selected tide range, and
     # drop time-steps without any relevant pixels to reduce data to load

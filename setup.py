@@ -30,17 +30,16 @@ REQUIRED = [
     "scipy",
     "Shapely",
     "skimage",
-    "topojson",
     "tqdm",
     "xarray"
 ]
 
 # Package metadata
-NAME = "dea_coastlines"
-DESCRIPTION = "Tools for running Digital Earth Australia Coastlines"
+NAME = "deafrica_coastlines"
+DESCRIPTION = "Tools for running Digital Earth Africa Coastlines"
 URL = "https://github.com/GeoscienceAustralia/dea-coastlines"
 EMAIL = "Robbi.BishopTaylor@ga.gov.au"
-AUTHOR = "Robbi Bishop-Taylor (Digital Earth Australia)"
+AUTHOR = "Robbi Bishop-Taylor"
 REQUIRES_PYTHON = ">=3.6.0"
 
 # Setup kwargs
@@ -60,9 +59,9 @@ setup_kwargs = {
     "license": "Apache License 2.0",
     "entry_points": {
         "console_scripts": [
-            "deacoastlines-raster = dea_coastlines.raster:generate_rasters",
-            "deacoastlines-vector = dea_coastlines.vector:generate_vectors",
-            "deacoastlines-continental = dea_coastlines.continental:continental_layers"
+            "deafricacoastlines-raster = deafrica_coastlines.raster:generate_rasters",
+            "deafricacoastlines-vector = deafrica_coastlines.vector:generate_vectors",
+            "deafricacoastlines-continental = deafrica_coastlines.continental:continental_layers"
         ]
     },
 }
