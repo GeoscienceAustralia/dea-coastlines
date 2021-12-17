@@ -45,7 +45,6 @@ The code currently runs on the [Digital Earth Africa Sandbox](https://sandbox.di
 Clone the `deafrica` branch of the `dea-coastlines` reposity:
 ```
 git clone -b deafrica https://github.com/GeoscienceAustralia/dea-coastlines.git
-
 ```
 
 #### Python modules
