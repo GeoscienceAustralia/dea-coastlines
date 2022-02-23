@@ -44,8 +44,8 @@ from skimage.morphology import (
 import datacube
 import odc.algo
 from datacube.utils.cog import write_cog
-from dea_tools.spatial import subpixel_contours
-from dea_tools.spatial import xr_vectorize
+from deafrica_tools.spatial import subpixel_contours
+from deafrica_tools.spatial import xr_vectorize
 
 # DE Africa Coastlines code
 from deafrica_coastlines import raster

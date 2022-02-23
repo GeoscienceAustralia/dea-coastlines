@@ -1,7 +1,7 @@
 affine>=2.3.0
 click>=8.0.1
 datacube>=1.8.6
-dea_tools>=0.2.1
+deafrica_tools>=0.1.0
 Fiona>=1.8.20
 geopandas>=0.10.2
 matplotlib>=3.4.3

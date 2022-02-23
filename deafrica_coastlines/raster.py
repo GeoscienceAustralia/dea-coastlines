@@ -44,8 +44,8 @@ from datacube.utils.cog import write_cog
 from datacube.utils.geometry import Geometry
 from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file, construct
-from dea_tools.spatial import interpolate_2d
-from dea_tools.dask import create_local_dask_cluster
+from deafrica_tools.spatial import interpolate_2d
+from deafrica_tools.dask import create_local_dask_cluster
 
 # Hide warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
