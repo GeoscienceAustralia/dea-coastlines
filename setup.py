@@ -12,7 +12,7 @@ REQUIRED = [
     "affine",
     "click",
     "datacube",
-    "deafrica_tools @ https://github.com/digitalearthafrica/deafrica-sandbox-notebooks.git#subdirectory=Tools",
+    "deafrica_tools @ git+https://github.com/digitalearthafrica/deafrica-sandbox-notebooks.git#subdirectory=Tools",
     "Fiona",
     "geopandas",
     "matplotlib",
