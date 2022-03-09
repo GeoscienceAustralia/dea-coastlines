@@ -9,19 +9,16 @@
 #     * Aggregates this data to produce moving window hotspot datasets
 #       that summarise coastal change at regional and continental scale.
 
-# Standard library
-import os
-import sys
 
-# Third party
+import os
+
 import click
 import fiona
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 from rtree import index
 from tqdm.auto import tqdm
 
-# DEA Coastlines code
 from deafrica_coastlines import vector
 
 
@@ -45,15 +42,14 @@ def points_in_poly(points, polygons):
 
     # Create the R-tree index and store the features in it (bounding box)
     idx = index.Index()
-    for pos, poly in enumerate(tqdm(polygons, desc='Building index')):
+    for pos, poly in enumerate(tqdm(polygons, desc="Building index")):
         idx.insert(pos, poly.bounds)
 
     # Iterate through points
     out_dict = {}
-    for i, point in enumerate(tqdm(points, desc='Processing points')):
+    for i, point in enumerate(tqdm(points, desc="Processing points")):
         poly_ids = [
-            j for j in idx.intersection((point.coords[0]))
-            if point.within(polygons[j])
+            j for j in idx.intersection((point.coords[0])) if point.within(polygons[j])
         ]
         out_dict[i] = poly_ids
 
@@ -93,82 +89,105 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
 
     if len(matching_points.index) > min_n:
 
-        return pd.Series([
-            matching_points.rate_time.mean(),
-            len(matching_points.index)
-        ])
+        return pd.Series([matching_points.rate_time.mean(), len(matching_points.index)])
 
     else:
         return pd.Series([None, None])
 
 
 @click.command()
-@click.option('--vector_version',
-              type=str,
-              required=True,
-              help='A unique string proving a name that was used '
-              'for output vector directories and files. This is used '
-              'to identify the tiled annual shoreline and rates of '
-              'change layers that will be combined into continental-'
-              'scale layers.')
-@click.option('--continental_version',
-              type=str,
-              help='A unique string proving a name that will be used '
-              'for output continental-scale layers. This allows '
-              'multiple versions of continental-scale layers to be '
-              'generated from the same input vector data, e.g. for '
-              'testing different hotspot of coastal change summary '
-              'layers. If not provided, this will default to the '
-              'string provided to "--vector_version".')
-@click.option('--water_index',
-              type=str,
-              default='mndwi',
-              help='The water index used to extract annual shorelines. '
-              'Used to identify tiled annual shoreline and rates of '
-              'change layers to combine into individual continental-'
-              'scale layers. Defaults to "mndwi".')
-@click.option('--index_threshold',
-              default='0.00',
-              type=str,
-              help='The water index threshold used to extract annual '
-              'shorelines. Used to identify tiled annual shoreline and '
-              'rates of change layers to combine into individual '
-              'continental-scale layers. Defaults to "0.00".')
-@click.option('--shorelines',
-              type=bool,
-              default=True,
-              help='A boolean indicating whether to combine tiled '
-              'annual shorelines layers into a single continental-'
-              'scale annual shorelines layer.')
-@click.option('--ratesofchange',
-              type=bool,
-              default=True,
-              help='A boolean indicating whether to combine tiled '
-              'rates of change statistics layers into a single '
-              'continental-scale rates of change statistics layer.')
-@click.option('--hotspots',              
-              type=bool,
-              default=True,
-              help='A boolean indicating whether to generate a '
-              'continental-scale hotspots of coastal change summary '
-              'layer.')
-@click.option('--hotspots_radius',
-              default=10000,
-              type=int,
-              help='The distance (in metres) used to generate a '
-              'coastal change hotspots summary layer. This controls '
-              'the spacing of each summary point, and the radius used '
-              'to aggregate rates of change statistics around each '
-              'point. The default uses a radius of 10000 m.')
-@click.option('--baseline_year',
-              type=str,
-              default='2020',
-              help='The annual shoreline used to generate the hotspot '
-              'summary points. This is typically the most recent '
-              'annual shoreline in the dataset.')
-def continental_layers(vector_version, continental_version, water_index,
-                       index_threshold, shorelines, ratesofchange, hotspots,
-                       hotspots_radius, baseline_year):
+@click.option(
+    "--vector_version",
+    type=str,
+    required=True,
+    help="A unique string proving a name that was used "
+    "for output vector directories and files. This is used "
+    "to identify the tiled annual shoreline and rates of "
+    "change layers that will be combined into continental-"
+    "scale layers.",
+)
+@click.option(
+    "--continental_version",
+    type=str,
+    help="A unique string proving a name that will be used "
+    "for output continental-scale layers. This allows "
+    "multiple versions of continental-scale layers to be "
+    "generated from the same input vector data, e.g. for "
+    "testing different hotspot of coastal change summary "
+    "layers. If not provided, this will default to the "
+    'string provided to "--vector_version".',
+)
+@click.option(
+    "--water_index",
+    type=str,
+    default="mndwi",
+    help="The water index used to extract annual shorelines. "
+    "Used to identify tiled annual shoreline and rates of "
+    "change layers to combine into individual continental-"
+    'scale layers. Defaults to "mndwi".',
+)
+@click.option(
+    "--index_threshold",
+    default="0.00",
+    type=str,
+    help="The water index threshold used to extract annual "
+    "shorelines. Used to identify tiled annual shoreline and "
+    "rates of change layers to combine into individual "
+    'continental-scale layers. Defaults to "0.00".',
+)
+@click.option(
+    "--shorelines",
+    type=bool,
+    default=True,
+    help="A boolean indicating whether to combine tiled "
+    "annual shorelines layers into a single continental-"
+    "scale annual shorelines layer.",
+)
+@click.option(
+    "--ratesofchange",
+    type=bool,
+    default=True,
+    help="A boolean indicating whether to combine tiled "
+    "rates of change statistics layers into a single "
+    "continental-scale rates of change statistics layer.",
+)
+@click.option(
+    "--hotspots",
+    type=bool,
+    default=True,
+    help="A boolean indicating whether to generate a "
+    "continental-scale hotspots of coastal change summary "
+    "layer.",
+)
+@click.option(
+    "--hotspots_radius",
+    default=10000,
+    type=int,
+    help="The distance (in metres) used to generate a "
+    "coastal change hotspots summary layer. This controls "
+    "the spacing of each summary point, and the radius used "
+    "to aggregate rates of change statistics around each "
+    "point. The default uses a radius of 10000 m.",
+)
+@click.option(
+    "--baseline_year",
+    type=str,
+    default="2020",
+    help="The annual shoreline used to generate the hotspot "
+    "summary points. This is typically the most recent "
+    "annual shoreline in the dataset.",
+)
+def continental_layers(
+    vector_version,
+    continental_version,
+    water_index,
+    index_threshold,
+    shorelines,
+    ratesofchange,
+    hotspots,
+    hotspots_radius,
+    baseline_year,
+):
 
     #################
     # Merge vectors #
@@ -178,34 +197,45 @@ def continental_layers(vector_version, continental_version, water_index,
     # version
     if continental_version is None:
         continental_version = vector_version
-    output_dir = f'data/processed/{continental_version}'    
+    output_dir = f"data/processed/{continental_version}"
     os.makedirs(output_dir, exist_ok=True)
 
     # Setup input and output file paths
-    shoreline_paths = f'data/interim/vector/{vector_version}/*/' \
-                      f'annualshorelines_*_{vector_version}_' \
-                      f'{water_index}_{index_threshold}.shp'
-    ratesofchange_paths = f'data/interim/vector/{vector_version}/*/' \
-                          f'ratesofchange_*_{vector_version}_' \
-                          f'{water_index}_{index_threshold}.shp'
-    continental_shorelines_path = f'{output_dir}/DEAfricaCoastlines_' \
-                                  f'annualshorelines_{continental_version}.shp'
-    continental_rates_path = f'{output_dir}/DEAfricaCoastlines_' \
-                             f'ratesofchange_{continental_version}.shp'
+    shoreline_paths = (
+        f"data/interim/vector/{vector_version}/*/"
+        f"annualshorelines_*_{vector_version}_"
+        f"{water_index}_{index_threshold}.shp"
+    )
+    ratesofchange_paths = (
+        f"data/interim/vector/{vector_version}/*/"
+        f"ratesofchange_*_{vector_version}_"
+        f"{water_index}_{index_threshold}.shp"
+    )
+    continental_shorelines_path = (
+        f"{output_dir}/DEAfricaCoastlines_"
+        f"annualshorelines_{continental_version}.shp"
+    )
+    continental_rates_path = (
+        f"{output_dir}/DEAfricaCoastlines_" f"ratesofchange_{continental_version}.shp"
+    )
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
-        print('Combining annual shorelines...')
-        os.system(f'ogrmerge.py -o '
-                  f'{continental_shorelines_path} {shoreline_paths} '
-                  f'-single -overwrite_ds -t_srs EPSG:6933')
+        print("Combining annual shorelines...")
+        os.system(
+            f"ogrmerge.py -o "
+            f"{continental_shorelines_path} {shoreline_paths} "
+            f"-single -overwrite_ds -t_srs EPSG:6933"
+        )
 
     # Combine rates of change stats points into single continental layer
     if ratesofchange:
-        print('Combining rates of change statistics...')
-        os.system(f'ogrmerge.py '
-                  f'-o {continental_rates_path} {ratesofchange_paths} '
-                  f'-single -overwrite_ds -t_srs EPSG:6933')
+        print("Combining rates of change statistics...")
+        os.system(
+            f"ogrmerge.py "
+            f"-o {continental_rates_path} {ratesofchange_paths} "
+            f"-single -overwrite_ds -t_srs EPSG:6933"
+        )
 
     # Generate hotspot points that provide regional/continental summary
     # of hotspots of coastal erosion and growth
@@ -215,7 +245,7 @@ def continental_layers(vector_version, continental_version, water_index,
         # Load DEA CoastLines vectors #
         ###############################
 
-        print('Generating hotspots...')
+        print("Generating hotspots...")
 
         # If hotspots is True, set radius from `hotspots_radius`
         hotspots = hotspots_radius
@@ -226,54 +256,57 @@ def continental_layers(vector_version, continental_version, water_index,
             shorelines_gdf = gpd.read_file(continental_shorelines_path)
         except fiona.errors.DriverError:
             raise FileNotFoundError(
-                'Continental-scale annual shoreline and rates of '
-                'change layers are required for hotspot generation. '
-                'Try re-running this analysis with the following '
-                'settings: `--shorelines True --ratesofchange True`.')
+                "Continental-scale annual shoreline and rates of "
+                "change layers are required for hotspot generation. "
+                "Try re-running this analysis with the following "
+                "settings: `--shorelines True --ratesofchange True`."
+            )
 
         # Set year index on coastlines
-        shorelines_gdf = (shorelines_gdf.loc[
-            shorelines_gdf.geometry.is_valid].set_index('year'))
+        shorelines_gdf = shorelines_gdf.loc[shorelines_gdf.geometry.is_valid].set_index(
+            "year"
+        )
 
         # Extract hotspot points
-        hotspots_gdf = vector.points_on_line(shorelines_gdf,
-                                             index=baseline_year,
-                                             distance=hotspots)
+        hotspots_gdf = vector.points_on_line(
+            shorelines_gdf, index=baseline_year, distance=hotspots
+        )
 
         # Drop low observations (less than 10) from rates
-        ratesofchange_gdf = ratesofchange_gdf.loc[
-            ratesofchange_gdf.valid_obs > 15]
+        ratesofchange_gdf = ratesofchange_gdf.loc[ratesofchange_gdf.valid_obs > 15]
         ratesofchange_gdf = ratesofchange_gdf.reset_index(drop=True)
 
         # Set nonsignificant rates to 0 m / year
-        ratesofchange_gdf.loc[ratesofchange_gdf.sig_time > 0.01,
-                              'rate_time'] = 0
+        ratesofchange_gdf.loc[ratesofchange_gdf.sig_time > 0.01, "rate_time"] = 0
 
         # Clip to 50 m rates to remove extreme outliers
-        ratesofchange_gdf['rate_time'] = ratesofchange_gdf.rate_time.clip(
-            -50, 50)
+        ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-50, 50)
 
         #####################
         # Generate hotspots #
         #####################
 
         # Generate dictionary of polygon IDs and corresponding points
-        print('Identifying points in each polygon')
+        print("Identifying points in each polygon")
         poly_points_dict = points_in_poly(
             points=hotspots_gdf.geometry,
-            polygons=ratesofchange_gdf.buffer(hotspots * 2))
+            polygons=ratesofchange_gdf.buffer(hotspots * 2),
+        )
 
         # Compute mean and number of obs for each polygon
-        print('Calculating mean rates')
-        hotspots_gdf[['rate_time', 'n']] = hotspots_gdf.apply(
-            lambda row: get_matching_data(row.name,
-                                          ratesofchange_gdf,
-                                          poly_points_dict,
-                                          min_n=hotspots / 30), axis=1)
+        print("Calculating mean rates")
+        hotspots_gdf[["rate_time", "n"]] = hotspots_gdf.apply(
+            lambda row: get_matching_data(
+                row.name, ratesofchange_gdf, poly_points_dict, min_n=hotspots / 30
+            ),
+            axis=1,
+        )
 
         # Export hotspots to file
-        hotspots_gdf.to_file(f'{output_dir}/DEAfricaCoastlines_hotspots_'
-                             f'{continental_version}_{hotspots}.shp')
+        hotspots_gdf.to_file(
+            f"{output_dir}/DEAfricaCoastlines_hotspots_"
+            f"{continental_version}_{hotspots}.shp"
+        )
 
 
 if __name__ == "__main__":
