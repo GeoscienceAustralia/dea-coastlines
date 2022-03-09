@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import io
 import os
 from setuptools import find_packages, setup
 
@@ -9,12 +8,14 @@ IS_SANDBOX = ('sandbox' in os.getenv('JUPYTER_IMAGE', default=''))
 
 # What packages are required for this module to be executed?
 REQUIRED = [
+    "aiohttp",
     "affine",
     "click",
     "datacube",
     "dea_tools",
-    "Fiona",
+    "fiona",
     "geopandas",
+    "geopy",
     "matplotlib",
     "mock",
     "numpy",
@@ -24,12 +25,12 @@ REQUIRED = [
     "pyproj",
     "pytz",
     "rasterio",
+    "rasterstats",
     "Rtree",
     "scikit_image",
     "scikit_learn",
     "scipy",
-    "Shapely",
-    "skimage",
+    "shapely",
     "tqdm",
     "xarray"
 ]
