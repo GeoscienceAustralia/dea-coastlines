@@ -1,6 +1,7 @@
 --extra-index-url=https://packages.dea.ga.gov.au/
 aiohttp
 affine>=2.3.0
+botocore
 click>=8.0.1
 datacube>=1.8.6
 Fiona>=1.8.20

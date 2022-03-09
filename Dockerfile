@@ -22,7 +22,10 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
     --no-binary rasterio \
     --no-binary shapely \
-    --no-binary fiona
+    --no-binary fiona \
+    # Extras
+    && pip install --no-cache-dir awscli requests
+
 
 RUN mkdir -p /code
 WORKDIR /code
