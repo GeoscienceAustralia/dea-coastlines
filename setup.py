@@ -10,6 +10,7 @@ IS_SANDBOX = "sandbox" in os.getenv("JUPYTER_IMAGE", default="")
 REQUIRED = [
     "aiohttp",
     "affine",
+    "botocore",
     "click",
     "datacube",
     "dea_tools",
