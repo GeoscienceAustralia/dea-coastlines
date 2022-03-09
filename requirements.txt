@@ -39,6 +39,16 @@ backcall==0.2.0
     # via ipython
 bleach==4.1.0
     # via nbconvert
+boto3==1.21.16
+    # via datacube
+botocore==1.24.16
+    # via
+    #   -r requirements.in
+    #   boto3
+    #   datacube
+    #   s3transfer
+bottleneck==1.3.4
+    # via datacube
 branca==0.4.2
     # via
     #   dea-tools
@@ -60,7 +70,9 @@ charset-normalizer==2.0.12
     #   aiohttp
     #   requests
 ciso8601==2.2.0
-    # via dea-tools
+    # via
+    #   datacube
+    #   dea-tools
 click==8.0.4
     # via
     #   -r requirements.in
@@ -95,7 +107,7 @@ dask[array]==2022.2.1
     #   odc-algo
 dask-image==2021.12.0
     # via odc-algo
-datacube==1.8.6
+datacube[performance,s3]==1.8.6
     # via
     #   -r requirements.in
     #   dea-tools
@@ -186,6 +198,10 @@ jinja2==3.0.3
     #   folium
     #   nbconvert
     #   notebook
+jmespath==0.10.0
+    # via
+    #   boto3
+    #   botocore
 joblib==1.1.0
     # via scikit-learn
 jsonschema==4.4.0
@@ -269,6 +285,7 @@ numexpr==2.8.1
 numpy==1.22.3
     # via
     #   -r requirements.in
+    #   bottleneck
     #   cftime
     #   dask
     #   dask-image
@@ -373,6 +390,7 @@ pyrsistent==0.18.1
     # via jsonschema
 python-dateutil==2.8.2
     # via
+    #   botocore
     #   datacube
     #   dea-tools
     #   jupyter-client
@@ -416,6 +434,8 @@ requests==2.27.1
     #   owslib
 rtree==0.9.7
     # via -r requirements.in
+s3transfer==0.5.2
+    # via boto3
 scikit-image==0.19.2
     # via
     #   -r requirements.in
@@ -507,7 +527,9 @@ traitlets==5.1.1
 traittypes==0.2.1
     # via ipyleaflet
 urllib3==1.26.8
-    # via requests
+    # via
+    #   botocore
+    #   requests
 wcwidth==0.2.5
     # via prompt-toolkit
 webencodings==0.5.1
@@ -521,7 +543,7 @@ xarray==2022.3.0
     #   dea-tools
     #   odc-algo
     #   odc-ui
-xyzservices==2022.2.0
+xyzservices==2022.3.0
     # via ipyleaflet
 yarl==1.7.2
     # via aiohttp
