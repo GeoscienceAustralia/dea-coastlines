@@ -666,12 +666,16 @@ def generate_rasters(config_path, study_area, raster_version, start_year, end_ye
     }
 
     # Load virtual product
-    ds = load_water_index(
-        dc,
-        query,
-        yaml_path=config["Virtual product"]["virtual_product_path"],
-        product_name=config["Virtual product"]["virtual_product_name"],
-    )
+    try:
+        ds = load_water_index(
+            dc,
+            query,
+            yaml_path=config["Virtual product"]["virtual_product_path"],
+            product_name=config["Virtual product"]["virtual_product_name"],
+        )
+    except ValueError:
+        print(f"WARNING: No valid data found for gridcell {study_area}")
+        sys.exit(0)
 
     ###################
     # Tidal modelling #
@@ -686,7 +690,10 @@ def generate_rasters(config_path, study_area, raster_version, start_year, end_ye
 
     # Test if there is data and skip rest of the analysis if not
     if tidepoints_gdf.geometry.unique().shape[0] <= 1:
-        sys.exit("Gridcell has 1 or less tidal points; cannot interpolate data")
+        print(
+            f"WARNING: Gridcell {study_area} has 1 or less tidal points so cannot interpolate tide data"
+        )
+        sys.exit(0)
 
     # For each satellite timestep, spatially interpolate our modelled
     # tide height points into the spatial extent of our satellite image,
