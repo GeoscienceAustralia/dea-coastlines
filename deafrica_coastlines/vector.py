@@ -13,6 +13,7 @@
 
 import glob
 import os
+import sys
 import warnings
 
 import click
@@ -98,12 +99,13 @@ def load_rasters(
 
             # Test if data was returned
             if len(paths) == 0:
-                raise ValueError(
-                    f"No rasters found for grid cell {study_area} "
+                print(
+                    f"WARNING: No rasters found for grid cell {study_area} "
                     f"(raster version '{raster_version}'). Verify that "
                     f"`raster.py` has been run "
                     "for this grid cell."
                 )
+                sys.exit(0)
 
             # Create variable used for time axis
             time_var = xr.Variable("year", [int(i.split("/")[-1][0:4]) for i in paths])
@@ -1137,15 +1139,19 @@ def generate_vectors(
     waterbody_mask = np.full(yearly_ds.geobox.shape, False, dtype=bool)
 
     # Mask dataset to focus on coastal zone only
-    masked_ds, certainty_masks = contours_preprocess(
-        yearly_ds,
-        gapfill_ds,
-        water_index,
-        index_threshold,
-        waterbody_mask,
-        tide_points_gdf,
-        buffer_pixels=25,
-    )
+    try:
+        masked_ds, certainty_masks = contours_preprocess(
+            yearly_ds,
+            gapfill_ds,
+            water_index,
+            index_threshold,
+            waterbody_mask,
+            tide_points_gdf,
+            buffer_pixels=25,
+        )
+    except ValueError as e:
+        print(f"WARNING: Exiting due to unexpected error proprocessing contours, {e}")
+        sys.exit(0)
 
     # Extract contours
     contours_gdf = subpixel_contours(
@@ -1157,8 +1163,11 @@ def generate_vectors(
     ######################
 
     # Extract statistics modelling points along baseline contour
-    points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
-
+    try:
+        points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
+    except KeyError as e:
+        print(f"WARNING: a year is missing and raised the error {e}")
+        points_gdf = None
     # Note that `rocky_shores_clip` is not implemented
 
     # If a rocky mask is provided, use this to clip data
@@ -1176,7 +1185,7 @@ def generate_vectors(
     #     )
 
     # If any points remain after rocky shoreline clip
-    if points_gdf is not None:
+    if points_gdf is not None and len(points_gdf) > 0:
 
         # Calculate annual coastline movements and residual tide heights
         # for every contour compared to the baseline year
@@ -1198,7 +1207,7 @@ def generate_vectors(
         # Export stats #
         ################
 
-        if points_gdf is not None:
+        if points_gdf is not None and len(points_gdf) > 0:
 
             # Set up scheme to optimise file size
             schema_dict = {

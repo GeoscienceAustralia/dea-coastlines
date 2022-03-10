@@ -673,7 +673,7 @@ def generate_rasters(config_path, study_area, raster_version, start_year, end_ye
             yaml_path=config["Virtual product"]["virtual_product_path"],
             product_name=config["Virtual product"]["virtual_product_name"],
         )
-    except ValueError:
+    except (ValueError, IndexError):
         print(f"WARNING: No valid data found for gridcell {study_area}")
         sys.exit(0)
 
