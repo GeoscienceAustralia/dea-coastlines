@@ -14,7 +14,7 @@
 
 > Bishop-Taylor, R., Sagar, S., Lymburner, L., Alam, I., Sixsmith, J. (2019). Sub-pixel waterline extraction: characterising accuracy and sensitivity to indices and spectra. _Remote Sensing_, 11 (24):2984. Available: https://doi.org/10.3390/rs11242984
 
-> Nanson, R., Bishop-Taylor, R., Sagar, S., Lymburner, L. (2021). In press. Geomorphic insights into Australia’s coastal change using a national dataset derived from the multi-decadal Landsat archive. _Estuarine, Coastal and Shelf Science_.
+> Nanson, R., Bishop-Taylor, R., Sagar, S. and Lymburner, L., (2022). Geomorphic insights into Australia's coastal change using a national dataset derived from the multi-decadal Landsat archive. _Estuarine, Coastal and Shelf Science_, 265, p.107712. Available: https://doi.org/10.1016/j.ecss.2021.107712
 
 ---
 
