@@ -21,8 +21,8 @@ from tqdm.auto import tqdm
 
 from pathlib import Path
 
-from coastlines import vector
-from utils import configure_logging
+from coastlines.vector import points_on_line
+from coastlines.utils import configure_logging
 
 
 def points_in_poly(points, polygons):
@@ -202,44 +202,44 @@ def continental_cli(
     if continental_version is None:
         continental_version = vector_version
     output_dir = Path(f"data/processed/{continental_version}")
-    output_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(exist_ok=True, parents=True)
     log.info(f"Writing data to {output_dir}")
 
     # Setup input and output file paths
     shoreline_paths = (
         f"data/interim/vector/{vector_version}/*/"
-        f"annualshorelines_*_{vector_version}_"
-        f"{water_index}_{index_threshold}.shp"
+        f"annualshorelines*.shp"
     )
     ratesofchange_paths = (
         f"data/interim/vector/{vector_version}/*/"
-        f"ratesofchange_*_{vector_version}_"
-        f"{water_index}_{index_threshold}.shp"
+        f"ratesofchange*.shp"
     )
 
     OUTPUT_FILE = output_dir / f"coastlines_{continental_version}.gpkg"
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
-        log.info("Combining annual shorelines...")
         os.system(
             f"ogrmerge.py -o "
             f"{OUTPUT_FILE} {shoreline_paths} "
-            f"-single -overwrite_ds -t_srs epsg:6933"
+            f"-single -overwrite_ds -t_srs epsg:6933 "
             f"-nln annual_shorelines"
         )
-    log.info("Writing annual shorelines complete")
+        log.info("Writing annual shorelines complete")
+    else:
+        log.info("Not writing shorelines")
 
     # Combine rates of change stats points into single continental layer
     if ratesofchange:
-        log.info("Combining rates of change statistics...")
         os.system(
             f"ogrmerge.py "
             f"-o {OUTPUT_FILE} {ratesofchange_paths} "
-            f"-single -overwrite_ds -t_srs epsg:6933 "
+            f"-single -update -t_srs epsg:6933 "
             f"-nln rates_of_change"
         )
-    log.info("Writing rates of change statistics complete")
+        log.info("Writing rates of change statistics complete")
+    else:
+        log.info("Not writing shorelines")
 
     # Generate hotspot points that provide regional/continental summary
     # of hotspots of coastal erosion and growth
@@ -271,7 +271,7 @@ def continental_cli(
         )
 
         # Extract hotspot points
-        hotspots_gdf = vector.points_on_line(
+        hotspots_gdf = points_on_line(
             shorelines_gdf, index=baseline_year, distance=hotspots
         )
 

@@ -610,7 +610,7 @@ def generate_rasters(
             product_name=config["Virtual product"]["virtual_product_name"],
         )
     except (ValueError, IndexError):
-        raise ValueError(f"WARNING: No valid data found for gridcell {study_area}")
+        raise ValueError(f"No valid data found for gridcell {study_area}")
 
     ###################
     # Tidal modelling #

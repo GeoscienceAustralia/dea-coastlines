@@ -1,20 +1,18 @@
-from logging import Logger, basicConfig, INFO
+import logging
 import yaml
 import fsspec
 
 
-def configure_logging(name: str = "Coastlines") -> Logger:
+def configure_logging(name: str = "Coastlines") -> logging.Logger:
     """
     Configure logging for the application.
     """
-    basicConfig(
+    logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
-        level=INFO,
-        filename="{}.log".format(name),
-        filemode="w",
+        level=logging.INFO
     )
     # Create a logger and return it
-    return Logger(name)
+    return logging.getLogger(name)
 
 
 def load_config(config_path: str) -> dict:
