@@ -8,8 +8,7 @@ def configure_logging(name: str = "Coastlines") -> logging.Logger:
     Configure logging for the application.
     """
     logging.basicConfig(
-        format="%(asctime)s %(levelname)s %(message)s",
-        level=logging.INFO
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
     # Create a logger and return it
     return logging.getLogger(name)

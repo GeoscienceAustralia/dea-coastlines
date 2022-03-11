@@ -207,12 +207,10 @@ def continental_cli(
 
     # Setup input and output file paths
     shoreline_paths = (
-        f"data/interim/vector/{vector_version}/*/"
-        f"annualshorelines*.shp"
+        f"data/interim/vector/{vector_version}/*/" f"annualshorelines*.shp"
     )
     ratesofchange_paths = (
-        f"data/interim/vector/{vector_version}/*/"
-        f"ratesofchange*.shp"
+        f"data/interim/vector/{vector_version}/*/" f"ratesofchange*.shp"
     )
 
     OUTPUT_FILE = output_dir / f"coastlines_{continental_version}.gpkg"
