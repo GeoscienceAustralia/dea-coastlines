@@ -201,7 +201,7 @@ def continental_cli(
     # version
     if continental_version is None:
         continental_version = vector_version
-    output_dir = Path("data/processed/{continental_version}")
+    output_dir = Path(f"data/processed/{continental_version}")
     output_dir.mkdir(exist_ok=True)
     log.info(f"Writing data to {output_dir}")
 
