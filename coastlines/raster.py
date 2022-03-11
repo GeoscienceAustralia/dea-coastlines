@@ -34,7 +34,6 @@ import otps
 import pandas as pd
 import pytz
 import xarray as xr
-import yaml
 from affine import Affine
 from datacube.utils.cog import write_cog
 from datacube.utils.geometry import CRS, GeoBox, Geometry
@@ -44,17 +43,10 @@ from dea_tools.dask import create_local_dask_cluster
 from dea_tools.spatial import interpolate_2d
 from shapely.geometry import shape
 
+from coastlines.utils import configure_logging, load_config
+
 # Hide warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
-
-
-def load_config(config_path):
-    """
-    Loads a YAML config file and returns data as a nested dictionary.
-    """
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
-    return config
 
 
 def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
@@ -332,7 +324,6 @@ def interpolate_tide(timestep, tidepoints_gdf, method="rbf", factor=50):
     # Extract subset of observations based on timestamp of imagery
     time_string = str(timestep.time.values)[0:19].replace("T", " ")
     tidepoints_subset = tidepoints_gdf.loc[time_string]
-    print(f"{time_string:<80}", end="\r")
 
     # Get lists of x, y and z (tide height) data to interpolate
     x_coords = tidepoints_subset.geometry.x.values.astype("float32")
@@ -378,7 +369,6 @@ def multiprocess_apply(ds, dim, func):
     """
 
     pool = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
-    print(f"Parallelising {multiprocessing.cpu_count() - 1} processes")
     out_list = pool.map(func, iterable=[group for (i, group) in ds.groupby(dim)])
     pool.close()
     pool.join()
@@ -412,10 +402,6 @@ def load_tidal_subset(year_ds, tide_cutoff_min, tide_cutoff_max):
         An in-memory `xarray.Dataset` with pixels set to `NaN` if
         they were acquired outside of the supplied tide height range.
     """
-
-    # Print status
-    year = year_ds.time[0].dt.year.item()
-    print(f"Processing {year:<80}", end="\r")
 
     # Determine what pixels were acquired in selected tide range, and
     # drop time-steps without any relevant pixels to reduce data to load
@@ -574,6 +560,116 @@ def export_annual_gapfill(ds, output_dir, tide_cutoff_min, tide_cutoff_max):
         future_ds = []
 
 
+def generate_rasters(
+    dc, config, study_area, raster_version, start_year, end_year, log=None
+):
+    #####################################
+    # Connect to datacube, Dask cluster #
+    #####################################
+    if log is None:
+        log = configure_logging()
+
+    # Create local dask client for parallelisation
+    client = create_local_dask_cluster(return_client=True)
+
+    ###########################
+    # Load supplementary data #
+    ###########################
+
+    # Tide points are used to model tides across the extent of the satellite data
+    points_gdf = gpd.read_file(config["Input files"]["coastal_points_path"])
+
+    # Grid cells used to process the analysis
+    gridcell_gdf = (
+        gpd.read_file(config["Input files"]["coastal_grid_path"])
+        .to_crs(epsg=4326)
+        .set_index("id")
+    )
+    gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
+    gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
+    log.info("Loaded coastal points and grid file")
+
+    ################
+    # Loading data #
+    ################
+
+    # Create query
+    geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
+    query = {
+        "geopolygon": geopoly.buffer(0.05),
+        "time": (start_year, end_year),
+        "dask_chunks": {"time": 1, "x": 3000, "y": 3000},
+    }
+
+    # Load virtual product
+    try:
+        ds = load_water_index(
+            dc,
+            query,
+            yaml_path=config["Virtual product"]["virtual_product_path"],
+            product_name=config["Virtual product"]["virtual_product_name"],
+        )
+    except (ValueError, IndexError):
+        raise ValueError(f"WARNING: No valid data found for gridcell {study_area}")
+
+    ###################
+    # Tidal modelling #
+    ###################
+
+    # Model tides at each point in a provided geopandas.GeoDataFrame
+    # based on all timesteps observed by Landsat. This returns a new
+    # geopandas.GeoDataFrame with a "time" index (matching every time
+    # step in our Landsat data), and a "tide_m" column giving the tide
+    # heights at each point location at that time.
+    tidepoints_gdf = model_tide_points(ds, points_gdf)
+
+    # Test if there is data and skip rest of the analysis if not
+    if tidepoints_gdf.geometry.unique().shape[0] <= 1:
+        raise Exception(
+            "Gridcell {study_area} has 1 or less tidal points so cannot interpolate tide data"
+        )
+
+    log.info("Loaded modelled tide data")
+
+    # For each satellite timestep, spatially interpolate our modelled
+    # tide height points into the spatial extent of our satellite image,
+    # and add this new data as a new variable in our satellite dataset.
+    # This allows each satellite pixel to be analysed and filtered
+    # based on the tide height at the exact moment of each satellite
+    # image acquisition.
+    ds["tide_m"] = multiprocess_apply(
+        ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
+    )
+
+    # Based on the entire time-series of tide heights, compute the max
+    # and min satellite-observed tide height for each pixel, then
+    # calculate tide cutoffs used to restrict our data to satellite
+    # observations centred over mid-tide (0 m Above Mean Sea Level).
+    tide_cutoff_buff = (
+        ds["tide_m"].max(dim="time") - ds["tide_m"].min(dim="time")
+    ) * 0.25
+    tide_cutoff_min = 0.0 - tide_cutoff_buff
+    tide_cutoff_max = 0.0 + tide_cutoff_buff
+
+    ##############################
+    # Generate yearly composites #
+    ##############################
+
+    # If output folder doesn't exist, create it
+    output_dir = (
+        f"data/interim/raster/{raster_version}/" f"{study_area}_{raster_version}"
+    )
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Iterate through each year and export annual and 3-year
+    # gapfill composites
+    export_annual_gapfill(ds, output_dir, tide_cutoff_min, tide_cutoff_max)
+    log.info("Completed writing data")
+
+    # Close dask client
+    client.close()
+
+
 @click.command()
 @click.option(
     "--config_path",
@@ -622,116 +718,31 @@ def export_annual_gapfill(ds, output_dir, tide_cutoff_min, tide_cutoff_max):
     "`--end_year 2021` to extract a shoreline timeseries "
     "that finishes in the year 2020.",
 )
-def generate_rasters(config_path, study_area, raster_version, start_year, end_year):
-
-    #####################################
-    # Connect to datacube, Dask cluster #
-    #####################################
-
+def generate_rasters_cli(config_path, study_area, raster_version, start_year, end_year):
     # Connect to datacube
-    dc = datacube.Datacube(app="DEACoastlines")
-
-    # Create local dask client for parallelisation
-    client = create_local_dask_cluster(return_client=True)
+    dc = datacube.Datacube(app="Coastlines")
 
     # Load analysis params from config file
     config = load_config(config_path=config_path)
 
-    ###########################
-    # Load supplementary data #
-    ###########################
+    log = configure_logging(f"Coastlines Raster {study_area}")
 
-    # Tide points are used to model tides across the extent of the satellite data
-    points_gdf = gpd.read_file(config["Input files"]["coastal_points_path"])
-
-    # Grid cells used to process the analysis
-    gridcell_gdf = (
-        gpd.read_file(config["Input files"]["coastal_grid_path"])
-        .to_crs(epsg=4326)
-        .set_index("id")
-    )
-    gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
-    gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
-
-    ################
-    # Loading data #
-    ################
-
-    # Create query
-    geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
-    query = {
-        "geopolygon": geopoly.buffer(0.05),
-        "time": (start_year, end_year),
-        "dask_chunks": {"time": 1, "x": 3000, "y": 3000},
-    }
-
-    # Load virtual product
     try:
-        ds = load_water_index(
+        generate_rasters(
             dc,
-            query,
-            yaml_path=config["Virtual product"]["virtual_product_path"],
-            product_name=config["Virtual product"]["virtual_product_name"],
+            config,
+            study_area,
+            raster_version,
+            start_year,
+            end_year,
+            log=log,
         )
-    except (ValueError, IndexError):
-        print(f"WARNING: No valid data found for gridcell {study_area}")
-        sys.exit(0)
-
-    ###################
-    # Tidal modelling #
-    ###################
-
-    # Model tides at each point in a provided geopandas.GeoDataFrame
-    # based on all timesteps observed by Landsat. This returns a new
-    # geopandas.GeoDataFrame with a "time" index (matching every time
-    # step in our Landsat data), and a "tide_m" column giving the tide
-    # heights at each point location at that time.
-    tidepoints_gdf = model_tide_points(ds, points_gdf)
-
-    # Test if there is data and skip rest of the analysis if not
-    if tidepoints_gdf.geometry.unique().shape[0] <= 1:
-        print(
-            f"WARNING: Gridcell {study_area} has 1 or less tidal points so cannot interpolate tide data"
+    except Exception as e:
+        log.exception(
+            f"Failed to run process on study area {study_area} with error {e}"
         )
-        sys.exit(0)
-
-    # For each satellite timestep, spatially interpolate our modelled
-    # tide height points into the spatial extent of our satellite image,
-    # and add this new data as a new variable in our satellite dataset.
-    # This allows each satellite pixel to be analysed and filtered
-    # based on the tide height at the exact moment of each satellite
-    # image acquisition.
-    ds["tide_m"] = multiprocess_apply(
-        ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
-    )
-
-    # Based on the entire time-series of tide heights, compute the max
-    # and min satellite-observed tide height for each pixel, then
-    # calculate tide cutoffs used to restrict our data to satellite
-    # observations centred over mid-tide (0 m Above Mean Sea Level).
-    tide_cutoff_buff = (
-        ds["tide_m"].max(dim="time") - ds["tide_m"].min(dim="time")
-    ) * 0.25
-    tide_cutoff_min = 0.0 - tide_cutoff_buff
-    tide_cutoff_max = 0.0 + tide_cutoff_buff
-
-    ##############################
-    # Generate yearly composites #
-    ##############################
-
-    # If output folder doesn't exist, create it
-    output_dir = (
-        f"data/interim/raster/{raster_version}/" f"{study_area}_{raster_version}"
-    )
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Iterate through each year and export annual and 3-year
-    # gapfill composites
-    export_annual_gapfill(ds, output_dir, tide_cutoff_min, tide_cutoff_max)
-
-    # Close dask client
-    client.close()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    generate_rasters()
+    generate_rasters_cli()

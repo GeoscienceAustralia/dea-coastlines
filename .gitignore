@@ -3,3 +3,7 @@
 !*.sh
 !*.yaml
 !*.gitignore
+
+build
+coastlines/_version.py
+deafrica_coastlines.egg-info/

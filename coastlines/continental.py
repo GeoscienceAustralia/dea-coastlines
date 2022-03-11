@@ -21,7 +21,8 @@ from tqdm.auto import tqdm
 
 from pathlib import Path
 
-from deafrica_coastlines import vector
+from coastlines import vector
+from utils import configure_logging
 
 
 def points_in_poly(points, polygons):
@@ -179,7 +180,7 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
     "summary points. This is typically the most recent "
     "annual shoreline in the dataset.",
 )
-def continental_layers(
+def continental_cli(
     vector_version,
     continental_version,
     water_index,
@@ -194,6 +195,7 @@ def continental_layers(
     #################
     # Merge vectors #
     #################
+    log = configure_logging("Coastlines Continental")
 
     # If no continental version is provided, copy this from vector
     # version
@@ -201,6 +203,7 @@ def continental_layers(
         continental_version = vector_version
     output_dir = Path("data/processed/{continental_version}")
     output_dir.mkdir(exist_ok=True)
+    log.info(f"Writing data to {output_dir}")
 
     # Setup input and output file paths
     shoreline_paths = (
@@ -218,33 +221,34 @@ def continental_layers(
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
-        print("Combining annual shorelines...")
+        log.info("Combining annual shorelines...")
         os.system(
             f"ogrmerge.py -o "
             f"{OUTPUT_FILE} {shoreline_paths} "
             f"-single -overwrite_ds -t_srs epsg:6933"
             f"-nln annual_shorelines"
         )
+    log.info("Writing annual shorelines complete")
 
     # Combine rates of change stats points into single continental layer
     if ratesofchange:
-        print("Combining rates of change statistics...")
+        log.info("Combining rates of change statistics...")
         os.system(
             f"ogrmerge.py "
             f"-o {OUTPUT_FILE} {ratesofchange_paths} "
             f"-single -overwrite_ds -t_srs epsg:6933 "
             f"-nln rates_of_change"
         )
+    log.info("Writing rates of change statistics complete")
 
     # Generate hotspot points that provide regional/continental summary
     # of hotspots of coastal erosion and growth
     if hotspots:
-
         ###############################
         # Load DEA CoastLines vectors #
         ###############################
 
-        print("Generating hotspots...")
+        log.info("Generating hotspots...")
 
         # If hotspots is True, set radius from `hotspots_radius`
         hotspots = hotspots_radius
@@ -286,14 +290,12 @@ def continental_layers(
         #####################
 
         # Generate dictionary of polygon IDs and corresponding points
-        print("Identifying points in each polygon")
         poly_points_dict = points_in_poly(
             points=hotspots_gdf.geometry,
             polygons=ratesofchange_gdf.buffer(hotspots * 2),
         )
 
         # Compute mean and number of obs for each polygon
-        print("Calculating mean rates")
         hotspots_gdf[["rate_time", "n"]] = hotspots_gdf.apply(
             lambda row: get_matching_data(
                 row.name, ratesofchange_gdf, poly_points_dict, min_n=hotspots / 30
@@ -303,7 +305,10 @@ def continental_layers(
 
         # Export hotspots to file
         hotspots_gdf.to_file(OUTPUT_FILE, layer="hotspots")
+        log.info("Writing hotspots complete")
+    else:
+        log.info("Not writing hotspots...")
 
 
 if __name__ == "__main__":
-    continental_layers()
+    continental_cli()

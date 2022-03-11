@@ -24,7 +24,7 @@ jobs:
       uses: rickstaa/action-black@v1
       id: action_black
       with:
-        black_args: "--check deafrica_coastlines"
+        black_args: "--check ."
 
     # Set up a cache
     - name: Set up Docker Buildx

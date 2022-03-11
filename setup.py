@@ -61,9 +61,9 @@ setup_kwargs = {
     "license": "Apache License 2.0",
     "entry_points": {
         "console_scripts": [
-            "deafricacoastlines-raster = deafrica_coastlines.raster:generate_rasters",
-            "deafricacoastlines-vector = deafrica_coastlines.vector:generate_vectors",
-            "deafricacoastlines-continental = deafrica_coastlines.continental:continental_layers",
+            "deafricacoastlines-raster = coastlines.raster:generate_rasters_cli",
+            "deafricacoastlines-vector = coastlines.vector:generate_vectors_cli",
+            "deafricacoastlines-continental = coastlines.continental:continental_cli",
         ]
     },
 }
