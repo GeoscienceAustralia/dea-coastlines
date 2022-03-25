@@ -7,11 +7,17 @@ def configure_logging(name: str = "Coastlines") -> logging.Logger:
     """
     Configure logging for the application.
     """
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
+    logger = logging.getLogger(name)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        "%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
-    # Create a logger and return it
-    return logging.getLogger(name)
+
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+    return logger
 
 
 def load_config(config_path: str) -> dict:

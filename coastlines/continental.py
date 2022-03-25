@@ -121,24 +121,6 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
     'string provided to "--vector_version".',
 )
 @click.option(
-    "--water_index",
-    type=str,
-    default="mndwi",
-    help="The water index used to extract annual shorelines. "
-    "Used to identify tiled annual shoreline and rates of "
-    "change layers to combine into individual continental-"
-    'scale layers. Defaults to "mndwi".',
-)
-@click.option(
-    "--index_threshold",
-    default="0.00",
-    type=str,
-    help="The water index threshold used to extract annual "
-    "shorelines. Used to identify tiled annual shoreline and "
-    "rates of change layers to combine into individual "
-    'continental-scale layers. Defaults to "0.00".',
-)
-@click.option(
     "--shorelines",
     type=bool,
     default=True,
@@ -180,16 +162,21 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
     "summary points. This is typically the most recent "
     "annual shoreline in the dataset.",
 )
+@click.option(
+    "--include-styles/--no-include-styles",
+    is_flag=True,
+    default=True,
+    help="Set this to indicate whether to include styles " "in output Geopackage file.",
+)
 def continental_cli(
     vector_version,
     continental_version,
-    water_index,
-    index_threshold,
     shorelines,
     ratesofchange,
     hotspots,
     hotspots_radius,
     baseline_year,
+    include_styles,
 ):
 
     #################
@@ -306,6 +293,13 @@ def continental_cli(
         log.info("Writing hotspots complete")
     else:
         log.info("Not writing hotspots...")
+
+    if include_styles:
+        log.info("Writing styles in the geopackage file")
+        styles = gpd.read_file("styles.csv")
+        styles.to_file(OUTPUT_FILE, layer="layer_styles")
+    else:
+        log.info("Not writing styles")
 
 
 if __name__ == "__main__":
