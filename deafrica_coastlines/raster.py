@@ -285,6 +285,7 @@ def model_tides(x,
     time = np.atleast_1d(time)
     
     # Determine point and time counts
+    assert len(x) == len(y), 'x and y must be the same length'
     n_points = len(x)
     n_times = len(time)
 
