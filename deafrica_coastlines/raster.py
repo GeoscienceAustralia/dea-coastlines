@@ -211,9 +211,10 @@ def model_tides(x,
         the location at which to model tides. By default these
         coordinates should be lat/lon; use `epsg` if they
         are in a custom coordinate reference system.
-    time : A datetime array
-        An array containing 'datetime64[ns]' values providing
-        the times at which to model tides in UTC time.
+    time : A datetime array or pandas.DatetimeIndex
+        An array containing 'datetime64[ns]' values or a 
+        'pandas.DatetimeIndex' providing the times at which to 
+        model tides in UTC time.
     model : string
         The tide model used to model tides. Options include:
         - FES2014
@@ -273,14 +274,19 @@ def model_tides(x,
 
     # Get parameters for tide model
     model = pyTMD.model(directory, format="netcdf", compressed=False).elevation(model)
+    
+    # If time passed as a single Timestamp, convert to datetime64
+    if isinstance(time, pd.Timestamp):
+        time = time.to_datetime64()
 
-    # Determine point and time input counts
-    n_points = len(x)
-    n_times = len(time)
-
-    # Verify coordinate dimension shapes
+    # Handle numeric or array inputs
     x = np.atleast_1d(x)
     y = np.atleast_1d(y)
+    time = np.atleast_1d(time)
+    
+    # Determine point and time counts
+    n_points = len(x)
+    n_times = len(time)
 
     # Converting x,y from EPSG to latitude/longitude
     try:
