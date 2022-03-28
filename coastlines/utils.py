@@ -1,6 +1,9 @@
 import logging
 import yaml
 import fsspec
+from pathlib import Path
+
+STYLES_FILE = Path(__file__).parent / "styles.csv"
 
 
 def configure_logging(name: str = "Coastlines") -> logging.Logger:

@@ -22,7 +22,7 @@ from tqdm.auto import tqdm
 from pathlib import Path
 
 from coastlines.vector import points_on_line
-from coastlines.utils import configure_logging
+from coastlines.utils import configure_logging, STYLES_FILE
 
 
 def points_in_poly(points, polygons):
@@ -296,7 +296,7 @@ def continental_cli(
 
     if include_styles:
         log.info("Writing styles in the geopackage file")
-        styles = gpd.read_file("styles.csv")
+        styles = gpd.read_file(STYLES_FILE)
         styles.to_file(OUTPUT_FILE, layer="layer_styles")
     else:
         log.info("Not writing styles")

@@ -60,9 +60,9 @@ jobs:
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-    # - name: Run tests in image
-    #   run: |
-    #       docker run --rm ${{ env.IMAGE_NAME }} bash -c "pip install -e /code; pip install -r /code/requirements-test.txt; pytest /code"
+    - name: Run tests in image
+      run: |
+          docker run --rm ${{ env.IMAGE_NAME }} bash -c "pip install -e /code; pip install pytest; pytest /code/tests"
 
   push:
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
