@@ -1,6 +1,38 @@
 about: Catalog of virtual products for loading Landsat USGS Collection 2 products
 products:
 
+    # Landsat 9 USGS Collection 2 Tier 1 Surface Reflectance, rescaled using scaling factors and
+    # masked to remove nodata
+    ls9_sr:
+        recipe:
+            &ls9_sr
+            transform: expressions
+            input:
+                product: ls9_sr
+                measurements: [blue, green, red, nir, swir_1, swir_2, pixel_quality]
+                collection_category: 'T1'
+                group_by: solar_day
+            output:
+                 blue:
+                     formula: 2.75e-5 * blue - 0.2
+                     dtype: float32
+                 green:
+                     formula: 2.75e-5 * green - 0.2
+                     dtype: float32
+                 red: 
+                     formula: 2.75e-5 * red - 0.2
+                     dtype: float32
+                 nir: 
+                     formula: 2.75e-5 * nir - 0.2
+                     dtype: float32
+                 swir_1: 
+                     formula: 2.75e-5 * swir_1 - 0.2
+                     dtype: float32
+                 swir_2: 
+                     formula: 2.75e-5 * swir_2 - 0.2
+                     dtype: float32
+                 pixel_quality: pixel_quality
+
     # Landsat 8 USGS Collection 2 Tier 1 Surface Reflectance, rescaled using scaling factors and
     # masked to remove nodata
     ls8_sr:
@@ -97,35 +129,22 @@ products:
                      dtype: float32
                  pixel_quality: pixel_quality
 
-#     # Landsat 8 USGS Collection 2 Tier 1 Surface Reflectance, harmonised 
-#     # for compatibility with Landsat 7 ETM+ using empirical corrections 
-#     # from Flood 2014 (https://www.mdpi.com/2072-4292/6/9/7952/htm)
-#     ls8_sr_harmonised:
-#         recipe:
-#             &ls8_sr_harmonised
-#             transform: expressions
-#             input: *ls8_sr
-#             output:
-#                  blue:
-#                      formula: 0.00041 + 0.97470 * blue
-#                      dtype: float32
-#                  green:
-#                      formula: 0.00289 + 0.99779 * green
-#                      dtype: float32
-#                  red: 
-#                      formula: 0.00274 + 1.00446 * red
-#                      dtype: float32
-#                  nir: 
-#                      formula: 0.00004 + 0.98906 * nir
-#                      dtype: float32
-#                  swir_1: 
-#                      formula: 0.00256 + 0.99467 * swir_1
-#                      dtype: float32
-#                  swir_2: 
-#                      formula: -0.00327 + 1.02551 * swir_2
-#                      dtype: float32
-#                  pixel_quality: pixel_quality
-                 
+    # Landsat 9 USGS Collection 2 Tier 1 Surface Temperature, 
+    # rescaled using scaling factors 
+    ls9_st:
+        recipe:
+            &ls9_st
+            transform: expressions
+            input:
+                product: ls9_st
+                measurements: [ST_B10]
+                collection_category: 'T1'
+                group_by: solar_day
+            output:
+                 temp:
+                     formula: (0.00341802 * ST_B10 + 149.0) - 273.15
+                     dtype: float32    
+
     # Landsat 8 USGS Collection 2 Tier 1 Surface Temperature, 
     # rescaled using scaling factors 
     ls8_st:
@@ -174,7 +193,7 @@ products:
                      formula: (0.00341802 * ST_B6 + 149.0) - 273.15
                      dtype: float32    
 
-    # Combined Landsat 5, 7 and 8 USGS Collection 2 Tier 1 Surface Reflectance, 
+    # Combined Landsat USGS Collection 2 Tier 1 Surface Reflectance, 
     # rescaled using scaling factors and masked to remove nodata
     ls_sr:
          recipe:
@@ -185,6 +204,7 @@ products:
                      - *ls5_sr
                      - *ls7_sr
                      - *ls8_sr
+                     - *ls9_sr
              output: 
                  blue: blue
                  green: green
@@ -194,7 +214,7 @@ products:
                  swir_2: swir_2
                  pixel_quality: pixel_quality 
     
-    # Combined Landsat 5, 7 and 8 USGS Collection 2 Tier 1 Surface Temperature,
+    # Combined Landsat USGS Collection 2 Tier 1 Surface Temperature,
     # rescaled using scaling factors and masked to remove nodata
     ls_st:
          recipe:
@@ -205,32 +225,11 @@ products:
                      - *ls5_st
                      - *ls7_st
                      - *ls8_st
+                     - *ls9_st
              output: 
                  temp: temp
-
-#     # Combined Landsat 5, 7 and 8 USGS Collection 2 Tier 1 data, rescaled 
-#     # using scaling factors and masked to remove nodata. Landsat 8 data 
-#     # harmonised for compatibility with Landsat 7 ETM+ using empirical 
-#     # corrections from Flood 2014 (https://www.mdpi.com/2072-4292/6/9/7952/htm)
-#     ls_sr_harmonised:
-#          recipe:
-#              &ls_sr_harmonised
-#              transform: expressions
-#              input:
-#                  collate:
-#                      - *ls5_sr
-#                      - *ls7_sr
-#                      - *ls8_sr_harmonised
-#              output: 
-#                  blue: blue
-#                  green: green
-#                  red: red
-#                  nir: nir
-#                  swir_1: swir_1
-#                  swir_2: swir_2
-#                  pixel_quality: pixel_quality 
-                   
-    # Combined Landsat 5, 7 and 8 USGS Collection 2 Tier 1 Surface Temperature 
+                  
+    # Combined Landsat USGS Collection 2 Tier 1 Surface Temperature 
     # and Surface Reflectance, rescaled using scaling factors and masked to remove nodata
     ls_sr_st:
          recipe:
@@ -250,7 +249,7 @@ products:
                  temp: temp
                  pixel_quality: pixel_quality 
                  
-    # Combined Landsat 5, 7 and 8 USGS Collection 2 data, converted to MNDWI
+    # Combined Landsat USGS Collection 2 data, converted to MNDWI
     ls_mndwi:
          recipe:
              transform: expressions
@@ -260,16 +259,3 @@ products:
                  temp: temp
                  mndwi:
                     formula: (green - swir_1) / (green + swir_1)       
-
-#     # Combined Landsat 5, 7 and 8 USGS Collection 2 data, converted to  MNDWI. 
-#     # Landsat 8 data harmonised for compatibility with Landsat 7 ETM+ using 
-#     # empirical corrections from Flood 2014 
-#     # (https://www.mdpi.com/2072-4292/6/9/7952/htm)
-#     ls_mndwi_harmonised:
-#          recipe:
-#              transform: expressions
-#              input: *ls_sr_harmonised
-#              output:
-#                  pixel_quality: pixel_quality
-#                  mndwi:
-#                     formula: (green - swir_1) / (green + swir_1)
