@@ -144,12 +144,14 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
     # Mask any invalid pixel values outside of 0 and 1
     green_bool = (ds.green >= 0) & (ds.green <= 1)
     swir_bool = (ds.swir_1 >= 0) & (ds.swir_1 <= 1)
+    nir_bool = (ds.nir >= 0) & (ds.nir <= 1)
     ds = ds.where(green_bool & swir_bool)
-
+    
     # Compute MNDWI
-    ds[["mndwi"]] = (ds.green - ds.swir_1) / (ds.green + ds.swir_1)
+    ds[['mndwi']] = (ds.green - ds.swir_1) / (ds.green + ds.swir_1)
+    ds[['ndwi']] = (ds.green - ds.nir) / (ds.green + ds.nir)
 
-    return ds[["mndwi"]]
+    return ds[['mndwi', 'ndwi']]
 
 
 def otps_tides(lats, lons, times, timezone=None):
@@ -462,6 +464,7 @@ def tidal_composite(
     median_ds["stdev"] = year_ds.mndwi.std(dim="time", keep_attrs=True)
 
     # Set nodata values
+    median_ds['ndwi'].attrs['nodata'] = np.nan
     median_ds["mndwi"].attrs["nodata"] = np.nan
     median_ds["tide_m"].attrs["nodata"] = np.nan
     median_ds["stdev"].attrs["nodata"] = np.nan
