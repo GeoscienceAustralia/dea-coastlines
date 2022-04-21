@@ -88,7 +88,7 @@ def load_rasters(
         # List to hold output DataArrays
         da_list = []
 
-        for layer_name in [f"{water_index}", "tide_m", "count", "stdev"]:
+        for layer_name in [f"{water_index}", "ndwi", "tide_m", "count", "stdev"]:
 
             # Get paths of files that match pattern
             paths = glob.glob(
@@ -461,23 +461,35 @@ def contours_preprocess(
     # Apply water index threshold
     thresholded_ds = yearly_ds[water_index] < index_threshold
 
-    # To remove aerosol-based noise over open water, apply an additional
-    # mask based on the ESA World Cover dataset, loading persistent water
+    # To remove aerosol-based noise over open water, apply a mask based
+    # on the ESA World Cover dataset, loading persistent water
     # then shrinking this to ensure only deep water pixels are included
     landcover = datacube.Datacube().load(
         product="esa_worldcover", like=yearly_ds.geobox
     )
     landcover_water = landcover.classification.isin([0, 80]).squeeze(dim="time")
-    landcover_water = odc.algo.mask_cleanup(
+    landcover_mask = ~odc.algo.mask_cleanup(
         landcover_water, mask_filters=[("erosion", 20)]
     )
-    thresholded_ds = thresholded_ds.where(~landcover_water, False).where(~nodata)
+    thresholded_ds = thresholded_ds.where(landcover_mask, False).where(~nodata)
+
+    # To remove remaining aerosol-based noise over open water, apply an additional
+    # mask based on NDWI. This works because NIR is less affected by the aerosol
+    # issues than SWIR, and NDWI tends to be less aggressive at mapping
+    # water than MNDWI, which ensures that masking by NDWI will not remove useful
+    # along the actual coastline. NDWI water pixels are first identified then
+    # shrunk using erosion to ensure only open water is modified
+    ndwi_water = yearly_ds["ndwi"] > 0
+    ndwi_mask = ~odc.algo.mask_cleanup(ndwi_water, mask_filters=[("erosion", 2)])
+    thresholded_ds = thresholded_ds.where(ndwi_mask, False).where(~nodata)
 
     # Compute temporal mask
     temporal_mask = temporal_masking(thresholded_ds == 1)
 
     # Identify pixels that are land in at least 20% of observations,
-    # and use this to generate a coastal buffer study area
+    # and use this to generate a coastal buffer study area. Morphological
+    # closing helps to "close" the entrances of estuaries and rivers, removing
+    # them from the analysis
     all_time = ((thresholded_ds != 0) & temporal_mask).mean(dim="year") >= 0.2
     coastal_mask = coastal_masking(
         ds=all_time, tide_points_gdf=tide_points_gdf, buffer=buffer_pixels, closing=10
@@ -501,7 +513,9 @@ def contours_preprocess(
 
     # Keep pixels within both all time coastal buffer, annual mask
     # and temporal mask
-    masked_ds = yearly_ds[water_index].where(annual_mask & coastal_mask & temporal_mask)
+    masked_ds = yearly_ds[water_index].where(
+        annual_mask & coastal_mask & temporal_mask & ndwi_mask
+    )
     masked_ds.attrs = yearly_ds.attrs
 
     # Generate annual vector polygon masks containing information

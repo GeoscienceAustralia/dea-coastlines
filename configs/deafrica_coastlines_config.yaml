@@ -1,5 +1,5 @@
 Virtual product:
-    virtual_product_path: /code/configs/deafrica_virtual_product_landsat.yaml
+    virtual_product_path: configs/deafrica_virtual_product_landsat.yaml
     virtual_product_name: ls_sr_st
 Input files:
     coastal_grid_path: https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/32km_coastal_grid_deafrica.geojson
