@@ -725,6 +725,41 @@ def outlier_mad(points, thresh=3.5):
     return modified_z_score > thresh
 
 
+def outlier_ransac(xy_df, **kwargs):
+    """
+    Use the RANSAC (RANdom SAmple Consensus) algorithm to
+    robustly identify outliers. Returns a boolean array with True if
+    points are outliers and False otherwise.
+
+    Parameters:
+    -----------
+    points :
+        An n-observations by n-dimensions array of observations
+    **kwargs :
+        Any parameters to pass to 
+        `sklearn.linear_model.RANSACRegressor`
+
+    Returns:
+    --------
+    mask :
+        A n-observations-length boolean array.
+    """
+    
+    from sklearn import linear_model
+    
+    # X and y inputs
+    X = xy_df[:, 0].reshape(-1, 1)
+    y = xy_df[:, 1].reshape(-1, 1)
+    
+    # Robustly fit linear model with RANSAC algorithm
+    ransac = linear_model.RANSACRegressor(**kwargs)
+    ransac.fit(X, y)
+    inlier_mask = ransac.inlier_mask_
+    outlier_mask = np.logical_not(inlier_mask)
+    
+    return outlier_mask
+
+
 def change_regress(
     y_vals,
     x_vals,
@@ -792,7 +827,8 @@ def change_regress(
         )
 
     # Remove outliers using MAD
-    outlier_bool = outlier_mad(xy_df, thresh=threshold)
+    # outlier_bool = outlier_mad(xy_df, thresh=threshold)
+    outlier_bool = outlier_ransac(xy_df)
     xy_df = xy_df[~outlier_bool]
     valid_labels = valid_labels[~outlier_bool]
 
