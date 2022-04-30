@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # coding: utf-8
 
@@ -673,17 +672,17 @@ def annual_movements(
         points_gdf["loss_gain"] = np.where(
             points_gdf.index_baseline_p2 > points_gdf.index_comp_p1, 1, -1
         )
-        
+
         # Ensure NaNs are correctly propagated (otherwise, X > NaN
         # will return False, resulting in an incorrect land-ward direction)
-        is_nan = points_gdf[['index_comp_p1', 'index_baseline_p2']].isna().any(axis=1)
+        is_nan = points_gdf[["index_comp_p1", "index_baseline_p2"]].isna().any(axis=1)
         points_gdf["loss_gain"] = points_gdf["loss_gain"].where(~is_nan)
-        
+
         # Multiply distance to set change to negative, positive or NaN
         points_gdf[f"dist_{comp_year}"] = (
             points_gdf[f"dist_{comp_year}"] * points_gdf.loss_gain
         )
-    
+
     # Keep required columns
     to_keep = points_gdf.columns.str.contains("dist|geometry")
     points_gdf = points_gdf.loc[:, to_keep]
@@ -744,7 +743,7 @@ def outlier_ransac(xy_df, **kwargs):
     points :
         An n-observations by n-dimensions array of observations
     **kwargs :
-        Any parameters to pass to 
+        Any parameters to pass to
         `sklearn.linear_model.RANSACRegressor`
 
     Returns:
@@ -752,19 +751,19 @@ def outlier_ransac(xy_df, **kwargs):
     mask :
         A n-observations-length boolean array.
     """
-    
+
     from sklearn import linear_model
-    
+
     # X and y inputs
     X = xy_df[:, 0].reshape(-1, 1)
     y = xy_df[:, 1].reshape(-1, 1)
-    
+
     # Robustly fit linear model with RANSAC algorithm
     ransac = linear_model.RANSACRegressor(**kwargs)
     ransac.fit(X, y)
     inlier_mask = ransac.inlier_mask_
     outlier_mask = np.logical_not(inlier_mask)
-    
+
     return outlier_mask
 
 
@@ -1161,7 +1160,7 @@ def generate_vectors(
     except KeyError:
         log.warning("One or more years missing, so no statistics points were generated")
         points_gdf = None
-        
+
     # Note that `rocky_shores_clip` is not implemented
 
     # If a rocky mask is provided, use this to clip data
@@ -1184,7 +1183,12 @@ def generate_vectors(
         # Calculate annual coastline movements and residual tide heights
         # for every contour compared to the baseline year
         points_gdf = annual_movements(
-            points_gdf, contours_gdf, yearly_ds, baseline_year, water_index
+            points_gdf,
+            contours_gdf,
+            yearly_ds,
+            baseline_year,
+            water_index,
+            max_valid_dist=3000,
         )
         log.info("Calculated distances to each annual shoreline")
 
@@ -1267,7 +1271,9 @@ def generate_vectors(
 
     # Export rates of change and annual shorelines as ESRI shapefiles
     contours_gdf.reset_index().to_file(f"{contour_path}.shp")
-    log.info(f"Output rates of change points and annual shorelines written to {output_dir}")
+    log.info(
+        f"Output rates of change points and annual shorelines written to {output_dir}"
+    )
 
 
 @click.command()

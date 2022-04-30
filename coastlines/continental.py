@@ -261,14 +261,14 @@ def continental_cli(
         )
 
         # Drop low observations (less than 10) from rates
-        ratesofchange_gdf = ratesofchange_gdf.loc[ratesofchange_gdf.valid_obs > 15]
+        ratesofchange_gdf = ratesofchange_gdf.loc[ratesofchange_gdf.valid_obs >= 15]
         ratesofchange_gdf = ratesofchange_gdf.reset_index(drop=True)
 
         # Set nonsignificant rates to 0 m / year
         ratesofchange_gdf.loc[ratesofchange_gdf.sig_time > 0.01, "rate_time"] = 0
 
         # Clip to 50 m rates to remove extreme outliers
-        ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-50, 50)
+        ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-150, 150)
 
         #####################
         # Generate hotspots #
