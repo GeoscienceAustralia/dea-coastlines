@@ -613,14 +613,18 @@ def annual_movements(
         baseline; positive values indicate the coastline was located
         towards the ocean.
     """
+                
+    def _point_interp(points, array, **kwargs):
+        points_gs = gpd.GeoSeries(points)
+        x_vals = xr.DataArray(points_gs.x, dims="z")
+        y_vals = xr.DataArray(points_gs.y, dims="z")
+        return array.interp(x=x_vals, y=y_vals, **kwargs)  
 
     # Get array of water index values for baseline time period
     baseline_array = yearly_ds[water_index].sel(year=int(baseline_year))
 
     # Copy baseline point geometry to new column in points dataset
     points_gdf["p_baseline"] = points_gdf.geometry
-    baseline_x_vals = points_gdf.geometry.x
-    baseline_y_vals = points_gdf.geometry.y
 
     # Years to analyse
     years = contours_gdf.index.unique().values
@@ -648,23 +652,16 @@ def annual_movements(
 
         # Extract comparison array containing water index values for the
         # current year being analysed
-        comp_array = yearly_ds[water_index].sel(year=int(comp_year))
-
-        # Convert baseline and comparison year points to geoseries to allow
-        # easy access to x and y coords
-        comp_x_vals = gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).x
-        comp_y_vals = gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).y
+        comp_array = yearly_ds[water_index].sel(year=int(comp_year))          
 
         # Sample water index values for baseline and comparison points
-        baseline_x_vals = xr.DataArray(baseline_x_vals, dims="z")
-        baseline_y_vals = xr.DataArray(baseline_y_vals, dims="z")
-        comp_x_vals = xr.DataArray(comp_x_vals, dims="z")
-        comp_y_vals = xr.DataArray(comp_y_vals, dims="z")
-        points_gdf["index_comp_p1"] = comp_array.interp(
-            x=baseline_x_vals, y=baseline_y_vals
+        points_gdf["index_comp_p1"] = _point_interp(
+            points_gdf["p_baseline"],
+            comp_array
         )
-        points_gdf["index_baseline_p2"] = baseline_array.interp(
-            x=comp_x_vals, y=comp_y_vals
+        points_gdf["index_baseline_p2"] = _point_interp(
+            points_gdf[f"p_{comp_year}"],
+            baseline_array
         )
 
         # Compute change directionality (positive = located towards the
@@ -682,6 +679,18 @@ def annual_movements(
         points_gdf[f"dist_{comp_year}"] = (
             points_gdf[f"dist_{comp_year}"] * points_gdf.loss_gain
         )
+                
+        # TESTING: Remove any annual distances where midpoint between 
+        # baseline and comparison point is over water in both arrays.
+        # This may assist with identifying emergent islands where distances
+        # are likely to be invalid
+        mid_points = gpd.points_from_xy(
+            x=(points_gdf.p_baseline.x + gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).x) / 2.0,
+            y=(points_gdf.p_baseline.y + gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).y) / 2.0)
+        mid_comp = _point_interp(mid_points, comp_array)
+        mid_baseline = _point_interp(mid_points, baseline_array)
+        is_island = (mid_comp > 0) & (mid_baseline > 0)
+        points_gdf[f"dist_{comp_year}"] = points_gdf[f"dist_{comp_year}"].where(~is_island)
 
     # Keep required columns
     to_keep = points_gdf.columns.str.contains("dist|geometry")
