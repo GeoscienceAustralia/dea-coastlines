@@ -680,18 +680,6 @@ def annual_movements(
             points_gdf[f"dist_{comp_year}"] * points_gdf.loss_gain
         )
                 
-        # TESTING: Remove any annual distances where midpoint between 
-        # baseline and comparison point is over water in both arrays.
-        # This may assist with identifying emergent islands where distances
-        # are likely to be invalid
-        mid_points = gpd.points_from_xy(
-            x=(points_gdf.p_baseline.x + gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).x) / 2.0,
-            y=(points_gdf.p_baseline.y + gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).y) / 2.0)
-        mid_comp = _point_interp(mid_points, comp_array)
-        mid_baseline = _point_interp(mid_points, baseline_array)
-        is_island = (mid_comp > 0) & (mid_baseline > 0)
-        points_gdf[f"dist_{comp_year}"] = points_gdf[f"dist_{comp_year}"].where(~is_island)
-
     # Keep required columns
     to_keep = points_gdf.columns.str.contains("dist|geometry")
     points_gdf = points_gdf.loc[:, to_keep]
