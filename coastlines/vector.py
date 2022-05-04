@@ -17,6 +17,7 @@ import sys
 import warnings
 
 import click
+import pyproj
 import datacube
 import geopandas as gpd
 import numpy as np
@@ -27,7 +28,7 @@ from affine import Affine
 from dea_tools.spatial import subpixel_contours, xr_vectorize
 from rasterio.features import sieve
 from rasterio.transform import array_bounds
-from scipy import stats
+from scipy.stats import circstd, circmean, linregress
 from shapely.geometry import box
 from shapely.ops import nearest_points
 from skimage.measure import label, regionprops
@@ -620,13 +621,6 @@ def annual_movements(
         y_vals = xr.DataArray(points_gs.y, dims="z")
         return array.interp(x=x_vals, y=y_vals, **kwargs)
 
-#     def _get_bearing(lat1, long1, lat2, long2):
-#         import pyproj
-
-#         geodesic = pyproj.Geod(ellps="WGS84")
-#         fwd_azimuth, back_azimuth, distance = geodesic.inv(long1, lat1, long2, lat2)
-#         return fwd_azimuth
-
     # Get array of water index values for baseline time period
     baseline_array = yearly_ds[water_index].sel(year=int(baseline_year))
 
@@ -684,51 +678,27 @@ def annual_movements(
         points_gdf[f"dist_{comp_year}"] = (
             points_gdf[f"dist_{comp_year}"] * points_gdf.loss_gain
         )
-        
-        
-        # Test angles
-        testing = points_gdf[["p_baseline", f"p_{comp_year}"]].apply(
-            lambda x: gpd.GeoSeries(x, crs=points_gdf.crs).to_crs("EPSG:4326"))
 
-        import pyproj
+        # Calculate compass bearing from baseline to comparison point;
+        # first we need our points in lat-lon 
+        lat_lon = points_gdf[["p_baseline", f"p_{comp_year}"]].apply(
+            lambda x: gpd.GeoSeries(x, crs=points_gdf.crs).to_crs("EPSG:4326")
+        )
+
         geodesic = pyproj.Geod(ellps="WGS84")
-        bearings = geodesic.inv(lons1=gpd.GeoSeries(testing.p_baseline).x, 
-                     lats1=gpd.GeoSeries(testing.p_baseline).y, 
-                     lons2=gpd.GeoSeries(testing[f"p_{comp_year}"]).x, 
-                     lats2=gpd.GeoSeries(testing[f"p_{comp_year}"]).y)[0]
+        bearings = geodesic.inv(
+            lons1=lat_lon.iloc[:, 0].values.x,
+            lats1=lat_lon.iloc[:, 0].values.y,
+            lons2=lat_lon.iloc[:, 1].values.x,
+            lats2=lat_lon.iloc[:, 1].values.y,
+        )[0]
+        
+        # Add bearing as a new column after first restricting
+        # angles between 0 and 180 as we are only interested in
+        # the overall axis of our points e.g. north-south
         points_gdf[f"bearings_{comp_year}"] = bearings % 180
 
-#         # TEST: angles
-#         #         def bearing_coords(lat1, long1, lat2, long2):
-#         #             import math
-#         #             dLon = (long2 - long1)
-#         #             x = math.cos(math.radians(lat2)) * math.sin(math.radians(dLon))
-#         #             y = math.cos(math.radians(lat1)) * math.sin(math.radians(lat2)) - math.sin(
-#         #                 math.radians(lat1)) * math.cos(math.radians(lat2)) * math.cos(
-#         #                     math.radians(dLon))
-#         #             brng = np.arctan2(x, y)
-#         #             brng = np.degrees(brng)
-#         # #             brng = np.degrees(brng+360)%360
-#         #             return brng
-#         angles = (
-#             points_gdf[["p_baseline", f"p_{comp_year}"]]
-#             .apply(lambda x: gpd.GeoSeries(x, crs=points_gdf.crs).to_crs("EPSG:4326"))
-#             .apply(
-#                 lambda x: _get_bearing(
-#                     lat1=x.p_baseline.y,
-#                     long1=x.p_baseline.x,
-#                     lat2=x[f"p_{comp_year}"].y,
-#                     long2=x[f"p_{comp_year}"].x,
-#                 )
-#                 % 180,
-#                 axis=1,
-#             )
-#         )
-#         points_gdf[f"degree_{comp_year}"] = angles
-
     # Calculate mean and standard deviation of angles
-    from scipy.stats import circstd, circmean
-
     points_gdf["angle_mean"] = (
         points_gdf.loc[:, points_gdf.columns.str.contains("bearings_")]
         .apply(lambda x: circmean(x, high=180), axis=1)
@@ -903,7 +873,7 @@ def change_regress(
     outlier_str = " ".join(map(str, sorted(outlier_set)))
 
     # Compute linear regression
-    lin_reg = stats.linregress(x=xy_df[:, 0], y=xy_df[:, 1])
+    lin_reg = linregress(x=xy_df[:, 0], y=xy_df[:, 1])
 
     # Return slope, p-values and list of outlier years excluded from regression
     results_dict = {
@@ -1279,8 +1249,10 @@ def generate_vectors(
                 {
                     "sig_time": "float:8.3",
                     "outl_time": "str:80",
-                    "valid_obs": "int:4",
-                    "valid_span": "int:4",
+                    "angle_mean": "int:3",
+                    "angle_std": "int:3",
+                    "valid_obs": "int:2",
+                    "valid_span": "int:2",
                     "max_year": "int:4",
                     "min_year": "int:4",
                 }
