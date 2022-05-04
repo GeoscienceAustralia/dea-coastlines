@@ -613,12 +613,19 @@ def annual_movements(
         baseline; positive values indicate the coastline was located
         towards the ocean.
     """
-                
+
     def _point_interp(points, array, **kwargs):
         points_gs = gpd.GeoSeries(points)
         x_vals = xr.DataArray(points_gs.x, dims="z")
         y_vals = xr.DataArray(points_gs.y, dims="z")
-        return array.interp(x=x_vals, y=y_vals, **kwargs)  
+        return array.interp(x=x_vals, y=y_vals, **kwargs)
+
+#     def _get_bearing(lat1, long1, lat2, long2):
+#         import pyproj
+
+#         geodesic = pyproj.Geod(ellps="WGS84")
+#         fwd_azimuth, back_azimuth, distance = geodesic.inv(long1, lat1, long2, lat2)
+#         return fwd_azimuth
 
     # Get array of water index values for baseline time period
     baseline_array = yearly_ds[water_index].sel(year=int(baseline_year))
@@ -652,16 +659,14 @@ def annual_movements(
 
         # Extract comparison array containing water index values for the
         # current year being analysed
-        comp_array = yearly_ds[water_index].sel(year=int(comp_year))          
+        comp_array = yearly_ds[water_index].sel(year=int(comp_year))
 
         # Sample water index values for baseline and comparison points
         points_gdf["index_comp_p1"] = _point_interp(
-            points_gdf["p_baseline"],
-            comp_array
+            points_gdf["p_baseline"], comp_array
         )
         points_gdf["index_baseline_p2"] = _point_interp(
-            points_gdf[f"p_{comp_year}"],
-            baseline_array
+            points_gdf[f"p_{comp_year}"], baseline_array
         )
 
         # Compute change directionality (positive = located towards the
@@ -679,9 +684,66 @@ def annual_movements(
         points_gdf[f"dist_{comp_year}"] = (
             points_gdf[f"dist_{comp_year}"] * points_gdf.loss_gain
         )
-                
-    # Keep required columns
-    to_keep = points_gdf.columns.str.contains("dist|geometry")
+        
+        
+        # Test angles
+        testing = points_gdf[["p_baseline", f"p_{comp_year}"]].apply(
+            lambda x: gpd.GeoSeries(x, crs=points_gdf.crs).to_crs("EPSG:4326"))
+
+        import pyproj
+        geodesic = pyproj.Geod(ellps="WGS84")
+        bearings = geodesic.inv(lons1=gpd.GeoSeries(testing.p_baseline).x, 
+                     lats1=gpd.GeoSeries(testing.p_baseline).y, 
+                     lons2=gpd.GeoSeries(testing[f"p_{comp_year}"]).x, 
+                     lats2=gpd.GeoSeries(testing[f"p_{comp_year}"]).y)[0]
+        points_gdf[f"bearings_{comp_year}"] = bearings % 180
+
+#         # TEST: angles
+#         #         def bearing_coords(lat1, long1, lat2, long2):
+#         #             import math
+#         #             dLon = (long2 - long1)
+#         #             x = math.cos(math.radians(lat2)) * math.sin(math.radians(dLon))
+#         #             y = math.cos(math.radians(lat1)) * math.sin(math.radians(lat2)) - math.sin(
+#         #                 math.radians(lat1)) * math.cos(math.radians(lat2)) * math.cos(
+#         #                     math.radians(dLon))
+#         #             brng = np.arctan2(x, y)
+#         #             brng = np.degrees(brng)
+#         # #             brng = np.degrees(brng+360)%360
+#         #             return brng
+#         angles = (
+#             points_gdf[["p_baseline", f"p_{comp_year}"]]
+#             .apply(lambda x: gpd.GeoSeries(x, crs=points_gdf.crs).to_crs("EPSG:4326"))
+#             .apply(
+#                 lambda x: _get_bearing(
+#                     lat1=x.p_baseline.y,
+#                     long1=x.p_baseline.x,
+#                     lat2=x[f"p_{comp_year}"].y,
+#                     long2=x[f"p_{comp_year}"].x,
+#                 )
+#                 % 180,
+#                 axis=1,
+#             )
+#         )
+#         points_gdf[f"degree_{comp_year}"] = angles
+
+    # Calculate mean and standard deviation of angles
+    from scipy.stats import circstd, circmean
+
+    points_gdf["angle_mean"] = (
+        points_gdf.loc[:, points_gdf.columns.str.contains("bearings_")]
+        .apply(lambda x: circmean(x, high=180), axis=1)
+        .round(0)
+        .astype(int)
+    )
+    points_gdf["angle_std"] = (
+        points_gdf.loc[:, points_gdf.columns.str.contains("bearings_")]
+        .apply(lambda x: circstd(x, high=180), axis=1)
+        .round(0)
+        .astype(int)
+    )
+
+    # Keep only required columns
+    to_keep = points_gdf.columns.str.contains("dist|geometry|angle")
     points_gdf = points_gdf.loc[:, to_keep]
     points_gdf = points_gdf.assign(**{f"dist_{baseline_year}": 0.0})
     points_gdf = points_gdf.round(2)
@@ -914,7 +976,9 @@ def calculate_regressions(points_gdf, contours_gdf):
     # Custom sorting
     reg_cols = ["rate_time", "sig_time", "se_time", "outl_time"]
 
-    return points_gdf.loc[:, [*reg_cols, *dist_years, "geometry"]]
+    return points_gdf.loc[
+        :, [*reg_cols, *dist_years, "angle_mean", "angle_std", "geometry"]
+    ]
 
 
 def all_time_stats(x, col="dist_", initial_year=1988):
