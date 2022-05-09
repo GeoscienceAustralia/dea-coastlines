@@ -642,7 +642,7 @@ def generate_rasters(
     # image acquisition.
     ds["tide_m"] = multiprocess_apply(
         ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
-    )    
+    )
     log.info("Finished spatially interpolating tide heights")
 
     # Based on the entire time-series of tide heights, compute the max
@@ -653,7 +653,7 @@ def generate_rasters(
         ds["tide_m"].max(dim="time") - ds["tide_m"].min(dim="time")
     ) * 0.25
     tide_cutoff_min = 0.0 - tide_cutoff_buff
-    tide_cutoff_max = 0.0 + tide_cutoff_buff    
+    tide_cutoff_max = 0.0 + tide_cutoff_buff
     log.info("Calculated tide cutoffs")
 
     ##############################

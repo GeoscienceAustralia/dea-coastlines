@@ -680,7 +680,7 @@ def annual_movements(
         )
 
         # Calculate compass bearing from baseline to comparison point;
-        # first we need our points in lat-lon 
+        # first we need our points in lat-lon
         lat_lon = points_gdf[["p_baseline", f"p_{comp_year}"]].apply(
             lambda x: gpd.GeoSeries(x, crs=points_gdf.crs).to_crs("EPSG:4326")
         )
@@ -692,7 +692,7 @@ def annual_movements(
             lons2=lat_lon.iloc[:, 1].values.x,
             lats2=lat_lon.iloc[:, 1].values.y,
         )[0]
-        
+
         # Add bearing as a new column after first restricting
         # angles between 0 and 180 as we are only interested in
         # the overall axis of our points e.g. north-south
