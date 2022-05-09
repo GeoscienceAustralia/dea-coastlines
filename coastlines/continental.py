@@ -267,7 +267,7 @@ def continental_cli(
         # Set nonsignificant rates to 0 m / year
         ratesofchange_gdf.loc[ratesofchange_gdf.sig_time > 0.01, "rate_time"] = 0
 
-        # Clip to 50 m rates to remove extreme outliers
+        # Clip rates to remove extreme outliers
         ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-150, 150)
 
         #####################
