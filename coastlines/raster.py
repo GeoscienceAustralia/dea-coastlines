@@ -590,7 +590,7 @@ def generate_rasters(
     )
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
-    log.info("Loaded coastal points and grid file")
+    log.info("Loaded tide modelling points and study area grid")
 
     ################
     # Loading data #
@@ -614,6 +614,7 @@ def generate_rasters(
         )
     except (ValueError, IndexError):
         raise ValueError(f"No valid data found for gridcell {study_area}")
+    log.info("Loaded virtual product")
 
     ###################
     # Tidal modelling #
@@ -631,8 +632,7 @@ def generate_rasters(
         raise Exception(
             "Gridcell {study_area} has 1 or less tidal points so cannot interpolate tide data"
         )
-
-    log.info("Loaded modelled tide data")
+    log.info("Modelled tide heights for each tide modelling point")
 
     # For each satellite timestep, spatially interpolate our modelled
     # tide height points into the spatial extent of our satellite image,
@@ -643,6 +643,7 @@ def generate_rasters(
     ds["tide_m"] = multiprocess_apply(
         ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
     )
+    log.info("Finished spatially interpolating tide heights")
 
     # Based on the entire time-series of tide heights, compute the max
     # and min satellite-observed tide height for each pixel, then
@@ -653,6 +654,7 @@ def generate_rasters(
     ) * 0.25
     tide_cutoff_min = 0.0 - tide_cutoff_buff
     tide_cutoff_max = 0.0 + tide_cutoff_buff
+    log.info("Calculated tide cutoffs")
 
     ##############################
     # Generate yearly composites #

@@ -17,6 +17,7 @@ import sys
 import warnings
 
 import click
+import pyproj
 import datacube
 import geopandas as gpd
 import numpy as np
@@ -27,7 +28,7 @@ from affine import Affine
 from dea_tools.spatial import subpixel_contours, xr_vectorize
 from rasterio.features import sieve
 from rasterio.transform import array_bounds
-from scipy import stats
+from scipy.stats import circstd, circmean, linregress
 from shapely.geometry import box
 from shapely.ops import nearest_points
 from skimage.measure import label, regionprops
@@ -614,13 +615,17 @@ def annual_movements(
         towards the ocean.
     """
 
+    def _point_interp(points, array, **kwargs):
+        points_gs = gpd.GeoSeries(points)
+        x_vals = xr.DataArray(points_gs.x, dims="z")
+        y_vals = xr.DataArray(points_gs.y, dims="z")
+        return array.interp(x=x_vals, y=y_vals, **kwargs)
+
     # Get array of water index values for baseline time period
     baseline_array = yearly_ds[water_index].sel(year=int(baseline_year))
 
     # Copy baseline point geometry to new column in points dataset
     points_gdf["p_baseline"] = points_gdf.geometry
-    baseline_x_vals = points_gdf.geometry.x
-    baseline_y_vals = points_gdf.geometry.y
 
     # Years to analyse
     years = contours_gdf.index.unique().values
@@ -650,34 +655,65 @@ def annual_movements(
         # current year being analysed
         comp_array = yearly_ds[water_index].sel(year=int(comp_year))
 
-        # Convert baseline and comparison year points to geoseries to allow
-        # easy access to x and y coords
-        comp_x_vals = gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).x
-        comp_y_vals = gpd.GeoSeries(points_gdf[f"p_{comp_year}"]).y
-
-        # Sample water index values from arrays for baseline and comparison points
-        baseline_x_vals = xr.DataArray(baseline_x_vals, dims="z")
-        baseline_y_vals = xr.DataArray(baseline_y_vals, dims="z")
-        comp_x_vals = xr.DataArray(comp_x_vals, dims="z")
-        comp_y_vals = xr.DataArray(comp_y_vals, dims="z")
-        points_gdf["index_comp_p1"] = comp_array.interp(
-            x=baseline_x_vals, y=baseline_y_vals
+        # Sample water index values for baseline and comparison points
+        points_gdf["index_comp_p1"] = _point_interp(
+            points_gdf["p_baseline"], comp_array
         )
-        points_gdf["index_baseline_p2"] = baseline_array.interp(
-            x=comp_x_vals, y=comp_y_vals
+        points_gdf["index_baseline_p2"] = _point_interp(
+            points_gdf[f"p_{comp_year}"], baseline_array
         )
 
-        # Compute change directionality (negative = located inland,
-        # positive = located towards the ocean)
+        # Compute change directionality (positive = located towards the
+        # ocean; negative = located inland)
         points_gdf["loss_gain"] = np.where(
             points_gdf.index_baseline_p2 > points_gdf.index_comp_p1, 1, -1
         )
+
+        # Ensure NaNs are correctly propagated (otherwise, X > NaN
+        # will return False, resulting in an incorrect land-ward direction)
+        is_nan = points_gdf[["index_comp_p1", "index_baseline_p2"]].isna().any(axis=1)
+        points_gdf["loss_gain"] = points_gdf["loss_gain"].where(~is_nan)
+
+        # Multiply distance to set change to negative, positive or NaN
         points_gdf[f"dist_{comp_year}"] = (
             points_gdf[f"dist_{comp_year}"] * points_gdf.loss_gain
         )
 
-    # Keep required columns
-    to_keep = points_gdf.columns.str.contains("dist|geometry")
+        # Calculate compass bearing from baseline to comparison point;
+        # first we need our points in lat-lon
+        lat_lon = points_gdf[["p_baseline", f"p_{comp_year}"]].apply(
+            lambda x: gpd.GeoSeries(x, crs=points_gdf.crs).to_crs("EPSG:4326")
+        )
+
+        geodesic = pyproj.Geod(ellps="WGS84")
+        bearings = geodesic.inv(
+            lons1=lat_lon.iloc[:, 0].values.x,
+            lats1=lat_lon.iloc[:, 0].values.y,
+            lons2=lat_lon.iloc[:, 1].values.x,
+            lats2=lat_lon.iloc[:, 1].values.y,
+        )[0]
+
+        # Add bearing as a new column after first restricting
+        # angles between 0 and 180 as we are only interested in
+        # the overall axis of our points e.g. north-south
+        points_gdf[f"bearings_{comp_year}"] = bearings % 180
+
+    # Calculate mean and standard deviation of angles
+    points_gdf["angle_mean"] = (
+        points_gdf.loc[:, points_gdf.columns.str.contains("bearings_")]
+        .apply(lambda x: circmean(x, high=180), axis=1)
+        .round(0)
+        .astype(int)
+    )
+    points_gdf["angle_std"] = (
+        points_gdf.loc[:, points_gdf.columns.str.contains("bearings_")]
+        .apply(lambda x: circstd(x, high=180), axis=1)
+        .round(0)
+        .astype(int)
+    )
+
+    # Keep only required columns
+    to_keep = points_gdf.columns.str.contains("dist|geometry|angle")
     points_gdf = points_gdf.loc[:, to_keep]
     points_gdf = points_gdf.assign(**{f"dist_{baseline_year}": 0.0})
     points_gdf = points_gdf.round(2)
@@ -723,6 +759,41 @@ def outlier_mad(points, thresh=3.5):
     modified_z_score = 0.6745 * diff / med_abs_deviation
 
     return modified_z_score > thresh
+
+
+def outlier_ransac(xy_df, **kwargs):
+    """
+    Use the RANSAC (RANdom SAmple Consensus) algorithm to
+    robustly identify outliers. Returns a boolean array with True if
+    points are outliers and False otherwise.
+
+    Parameters:
+    -----------
+    points :
+        An n-observations by n-dimensions array of observations
+    **kwargs :
+        Any parameters to pass to
+        `sklearn.linear_model.RANSACRegressor`
+
+    Returns:
+    --------
+    mask :
+        A n-observations-length boolean array.
+    """
+
+    from sklearn import linear_model
+
+    # X and y inputs
+    X = xy_df[:, 0].reshape(-1, 1)
+    y = xy_df[:, 1].reshape(-1, 1)
+
+    # Robustly fit linear model with RANSAC algorithm
+    ransac = linear_model.RANSACRegressor(**kwargs)
+    ransac.fit(X, y)
+    inlier_mask = ransac.inlier_mask_
+    outlier_mask = np.logical_not(inlier_mask)
+
+    return outlier_mask
 
 
 def change_regress(
@@ -793,6 +864,7 @@ def change_regress(
 
     # Remove outliers using MAD
     outlier_bool = outlier_mad(xy_df, thresh=threshold)
+    # outlier_bool = outlier_ransac(xy_df)
     xy_df = xy_df[~outlier_bool]
     valid_labels = valid_labels[~outlier_bool]
 
@@ -801,7 +873,7 @@ def change_regress(
     outlier_str = " ".join(map(str, sorted(outlier_set)))
 
     # Compute linear regression
-    lin_reg = stats.linregress(x=xy_df[:, 0], y=xy_df[:, 1])
+    lin_reg = linregress(x=xy_df[:, 0], y=xy_df[:, 1])
 
     # Return slope, p-values and list of outlier years excluded from regression
     results_dict = {
@@ -874,7 +946,9 @@ def calculate_regressions(points_gdf, contours_gdf):
     # Custom sorting
     reg_cols = ["rate_time", "sig_time", "se_time", "outl_time"]
 
-    return points_gdf.loc[:, [*reg_cols, *dist_years, "geometry"]]
+    return points_gdf.loc[
+        :, [*reg_cols, *dist_years, "angle_mean", "angle_std", "geometry"]
+    ]
 
 
 def all_time_stats(x, col="dist_", initial_year=1988):
@@ -1053,7 +1127,7 @@ def generate_vectors(
     tide_points_gdf = gpd.read_file(
         config["Input files"]["coastal_points_path"], bbox=bbox
     ).to_crs(yearly_ds.crs)
-    log.info("Loaded tide points")
+    log.info("Loaded tide modelling points")
 
     # Study area polygon
     gridcell_gdf = (
@@ -1100,22 +1174,24 @@ def generate_vectors(
         tide_points_gdf,
         buffer_pixels=25,
     )
-    # Extract contours
+    # Extract annual shorelines
     contours_gdf = subpixel_contours(
         da=masked_ds, z_values=index_threshold, min_vertices=10, dim="year"
     ).set_index("year")
-    log.info("Contours extracted")
+    log.info("Annual shorelines extracted")
 
     ######################
     # Compute statistics #
     ######################
 
-    # Extract statistics modelling points along baseline contour
+    # Extract statistics modelling points along baseline shoreline
     try:
         points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
+        log.info("Rates of change points extracted")
     except KeyError:
         log.warning("One or more years missing, so no statistics points were generated")
         points_gdf = None
+
     # Note that `rocky_shores_clip` is not implemented
 
     # If a rocky mask is provided, use this to clip data
@@ -1138,11 +1214,18 @@ def generate_vectors(
         # Calculate annual coastline movements and residual tide heights
         # for every contour compared to the baseline year
         points_gdf = annual_movements(
-            points_gdf, contours_gdf, yearly_ds, baseline_year, water_index
+            points_gdf,
+            contours_gdf,
+            yearly_ds,
+            baseline_year,
+            water_index,
+            max_valid_dist=3000,
         )
+        log.info("Calculated distances to each annual shoreline")
 
         # Calculate regressions
         points_gdf = calculate_regressions(points_gdf, contours_gdf)
+        log.info("Calculated rates of change regressions")
 
         # Add count and span of valid obs, Shoreline Change Envelope
         # (SCE), Net Shoreline Movement (NSM) and Max/Min years
@@ -1150,6 +1233,7 @@ def generate_vectors(
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x, initial_year=2000), axis=1
         )
+        log.info("Calculated all of time statistics")
 
         ################
         # Export stats #
@@ -1165,8 +1249,10 @@ def generate_vectors(
                 {
                     "sig_time": "float:8.3",
                     "outl_time": "str:80",
-                    "valid_obs": "int:4",
-                    "valid_span": "int:4",
+                    "angle_mean": "int:3",
+                    "angle_std": "int:3",
+                    "valid_obs": "int:2",
+                    "valid_span": "int:2",
                     "max_year": "int:4",
                     "min_year": "int:4",
                 }
@@ -1194,18 +1280,18 @@ def generate_vectors(
         else:
             log.warning("No points remain after rocky shoreline clip")
 
-    ###################
-    # Export contours #
-    ###################
+    #####################
+    # Export shorelines #
+    #####################
 
-    # Assign certainty to contours based on underlying masks
+    # Assign certainty to shorelines based on underlying masks
     contours_gdf = contour_certainty(contours_gdf, certainty_masks)
 
     # Add maturity details
     contours_gdf["maturity"] = "final"
     contours_gdf.loc[contours_gdf.index == baseline_year, "maturity"] = "interim"
 
-    # Clip annual shoreline contours to study area extent
+    # Clip annual shorelines to study area extent
     contour_path = (
         f"{output_dir}/annualshorelines_"
         f"{study_area}_{vector_version}_"
@@ -1216,9 +1302,11 @@ def generate_vectors(
         f"{contour_path}.geojson", driver="GeoJSON"
     )
 
-    # Export stats and contours as ESRI shapefiles
+    # Export rates of change and annual shorelines as ESRI shapefiles
     contours_gdf.reset_index().to_file(f"{contour_path}.shp")
-    log.info(f"Output stats and contours written to {output_dir}")
+    log.info(
+        f"Output rates of change points and annual shorelines written to {output_dir}"
+    )
 
 
 @click.command()
