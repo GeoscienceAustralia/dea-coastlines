@@ -260,7 +260,7 @@ def continental_cli(
             shorelines_gdf, index=baseline_year, distance=hotspots
         )
 
-        # Drop low observations (less than 10) from rates
+        # Drop low observations from rates
         ratesofchange_gdf = ratesofchange_gdf.loc[ratesofchange_gdf.valid_obs >= 15]
         ratesofchange_gdf = ratesofchange_gdf.reset_index(drop=True)
 
