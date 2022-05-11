@@ -35,6 +35,7 @@ import pandas as pd
 import pytz
 import xarray as xr
 from affine import Affine
+from datacube.utils.aws import configure_s3_access
 from datacube.utils.cog import write_cog
 from datacube.utils.geometry import CRS, GeoBox, Geometry
 from datacube.utils.masking import make_mask
@@ -227,7 +228,6 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
     # Mask any invalid pixel values outside of 0 and 1
     green_bool = (ds.green >= 0) & (ds.green <= 1)
     swir_bool = (ds.swir_1 >= 0) & (ds.swir_1 <= 1)
-    nir_bool = (ds.nir >= 0) & (ds.nir <= 1)
     ds = ds.where(green_bool & swir_bool)
 
     # Compute MNDWI
@@ -810,7 +810,15 @@ def generate_rasters(
     "`--end_year 2021` to extract a shoreline timeseries "
     "that finishes in the year 2020.",
 )
-def generate_rasters_cli(config_path, study_area, raster_version, start_year, end_year):
+@click.option(
+    "--aws_unsigned/--no-aws_unsigned",
+    type=bool,
+    default=True,
+    help="Whether to use sign AWS requests for S3 access",
+)
+def generate_rasters_cli(
+    config_path, study_area, raster_version, start_year, end_year, aws_unsigned
+):
     # Connect to datacube
     dc = datacube.Datacube(app="Coastlines")
 
@@ -818,6 +826,9 @@ def generate_rasters_cli(config_path, study_area, raster_version, start_year, en
     config = load_config(config_path=config_path)
 
     log = configure_logging(f"Coastlines Raster {study_area}")
+
+    # Do an opinionated configuration of S3
+    configure_s3_access(cloud_defaults=True, aws_unsigned=aws_unsigned)
 
     try:
         generate_rasters(
