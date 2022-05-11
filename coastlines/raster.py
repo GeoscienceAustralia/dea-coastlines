@@ -49,6 +49,89 @@ from coastlines.utils import configure_logging, load_config
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
+def hillshade(dem, elevation, azimuth, vert_exag=1, dx=30, dy=30):
+
+    # For each supplied azimuth, compute hillshade
+    from matplotlib.colors import LightSource
+
+    hs = LightSource(azdeg=azimuth, altdeg=elevation).hillshade(
+        dem, vert_exag=vert_exag, dx=dx, dy=dy
+    )
+    return hs
+
+
+def terrain_shadow(x, elevation, threshold=0.4, radius=3):
+
+    from skimage.morphology import binary_dilation, binary_opening, disk
+
+    hs = hillshade(elevation, x.sun_elevation, x.sun_azimuth)
+    hs = hs < threshold
+    hs = binary_opening(hs, disk(radius))
+    hs = binary_dilation(hs, disk(radius))
+
+    return xr.DataArray(hs, dims=["y", "x"])
+
+
+def sun_angles(dc, query):
+
+    import numpy as np
+    import datacube
+    from datacube.api.query import query_group_by
+    from datacube.model.utils import xr_apply
+
+    # Customise query to match query used to load raster data
+    query_subset = {k: v for k, v in query.items() if k not in ["dask_chunks"]}
+    query_subset.update(
+        product=["ls5_sr", "ls7_sr", "ls8_sr", "ls9_sr"],
+        collection_category="T1",
+        group_by="solar_day",
+    )
+
+    # Load the metadata from each product into an xarray after grouping by solar day
+    gb = query_group_by(**query_subset)
+    datasets = dc.find_datasets(**query_subset)
+    dataset_array = dc.group_datasets(datasets, gb)
+    sun_azimuth = xr_apply(
+        dataset_array,
+        lambda t, dd: np.mean([d.metadata.eo_sun_azimuth for d in dd]),
+        dtype=float,
+    )
+    sun_elevation = xr_apply(
+        dataset_array,
+        lambda t, dd: np.mean([d.metadata.eo_sun_elevation for d in dd]),
+        dtype=float,
+    )
+
+    # Combine into new xarray.Dataset
+    sun_angles_ds = xr.merge(
+        [sun_elevation.rename("sun_elevation"), sun_azimuth.rename("sun_azimuth")]
+    )
+
+    return sun_angles_ds
+
+
+def mask_terrain_shadow(dc, query, ds):
+
+    # Compute solar angles for all satellite image timesteps
+    sun_angles_ds = sun_angles(dc, query)
+
+    # Load DEM into satellite data geobox
+    dem_ds = dc.load(product="dem_srtm", like=ds.geobox, resampling="cubic").squeeze(
+        "time", drop=True
+    )
+    dem_ds = dem_ds.where(dem_ds.elevation >= 0)
+
+    # Identify terrain shadow across all timesteps
+    terrain_shadow_ds = multiprocess_apply(
+        sun_angles_ds,
+        dim="time",
+        func=partial(terrain_shadow, elevation=dem_ds.elevation.values),
+    )
+
+    # Remove terrain shadow pixels from satellite data
+    return ds.where(~terrain_shadow_ds)
+
+
 def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
     """
     This function uses virtual products to load Landsat 5, 7 and 8 data,
@@ -150,6 +233,10 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
     # Compute MNDWI
     ds[["mndwi"]] = (ds.green - ds.swir_1) / (ds.green + ds.swir_1)
     ds[["ndwi"]] = (ds.green - ds.nir) / (ds.green + ds.nir)
+
+    # Apply terrain mask to remove deep shadows that can be
+    # be mistaken for water
+    ds = mask_terrain_shadow(dc, query, ds)
 
     return ds[["mndwi", "ndwi"]]
 
