@@ -306,6 +306,7 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
             resolution=(-30, 30),
             align=(15, 15),
             resampling={"pixel_quality": "nearest", "*": "cubic"},
+            skip_broken_datasets=True,  # To remove on prod
         )
         box = product.group(bag, **settings, **query)
         ds = product.fetch(box, **settings, **query)
