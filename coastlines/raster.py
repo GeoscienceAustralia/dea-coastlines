@@ -51,8 +51,40 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def hillshade(dem, elevation, azimuth, vert_exag=1, dx=30, dy=30):
+    """
+    Calculate hillshade from an input Digital Elevation Model
+    (DEM) array and a sun elevation and azimith.
 
-    # For each supplied azimuth, compute hillshade
+    Parameters:
+    -----------
+    dem : numpy.array
+        A 2D Digital Elevation Model array.
+    elevation : int or float
+        Sun elevation (0-90, degrees up from horizontal).
+    azimith : int or float
+        Sun azimuth (0-360, degrees clockwise from north).
+    vert_exag : int or float, optional
+        The amount to exaggerate the elevation values by
+        when calculating illumination. This can be used either
+        to correct for differences in units between the x-y coordinate
+        system and the elevation coordinate system (e.g. decimal
+        degrees vs. meters) or to exaggerate or de-emphasize
+        topographic effects.
+    dx : int or float, optional
+        The x-spacing (columns) of the input DEM. This
+        is typically the spatial resolution of the DEM.
+    dy : int or float, optional
+        The y-spacing (rows) of the input input DEM. This
+        is typically the spatial resolution of the DEM.
+
+    Returns:
+    --------
+    hs : numpy.array
+        A 2D hillshade array with values between 0-1, where
+        0 is completely in shadow and 1 is completely
+        illuminated.
+    """
+
     from matplotlib.colors import LightSource
 
     hs = LightSource(azdeg=azimuth, altdeg=elevation).hillshade(
@@ -61,37 +93,38 @@ def hillshade(dem, elevation, azimuth, vert_exag=1, dx=30, dy=30):
     return hs
 
 
-def terrain_shadow(x, elevation, threshold=0.4, radius=3):
-
-    from skimage.morphology import binary_dilation, binary_opening, disk
-
-    hs = hillshade(elevation, x.sun_elevation, x.sun_azimuth)
-    hs = hs < threshold
-    hs = binary_opening(hs, disk(radius))
-    hs = binary_dilation(hs, disk(radius))
-
-    return xr.DataArray(hs, dims=["y", "x"])
-
-
 def sun_angles(dc, query):
+    """
+    For a given spatiotemporal query, calculate mean sun
+    azimuth and elevation for each satellite observation, and
+    return these as a new `xarray.Dataset` with 'sun_elevation'
+    and 'sun_azimuth' variables.
 
-    import numpy as np
-    import datacube
+    Parameters:
+    -----------
+    dc : datacube.Datacube object
+        Datacube instance used to load data.
+    query : dict
+        A dictionary containing query parameters used to identify
+        satellite observations and load metadata.
+
+    Returns:
+    --------
+    sun_angles_ds : xarray.Dataset
+        An `xarray.set` containing a 'sun_elevation' and
+        'sun_azimuth' variables.
+    """
+
     from datacube.api.query import query_group_by
     from datacube.model.utils import xr_apply
 
-    # Customise query to match query used to load raster data
-    query_subset = {k: v for k, v in query.items() if k not in ["dask_chunks"]}
-    query_subset.update(
-        product=["ls5_sr", "ls7_sr", "ls8_sr", "ls9_sr"],
-        collection_category="T1",
-        group_by="solar_day",
-    )
-
-    # Load the metadata from each product into an xarray after grouping by solar day
-    gb = query_group_by(**query_subset)
-    datasets = dc.find_datasets(**query_subset)
+    # Identify satellite datasets and group outputs using the
+    # same approach used to group satellite imagery (i.e. solar day)
+    gb = query_group_by(**query)
+    datasets = dc.find_datasets(**query)
     dataset_array = dc.group_datasets(datasets, gb)
+
+    # Load and take the mean of metadata from each product
     sun_azimuth = xr_apply(
         dataset_array,
         lambda t, dd: np.mean([d.metadata.eo_sun_azimuth for d in dd]),
@@ -111,10 +144,81 @@ def sun_angles(dc, query):
     return sun_angles_ds
 
 
+def terrain_shadow(ds, dem, threshold=0.5, radius=1):
+    """
+    Calculates a custom terrain shadow mask that can be used
+    to remove shadow-affected satellite pixels.
+
+    This is achieved by by first calculating hillshade using
+    'sun_elevation' and 'sun_azimuth' metadata, thresholding this
+    hillshade to identify shadows, then cleaning and dilating
+    to return clean areas of terrain shadow.
+
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        An `xarray.Dataset` containing data variables named
+        'sun_elevation' and 'sun_azimuth'.
+    dem : numpy.array
+        A 2D Digital Elevation Model array.
+    threshold : float, optional
+        An illumination value below which hillshaded cells should
+        be considered terrain shadow. Defaults to 0.5.
+    radius : int, optional
+        The disk radius to use when applying morphological opening
+        (to clean up small noisy shadows) and dilation (to
+        mask out shadow edges. Defaults to a 1.
+
+    Returns:
+    --------
+    xarray.DataArray
+        An `xarray.DataArray` containing boolean True values where
+        a pixel contains terrain shadow, and False if not.
+    """
+
+    from skimage.morphology import binary_dilation, binary_opening, disk
+
+    hs = hillshade(dem, ds.sun_elevation, ds.sun_azimuth)
+    hs = hs < threshold
+    hs = binary_opening(hs, disk(radius))
+    hs = binary_dilation(hs, disk(radius))
+
+    return xr.DataArray(hs, dims=["y", "x"])
+
+
 def mask_terrain_shadow(dc, query, ds):
+    """
+    Calculate and apply a terrain shadow mask to set all
+    satellite pixels to `NaN` if they are affected by terrain
+    shadow. This helps to remove noisy shorelines along coastal
+    cliffs and steep coastal terrain.
+
+    Parameters:
+    -----------
+    dc : datacube.Datacube object
+        Datacube instance used to load DEM data and sun angle metadata.
+    query : dict
+        A dictionary containing query parameters used to identify
+        satellite observations and load metadata.
+    ds : xarray.Dataset
+        An `xarray.Dataset` containing a time series of water index
+        data (e.g. MNDWI) that will be terrain shadow masked.
+
+    Returns:
+    --------
+    xarray.Dataset
+        An `xarray.Dataset` containing a time series of water index
+        data (e.g. MNDWI) with terrain shadowed pixels set to `NaN`.
+    """
 
     # Compute solar angles for all satellite image timesteps
-    sun_angles_ds = sun_angles(dc, query)
+    query_subset = {k: v for k, v in query.items() if k not in ["dask_chunks"]}
+    query_subset.update(
+        product=["ls5_sr", "ls7_sr", "ls8_sr", "ls9_sr"],
+        collection_category="T1",
+        group_by="solar_day",
+    )
+    sun_angles_ds = sun_angles(dc, query_subset)
 
     # Load DEM into satellite data geobox
     dem_ds = dc.load(product="dem_srtm", like=ds.geobox, resampling="cubic").squeeze(
@@ -126,7 +230,7 @@ def mask_terrain_shadow(dc, query, ds):
     terrain_shadow_ds = multiprocess_apply(
         sun_angles_ds,
         dim="time",
-        func=partial(terrain_shadow, elevation=dem_ds.elevation.values),
+        func=partial(terrain_shadow, dem=dem_ds.elevation.values),
     )
 
     # Remove terrain shadow pixels from satellite data
@@ -226,11 +330,11 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
     ds = ds.where(~mask_cleaned & ~nodata)
 
     # Mask any invalid pixel values outside of 0 and 1
-    green_bool = (ds.green >= 0) & (ds.green <= 1)
-    swir_bool = (ds.swir_1 >= 0) & (ds.swir_1 <= 1)
-    ds = ds.where(green_bool & swir_bool)
+    ds["green"] = ds.green.where((ds.green >= 0) & (ds.green <= 1))
+    ds["swir_1"] = ds.swir_1.where((ds.swir_1 >= 0) & (ds.swir_1 <= 1))
+    ds["nir"] = ds.nir.where((ds.nir >= 0) & (ds.nir <= 1))
 
-    # Compute MNDWI
+    # Calculate MNDWI
     ds[["mndwi"]] = (ds.green - ds.swir_1) / (ds.green + ds.swir_1)
     ds[["ndwi"]] = (ds.green - ds.nir) / (ds.green + ds.nir)
 

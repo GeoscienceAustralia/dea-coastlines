@@ -59,7 +59,7 @@ def points_in_poly(points, polygons):
     return out_dict
 
 
-def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
+def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100, statistic="median"):
     """
     Computes statistics based on all spatial points that intersect
     with a specific polygon. This is used to calculate moving
@@ -81,6 +81,9 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
     min_n : int, optional
         If less than `min_n` points are returned for a given polygon,
         return None.
+    statistic : str, optional
+        The statistic used in the moving window calculation. Valid options
+        include "mean" and "median".
 
     Returns:
     --------
@@ -92,8 +95,14 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100):
 
     if len(matching_points.index) > min_n:
 
-        return pd.Series([matching_points.rate_time.mean(), len(matching_points.index)])
-
+        if statistic == "median":
+            return pd.Series(
+                [matching_points.rate_time.median(), len(matching_points.index)]
+            )
+        elif statistic == "mean":
+            return pd.Series(
+                [matching_points.rate_time.mean(), len(matching_points.index)]
+            )
     else:
         return pd.Series([None, None])
 
@@ -260,15 +269,16 @@ def continental_cli(
             shorelines_gdf, index=baseline_year, distance=hotspots
         )
 
-        # Drop low observations from rates
-        ratesofchange_gdf = ratesofchange_gdf.loc[ratesofchange_gdf.valid_obs >= 15]
+        # Drop points with low observations and high angle variance
+        # TODO: Add a "certainty" column to points with a flag identifying these
+        ratesofchange_gdf = ratesofchange_gdf.loc[
+            (ratesofchange_gdf.valid_obs >= 15) & (ratesofchange_gdf.angle_std <= 30)
+        ]
         ratesofchange_gdf = ratesofchange_gdf.reset_index(drop=True)
 
-        # Set nonsignificant rates to 0 m / year
-        ratesofchange_gdf.loc[ratesofchange_gdf.sig_time > 0.01, "rate_time"] = 0
-
-        # Clip rates to remove extreme outliers
-        ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-150, 150)
+        # Clip rates to remove extreme distances, as these are likely due to
+        # modelling errors, not true coastal change
+        ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-200, 200)
 
         #####################
         # Generate hotspots #
