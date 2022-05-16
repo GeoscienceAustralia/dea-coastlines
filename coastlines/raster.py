@@ -18,23 +18,26 @@
 #       at approximately mean sea level tide height each year (0 metres
 #       Above Mean Sea Level).
 
-import multiprocessing
 import os
 import sys
+import gc
 import warnings
-from collections import Counter
+import multiprocessing
 from functools import partial
+from collections import Counter
 
+import otps
+import pytz
+import dask
 import click
 import datacube
-import geopandas as gpd
-import numpy as np
 import odc.algo
-import otps
+import numpy as np
 import pandas as pd
-import pytz
 import xarray as xr
+import geopandas as gpd
 from affine import Affine
+from shapely.geometry import shape
 from datacube.utils.aws import configure_s3_access
 from datacube.utils.cog import write_cog
 from datacube.utils.geometry import CRS, GeoBox, Geometry
@@ -42,12 +45,15 @@ from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file
 from dea_tools.dask import create_local_dask_cluster
 from dea_tools.spatial import interpolate_2d
-from shapely.geometry import shape
 
 from coastlines.utils import configure_logging, load_config
 
 # Hide warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
+
+# Suppress garbage collection warnings
+g0, g1, g2 = gc.get_threshold()
+gc.set_threshold(g0 * 3, g1 * 3, g2 * 3)
 
 
 def hillshade(dem, elevation, azimuth, vert_exag=1, dx=30, dy=30):
@@ -144,6 +150,7 @@ def sun_angles(dc, query):
     return sun_angles_ds
 
 
+@dask.delayed
 def terrain_shadow(ds, dem, threshold=0.5, radius=1):
     """
     Calculates a custom terrain shadow mask that can be used
@@ -186,7 +193,7 @@ def terrain_shadow(ds, dem, threshold=0.5, radius=1):
     return xr.DataArray(hs, dims=["y", "x"])
 
 
-def mask_terrain_shadow(dc, query, ds):
+def terrain_shadow_masking(dc, query, ds):
     """
     Calculate and apply a terrain shadow mask to set all
     satellite pixels to `NaN` if they are affected by terrain
@@ -227,24 +234,33 @@ def mask_terrain_shadow(dc, query, ds):
     dem_ds = dem_ds.where(dem_ds.elevation >= 0)
 
     # Identify terrain shadow across all timesteps
-    terrain_shadow_ds = multiprocess_apply(
-        sun_angles_ds,
-        dim="time",
-        func=partial(terrain_shadow, dem=dem_ds.elevation.values),
-    )
+    def _terrain_shadow_dask(x):
+        return xr.DataArray(
+            dask.array.from_delayed(
+                terrain_shadow(x, dem=dem_ds.elevation.values),
+                dem_ds.geobox.shape,
+                bool,
+            ),
+            dims=["y", "x"],
+        )
+
+    terrain_shadow_ds = sun_angles_ds.groupby("time").apply(_terrain_shadow_dask)
 
     # Remove terrain shadow pixels from satellite data
+    #     return terrain_shadow_ds
     return ds.where(~terrain_shadow_ds)
 
 
-def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
+def load_water_index(
+    dc, query, yaml_path, product_name="ls_nbart_mndwi", mask_terrain_shadow=True
+):
     """
     This function uses virtual products to load Landsat 5, 7 and 8 data,
     calculate a custom remote sensing index, and return the data as a
     single xarray.Dataset.
 
     To minimise resampling effects and maintain the highest data
-    fidelity required for subpixel coastline extraction, this workflow
+    fidelity required for subpixel shoreline extraction, this workflow
     applies masking and index calculation at native resolution, and
     only re-projects to the most common CRS for the query using cubic
     resampling in the final step.
@@ -260,6 +276,11 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
         Path to YAML file containing virtual product recipe.
     product_name : string, optional
         Name of the virtual product to load from the YAML recipe.
+    mask_terrain_shadow : bool, optional
+        Whether to use hillshading to mask out pixels potentially
+        affected by terrain shadow. This can significantly improve
+        shoreline mapping in areas of coastal cliffs or steep coastal
+        topography. Defaults to True.
 
     Returns:
     --------
@@ -305,8 +326,8 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
             output_crs=crs,
             resolution=(-30, 30),
             align=(15, 15),
-            resampling={"pixel_quality": "nearest", "*": "cubic"},
             skip_broken_datasets=True,  # To remove on prod
+            resampling={"pixel_quality": "nearest", "*": "cubic"},
         )
         box = product.group(bag, **settings, **query)
         ds = product.fetch(box, **settings, **query)
@@ -341,7 +362,8 @@ def load_water_index(dc, query, yaml_path, product_name="ls_nbart_mndwi"):
 
     # Apply terrain mask to remove deep shadows that can be
     # be mistaken for water
-    ds = mask_terrain_shadow(dc, query, ds)
+    if mask_terrain_shadow:
+        ds = terrain_shadow_masking(dc, query, ds)
 
     return ds[["mndwi", "ndwi"]]
 
@@ -477,6 +499,7 @@ def model_tide_points(ds, points_gdf, extent_buffer=0.05):
     return tidepoints_gdf
 
 
+@dask.delayed
 def interpolate_tide(timestep, tidepoints_gdf, method="rbf", factor=50):
     """
     Extract a subset of tide modelling point data for a given time-step,
@@ -536,6 +559,45 @@ def interpolate_tide(timestep, tidepoints_gdf, method="rbf", factor=50):
 
     # Return data as a Float32 to conserve memory
     return out_tide.astype("float32")
+
+
+def interpolate_tides(ds, tidepoints_gdf):
+    """
+    Interpolates tide heights into the spatial extent of each
+    timestep of a satellite dataset, and return data as a lazily
+    evaluated `xr.DataArray`.
+
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        An `xarray.Dataset` containing a time series of water index
+        data (e.g. MNDWI) for the provided datacube query.
+    tidepoints_gdf : geopandas.GeoDataFrame
+        An `geopandas.GeoDataFrame` containing modelled tide heights
+        with an index based on each timestep in `ds`.
+
+    Returns:
+    --------
+    tide_m : xarray.DataArray
+        A Dask-aware `xarray.DataArray` matching the dimensions of `ds`,
+        containing a spatially interpolated tide height for each pixel.
+    """
+
+    # Function to lazily apply tidal interpolation to each timestep
+    def _interpolate_tide_dask(x):
+        return xr.DataArray(
+            dask.array.from_delayed(
+                interpolate_tide(x, tidepoints_gdf=tidepoints_gdf),
+                ds.geobox.shape,
+                np.float32,
+            ),
+            dims=["y", "x"],
+        )
+
+    # Apply func to each timestep
+    tide_m = ds.groupby("time").apply(_interpolate_tide_dask)
+
+    return tide_m
 
 
 def multiprocess_apply(ds, dim, func):
@@ -832,10 +894,10 @@ def generate_rasters(
     # This allows each satellite pixel to be analysed and filtered
     # based on the tide height at the exact moment of each satellite
     # image acquisition.
-    ds["tide_m"] = multiprocess_apply(
-        ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
-    )
-    log.info("Finished spatially interpolating tide heights")
+    ds["tide_m"] = interpolate_tides(ds, tidepoints_gdf)
+
+    # Persist tide heights on cluster so they are only evaluated once
+    ds["tide_m"] = client.persist(ds["tide_m"])
 
     # Based on the entire time-series of tide heights, compute the max
     # and min satellite-observed tide height for each pixel, then
@@ -846,7 +908,9 @@ def generate_rasters(
     ) * 0.25
     tide_cutoff_min = 0.0 - tide_cutoff_buff
     tide_cutoff_max = 0.0 + tide_cutoff_buff
-    log.info("Calculated tide cutoffs")
+    log.info(
+        "Finished spatially interpolating tide heights and calculating tide cutoffs"
+    )
 
     ##############################
     # Generate yearly composites #
