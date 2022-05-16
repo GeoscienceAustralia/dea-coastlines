@@ -600,6 +600,97 @@ def interpolate_tides(ds, tidepoints_gdf):
     return tide_m
 
 
+def tide_cutoffs(ds, tidepoints_gdf, tide_centre=0.0, method="rbf", factor=50):
+    """
+    Based on the entire time-series of tide heights, compute the max
+    and min satellite-observed tide height for each pixel, then
+    calculate tide cutoffs used to restrict our data to satellite
+    observations centred over mid-tide (0 m Above Mean Sea Level).
+
+    These tide cutoffs for each tide modelling point are then
+    spatially interpolated into the extent of the input satellite
+    imagery so they can be used to mask out low and high tide
+    satellite pixels.
+
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        An `xarray.Dataset` containing a time series of water index
+        data (e.g. MNDWI) for the provided datacube query. This is
+        used to define the spatial extents into which tide height
+        cutoffs will be interpolated.
+    tidepoints_gdf : geopandas.GeoDataFrame
+        An `geopandas.GeoDataFrame` containing modelled tide heights.
+    tide_centre : float, optional
+        The central tide height used to compute the min and max
+        tide height cutoffs. Tide heights will be masked so all
+        satellite observations are approximiately centred over this
+        value. The default is 0.0 which represents 0 m Above Mean
+        Sea Level.
+    method : string, optional
+        The method used to interpolate between point values. This string
+        is either passed to `scipy.interpolate.griddata` (for 'linear',
+        'nearest' and 'cubic' methods), or used to specify Radial Basis
+        Function interpolation using `scipy.interpolate.Rbf` ('rbf').
+        Defaults to 'rbf'.
+    factor : int, optional
+        An optional integer that can be used to subsample the spatial
+        interpolation extent to obtain faster interpolation times, then
+        up-sample this array back to the original dimensions of the
+        data as a final step. For example, setting `factor=10` will
+        interpolate ata into a grid that has one tenth of the
+        resolution of `ds`. This approach will be significantly faster
+        than interpolating at full resolution, but will potentially
+        produce less accurate or reliable results.
+
+    Returns:
+    --------
+    tide_cutoff_min, tide_cutoff_max : xarray.DataArray
+        2D arrays containing tide height cutoff values interpolated
+        into the extent of `ds`.
+    """
+
+    # Group by unique points and calculate min and max tide
+    tidepoints_stats = tidepoints_gdf.groupby(
+        [tidepoints_gdf.geometry.x, tidepoints_gdf.geometry.y]
+    ).tide_m.agg(min_tide=np.min, max_tide=np.max)
+
+    # Use min and max time to calculate tide cutoffs
+    tidepoints_stats["tide_cutoff_buffer"] = (
+        tidepoints_stats.max_tide - tidepoints_stats.min_tide
+    ) * 0.25
+    tidepoints_stats["tide_cutoff_min"] = (
+        tide_centre - tidepoints_stats.tide_cutoff_buffer
+    )
+    tidepoints_stats["tide_cutoff_max"] = (
+        tide_centre + tidepoints_stats.tide_cutoff_buffer
+    )
+
+    # Get lists of x, y and z (tide height) data to interpolate
+    x_coords = tidepoints_stats.index.get_level_values(0)
+    y_coords = tidepoints_stats.index.get_level_values(1)
+
+    tide_cutoff_min = interpolate_2d(
+        ds=ds,
+        x_coords=x_coords,
+        y_coords=y_coords,
+        z_coords=tidepoints_stats.tide_cutoff_min,
+        method=method,
+        factor=factor,
+    )
+
+    tide_cutoff_max = interpolate_2d(
+        ds=ds,
+        x_coords=x_coords,
+        y_coords=y_coords,
+        z_coords=tidepoints_stats.tide_cutoff_max,
+        method=method,
+        factor=factor,
+    )
+
+    return tide_cutoff_min, tide_cutoff_max
+
+
 def multiprocess_apply(ds, dim, func):
     """
     Applies a custom function along the dimension of an xarray.Dataset,
@@ -884,7 +975,7 @@ def generate_rasters(
     # Test if there is data and skip rest of the analysis if not
     if tidepoints_gdf.geometry.unique().shape[0] <= 1:
         raise Exception(
-            "Gridcell {study_area} has 1 or less tidal points so cannot interpolate tide data"
+            f"Gridcell {study_area} has 1 or less tidal points so cannot interpolate tide data"
         )
     log.info("Modelled tide heights for each tide modelling point")
 
@@ -896,21 +987,11 @@ def generate_rasters(
     # image acquisition.
     ds["tide_m"] = interpolate_tides(ds, tidepoints_gdf)
 
-    # Persist tide heights on cluster so they are only evaluated once
-    ds["tide_m"] = client.persist(ds["tide_m"])
-
     # Based on the entire time-series of tide heights, compute the max
     # and min satellite-observed tide height for each pixel, then
     # calculate tide cutoffs used to restrict our data to satellite
     # observations centred over mid-tide (0 m Above Mean Sea Level).
-    tide_cutoff_buff = (
-        ds["tide_m"].max(dim="time") - ds["tide_m"].min(dim="time")
-    ) * 0.25
-    tide_cutoff_min = 0.0 - tide_cutoff_buff
-    tide_cutoff_max = 0.0 + tide_cutoff_buff
-    log.info(
-        "Finished spatially interpolating tide heights and calculating tide cutoffs"
-    )
+    tide_cutoff_min, tide_cutoff_max = tide_cutoffs(ds, tidepoints_gdf)
 
     ##############################
     # Generate yearly composites #
