@@ -20,7 +20,6 @@
 
 import os
 import sys
-import gc
 import warnings
 import multiprocessing
 from functools import partial
@@ -50,10 +49,6 @@ from coastlines.utils import configure_logging, load_config
 
 # Hide warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
-
-# Suppress garbage collection warnings
-g0, g1, g2 = gc.get_threshold()
-gc.set_threshold(g0 * 3, g1 * 3, g2 * 3)
 
 
 def hillshade(dem, elevation, azimuth, vert_exag=1, dx=30, dy=30):
@@ -150,7 +145,6 @@ def sun_angles(dc, query):
     return sun_angles_ds
 
 
-@dask.delayed
 def terrain_shadow(ds, dem, threshold=0.5, radius=1):
     """
     Calculates a custom terrain shadow mask that can be used
@@ -234,20 +228,13 @@ def terrain_shadow_masking(dc, query, ds):
     dem_ds = dem_ds.where(dem_ds.elevation >= 0)
 
     # Identify terrain shadow across all timesteps
-    def _terrain_shadow_dask(x):
-        return xr.DataArray(
-            dask.array.from_delayed(
-                terrain_shadow(x, dem=dem_ds.elevation.values),
-                dem_ds.geobox.shape,
-                bool,
-            ),
-            dims=["y", "x"],
-        )
-
-    terrain_shadow_ds = sun_angles_ds.groupby("time").apply(_terrain_shadow_dask)
+    terrain_shadow_ds = multiprocess_apply(
+        sun_angles_ds,
+        dim="time",
+        func=partial(terrain_shadow, dem=dem_ds.elevation.values),
+    )
 
     # Remove terrain shadow pixels from satellite data
-    #     return terrain_shadow_ds
     return ds.where(~terrain_shadow_ds)
 
 
@@ -499,7 +486,6 @@ def model_tide_points(ds, points_gdf, extent_buffer=0.05):
     return tidepoints_gdf
 
 
-@dask.delayed
 def interpolate_tide(timestep, tidepoints_gdf, method="rbf", factor=50):
     """
     Extract a subset of tide modelling point data for a given time-step,
@@ -559,45 +545,6 @@ def interpolate_tide(timestep, tidepoints_gdf, method="rbf", factor=50):
 
     # Return data as a Float32 to conserve memory
     return out_tide.astype("float32")
-
-
-def interpolate_tides(ds, tidepoints_gdf):
-    """
-    Interpolates tide heights into the spatial extent of each
-    timestep of a satellite dataset, and return data as a lazily
-    evaluated `xr.DataArray`.
-
-    Parameters:
-    -----------
-    ds : xarray.Dataset
-        An `xarray.Dataset` containing a time series of water index
-        data (e.g. MNDWI) for the provided datacube query.
-    tidepoints_gdf : geopandas.GeoDataFrame
-        An `geopandas.GeoDataFrame` containing modelled tide heights
-        with an index based on each timestep in `ds`.
-
-    Returns:
-    --------
-    tide_m : xarray.DataArray
-        A Dask-aware `xarray.DataArray` matching the dimensions of `ds`,
-        containing a spatially interpolated tide height for each pixel.
-    """
-
-    # Function to lazily apply tidal interpolation to each timestep
-    def _interpolate_tide_dask(x):
-        return xr.DataArray(
-            dask.array.from_delayed(
-                interpolate_tide(x, tidepoints_gdf=tidepoints_gdf),
-                ds.geobox.shape,
-                np.float32,
-            ),
-            dims=["y", "x"],
-        )
-
-    # Apply func to each timestep
-    tide_m = ds.groupby("time").apply(_interpolate_tide_dask)
-
-    return tide_m
 
 
 def tide_cutoffs(ds, tidepoints_gdf, tide_centre=0.0, method="rbf", factor=50):
@@ -985,8 +932,10 @@ def generate_rasters(
     # This allows each satellite pixel to be analysed and filtered
     # based on the tide height at the exact moment of each satellite
     # image acquisition.
-    ds["tide_m"] = interpolate_tides(ds, tidepoints_gdf)
-
+    ds["tide_m"] = multiprocess_apply(
+        ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
+    )
+    log.info("Finished spatially interpolating tide heights")
     # Based on the entire time-series of tide heights, compute the max
     # and min satellite-observed tide height for each pixel, then
     # calculate tide cutoffs used to restrict our data to satellite
