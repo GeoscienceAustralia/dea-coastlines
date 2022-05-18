@@ -391,7 +391,7 @@ def contours_preprocess(
     water_index,
     index_threshold,
     tide_points_gdf,
-    buffer_pixels=25,
+    buffer_pixels=33,
     mask_landcover=True,
     mask_ndwi=True,
     mask_temporal=True,
@@ -434,8 +434,8 @@ def contours_preprocess(
     buffer_pixels : int, optional
         The number of pixels by which to buffer the all time shoreline
         detected by this function to produce an overall coastal buffer.
-        The default is 50 pixels, which at 30 m Landsat resolution
-        produces a coastal buffer with a radius of approximately 1500 m.
+        The default is 33 pixels, which at 30 m Landsat resolution
+        produces a coastal buffer with a radius of approximately 1000 m.
     mask_landcover : bool, optional
         Whether to apply a mask derived from the ESA World Cover dataset
         to flag deep water pixels as water before computing the all-time
@@ -498,7 +498,7 @@ def contours_preprocess(
         )
         landcover_water = landcover.classification.isin([0, 80]).squeeze(dim="time")
         landcover_mask = ~odc.algo.mask_cleanup(
-            landcover_water, mask_filters=[("erosion", 25)]
+            landcover_water, mask_filters=[("erosion", buffer_pixels)]
         )
 
         # Set any pixels outside mask to 0 to represent water
@@ -1200,7 +1200,7 @@ def generate_vectors(
         water_index,
         index_threshold,
         tide_points_gdf,
-        buffer_pixels=25,
+        buffer_pixels=33,
     )
     # Extract annual shorelines
     contours_gdf = subpixel_contours(
