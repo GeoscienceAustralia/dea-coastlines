@@ -861,6 +861,7 @@ def generate_rasters(
     #####################################
     # Connect to datacube, Dask cluster #
     #####################################
+
     if log is None:
         log = configure_logging()
 
@@ -1015,16 +1016,41 @@ def generate_rasters(
     default=True,
     help="Whether to use sign AWS requests for S3 access",
 )
+@click.option(
+    "--overwrite/--no-overwrite",
+    type=bool,
+    default=True,
+    help="Whether to overwrite tiles with existing outputs, "
+    "or skip these tiles entirely.",
+)
 def generate_rasters_cli(
-    config_path, study_area, raster_version, start_year, end_year, aws_unsigned
+    config_path,
+    study_area,
+    raster_version,
+    start_year,
+    end_year,
+    aws_unsigned,
+    overwrite,
 ):
+    log = configure_logging(f"Coastlines raster generation for study area {study_area}")
+
+    # Test if study area has already been run by checking if final raster exists
+    output_exists = os.path.exists(
+        f"data/interim/raster/{raster_version}/{study_area}_{raster_version}/{int(end_year) - 1}_mndwi.tif"
+    )
+
+    # Skip if outputs exist but overwrite is False
+    if output_exists and not overwrite:
+        log.info(
+            f"Data exists for study area {study_area} but overwrite set to False; skipping."
+        )
+        sys.exit(1)
+
     # Connect to datacube
     dc = datacube.Datacube(app="Coastlines")
 
     # Load analysis params from config file
     config = load_config(config_path=config_path)
-
-    log = configure_logging(f"Coastlines Raster {study_area}")
 
     # Do an opinionated configuration of S3
     configure_s3_access(cloud_defaults=True, aws_unsigned=aws_unsigned)

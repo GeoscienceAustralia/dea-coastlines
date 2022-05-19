@@ -1153,9 +1153,7 @@ def generate_vectors(
     # if no vector version is provided, copy this from raster version
     if vector_version is None:
         vector_version = raster_version
-    output_dir = (
-        f"data/interim/vector/{vector_version}/" f"{study_area}_{vector_version}"
-    )
+    output_dir = f"data/interim/vector/{vector_version}/{study_area}_{vector_version}"
     os.makedirs(output_dir, exist_ok=True)
 
     ####################
@@ -1384,6 +1382,13 @@ def generate_vectors(
     "rates of change point statistics. This is typically "
     "the most recent annual shoreline in the dataset.",
 )
+@click.option(
+    "--overwrite/--no-overwrite",
+    type=bool,
+    default=True,
+    help="Whether to overwrite tiles with existing outputs, "
+    "or skip these tiles entirely.",
+)
 def generate_vectors_cli(
     config_path,
     study_area,
@@ -1392,11 +1397,25 @@ def generate_vectors_cli(
     water_index,
     index_threshold,
     baseline_year,
+    overwrite,
 ):
+
+    log = configure_logging(f"Coastlines vector generation for study area {study_area}")
+
+    # Test if study area has already been run by checking if shoreline data exists
+    output_exists = os.path.exists(
+        f"data/interim/vector/{vector_version}/{study_area}_{vector_version}/annualshorelines_{study_area}_{vector_version}_{water_index}_{index_threshold:.2f}.shp"
+    )
+
+    # Skip if outputs exist but overwrite is False
+    if output_exists and not overwrite:
+        log.info(
+            f"Data exists for study area {study_area} but overwrite set to False; skipping."
+        )
+        sys.exit(1)
 
     # Load analysis params from config file
     config = load_config(config_path=config_path)
-    log = configure_logging("Coastlines Vector")
 
     # Run the code to generate vectors
     try:
