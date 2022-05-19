@@ -1412,7 +1412,7 @@ def generate_vectors_cli(
         log.info(
             f"Data exists for study area {study_area} but overwrite set to False; skipping."
         )
-        sys.exit(1)
+        sys.exit(0)
 
     # Load analysis params from config file
     config = load_config(config_path=config_path)

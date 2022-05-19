@@ -1044,7 +1044,7 @@ def generate_rasters_cli(
         log.info(
             f"Data exists for study area {study_area} but overwrite set to False; skipping."
         )
-        sys.exit(1)
+        sys.exit(0)
 
     # Connect to datacube
     dc = datacube.Datacube(app="Coastlines")
