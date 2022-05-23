@@ -1243,6 +1243,19 @@ def generate_vectors(
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x, initial_year=2000), axis=1
         )
+
+        # Add certainty column to flag points with:
+        # - High angular variability: the nearest shorelines for each year do not
+        #   fall on an approximate line, making rates of change invalid
+        # - Insufficient observations: less than 15 valid annual shorelines, which
+        #   make the resulting rates of change more likely to be inaccurate
+        points_gdf["certainty"] = "good"
+        points_gdf.loc[
+            points_gdf.angle_std > 30, "certainty"
+        ] = "high angular variability"
+        points_gdf.loc[
+            points_gdf.valid_obs < 15, "certainty"
+        ] = "insufficient observations"
         log.info("Calculated all of time statistics")
 
         ################
@@ -1265,6 +1278,7 @@ def generate_vectors(
                     "valid_span": "int:2",
                     "max_year": "int:4",
                     "min_year": "int:4",
+                    "certainty": "str:25",
                 }
             )
             col_schema = schema_dict.items()
@@ -1300,6 +1314,9 @@ def generate_vectors(
     # Add maturity details
     contours_gdf["maturity"] = "final"
     contours_gdf.loc[contours_gdf.index == baseline_year, "maturity"] = "interim"
+
+    # Add tide datum details (this supports future addition of extra tide datums)
+    contours_gdf["tide_datum"] = "0 m AMSL (approx)"
 
     # Clip annual shorelines to study area extent
     contour_path = (
