@@ -3,7 +3,7 @@
 
 # This code conducts raster generation for DE Africa Coastlines:
 
-#     * Load stack of all available Landsat 5, 7 and 8 satellite imagery
+#     * Load stack of all available Landsat 5, 7, 8 and 9 satellite imagery
 #       for a location using ODC Virtual Products
 #     * Convert each satellite image into a remote sensing water index
 #       (MNDWI)
@@ -937,7 +937,7 @@ def generate_rasters(
         ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
     )
     log.info("Finished spatially interpolating tide heights")
-    
+
     # Based on the entire time-series of tide heights, compute the max
     # and min satellite-observed tide height for each pixel, then
     # calculate tide cutoffs used to restrict our data to satellite
