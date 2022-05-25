@@ -187,12 +187,12 @@ def terrain_shadow(ds, dem, threshold=0.5, radius=1):
     return xr.DataArray(hs, dims=["y", "x"])
 
 
-def terrain_shadow_masking(dc, query, ds):
+def terrain_shadow_masking(dc, query, ds, dem_product="dem_cop_30"):
     """
-    Calculate and apply a terrain shadow mask to set all
-    satellite pixels to `NaN` if they are affected by terrain
-    shadow. This helps to remove noisy shorelines along coastal
-    cliffs and steep coastal terrain.
+    Use a Digital Elevation Model to calculate and apply a terrain
+    shadow mask to set all satellite pixels to `NaN` if they are
+    affected by terrain shadow. This helps to remove noisy shorelines
+    along coastal cliffs and steep coastal terrain.
 
     Parameters:
     -----------
@@ -204,6 +204,11 @@ def terrain_shadow_masking(dc, query, ds):
     ds : xarray.Dataset
         An `xarray.Dataset` containing a time series of water index
         data (e.g. MNDWI) that will be terrain shadow masked.
+    dem_product : string, optional
+        A string giving the name of the DEM product to use for terrain
+        masking. This must match the name of a product in the datacube.
+        The DEM should contain a variable named 'elevation'.
+        Defaults to "dem_cop_30".
 
     Returns:
     --------
@@ -222,7 +227,7 @@ def terrain_shadow_masking(dc, query, ds):
     sun_angles_ds = sun_angles(dc, query_subset)
 
     # Load DEM into satellite data geobox
-    dem_ds = dc.load(product="dem_srtm", like=ds.geobox, resampling="cubic").squeeze(
+    dem_ds = dc.load(product=dem_product, like=ds.geobox, resampling="cubic").squeeze(
         "time", drop=True
     )
     dem_ds = dem_ds.where(dem_ds.elevation >= 0)
@@ -350,7 +355,7 @@ def load_water_index(
     # Apply terrain mask to remove deep shadows that can be
     # be mistaken for water
     if mask_terrain_shadow:
-        ds = terrain_shadow_masking(dc, query, ds)
+        ds = terrain_shadow_masking(dc, query, ds, dem_product="dem_cop_30")
 
     return ds[["mndwi", "ndwi"]]
 
