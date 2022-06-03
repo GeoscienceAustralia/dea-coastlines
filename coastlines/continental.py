@@ -11,100 +11,15 @@
 
 
 import os
+import sys
 
-import click
 import fiona
+import click
 import geopandas as gpd
-import pandas as pd
-from rtree import index
-from tqdm.auto import tqdm
-
 from pathlib import Path
 
 from coastlines.vector import points_on_line
 from coastlines.utils import configure_logging, STYLES_FILE
-
-
-def points_in_poly(points, polygons):
-    """
-    Builds an optimised spatial index using `rtree` to determine the IDs
-    of points that fall within each polygon ID.
-
-    Parameters:
-    -----------
-    points :
-        A `geopandas.GeoSeries` or iterable of `shapely` geometry points
-    polygons :
-        A `geopandas.GeoSeries` or iterable of `shapely` geometry polygons
-
-    Returns:
-    --------
-    A dictionary identifying what point IDs fall within each polygon ID.
-    the polygon.
-    """
-
-    # Create the R-tree index and store the features in it (bounding box)
-    idx = index.Index()
-    for pos, poly in enumerate(tqdm(polygons, desc="Building index")):
-        idx.insert(pos, poly.bounds)
-
-    # Iterate through points
-    out_dict = {}
-    for i, point in enumerate(tqdm(points, desc="Processing points")):
-        poly_ids = [
-            j for j in idx.intersection((point.coords[0])) if point.within(polygons[j])
-        ]
-        out_dict[i] = poly_ids
-
-    return out_dict
-
-
-def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100, statistic="median"):
-    """
-    Computes statistics based on all spatial points that intersect
-    with a specific polygon. This is used to calculate moving
-    window statistics after first creating a dictionary of polygons
-    and intersecting points using `points_in_poly`.
-
-    Parameters:
-    -----------
-    key :
-        The ID of a polygon that will be used to select all
-        intersecting points.
-    stats_gdf : geopandas.GeoDataFrame
-        A `geopandas.GeoDataFrame` containing multiple points which
-        will be selected based on whether they match the points linked
-        to the specific polygon in `poly_points_dict` requested by `key`.
-    poly_points_dict : dict
-        A dictionary identifying what point IDs fall within each polygon
-        ID. An individual polygon is selected using `key`.
-    min_n : int, optional
-        If less than `min_n` points are returned for a given polygon,
-        return None.
-    statistic : str, optional
-        The statistic used in the moving window calculation. Valid options
-        include "mean" and "median".
-
-    Returns:
-    --------
-    A `pandas.Series` containing statistics based on the points that
-    matched the polygon ID requested by `key`.
-    """
-
-    matching_points = stats_gdf.iloc[poly_points_dict[key]]
-
-    if len(matching_points.index) > min_n:
-
-        if statistic == "median":
-            return pd.Series(
-                [matching_points.rate_time.median(), len(matching_points.index)]
-            )
-        elif statistic == "mean":
-            return pd.Series(
-                [matching_points.rate_time.mean(), len(matching_points.index)]
-            )
-    else:
-        return pd.Series([None, None])
 
 
 @click.command()
@@ -155,18 +70,21 @@ def get_matching_data(key, stats_gdf, poly_points_dict, min_n=100, statistic="me
 )
 @click.option(
     "--hotspots_radius",
-    default=10000,
-    type=int,
-    help="The distance (in metres) used to generate a "
-    "coastal change hotspots summary layer. This controls "
-    "the spacing of each summary point, and the radius used "
-    "to aggregate rates of change statistics around each "
-    "point. The default uses a radius of 10000 m.",
+    default=[10000, 2000, 500],
+    multiple=True,
+    help="The distance (in metres) used to generate coastal "
+    "change hotspots summary layers. This controls the spacing "
+    "of each summary point, and the radius used to aggregate "
+    "rates of change statistics around each point. "
+    "The default generates three hotspot layers with radii "
+    "10000 m, 2000 m and 500 m. To specify multiple custom "
+    "radii, repeat this argument, e.g. "
+    "`--hotspots_radius 1000 --hotspots_radius 5000`.",
 )
 @click.option(
     "--baseline_year",
-    type=str,
-    default="2020",
+    type=int,
+    default=2020,
     help="The annual shoreline used to generate the hotspot "
     "summary points. This is typically the most recent "
     "annual shoreline in the dataset.",
@@ -191,7 +109,8 @@ def continental_cli(
     #################
     # Merge vectors #
     #################
-    log = configure_logging("Coastlines Continental")
+
+    log = configure_logging("Continental layers and hotspots generation")
 
     # If no continental version is provided, copy this from vector
     # version
@@ -213,45 +132,54 @@ def continental_cli(
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
+
         os.system(
             f"ogrmerge.py -o "
             f"{OUTPUT_FILE} {shoreline_paths} "
             f"-single -overwrite_ds -t_srs epsg:6933 "
-            f"-nln annual_shorelines"
+            f"-nln shorelines_annual"
         )
-        log.info("Writing annual shorelines complete")
+        log.info("Merging annual shorelines complete")
+
     else:
         log.info("Not writing shorelines")
 
     # Combine rates of change stats points into single continental layer
     if ratesofchange:
+
         os.system(
             f"ogrmerge.py "
             f"-o {OUTPUT_FILE} {ratesofchange_paths} "
             f"-single -update -t_srs epsg:6933 "
             f"-nln rates_of_change"
         )
-        log.info("Writing rates of change statistics complete")
+        log.info("Merging rates of change points complete")
+
     else:
-        log.info("Not writing shorelines")
+        log.info("Not writing annual rates of change points")
+
+    #####################
+    # Generate hotspots #
+    #####################
 
     # Generate hotspot points that provide regional/continental summary
     # of hotspots of coastal erosion and growth
     if hotspots:
+
         ###############################
         # Load DEA CoastLines vectors #
         ###############################
 
-        log.info("Generating hotspots...")
-
-        # If hotspots is True, set radius from `hotspots_radius`
-        hotspots = hotspots_radius
+        log.info("Generating continental hotspots")
 
         # Load continental shoreline and rates of change data
         try:
+
             ratesofchange_gdf = gpd.read_file(OUTPUT_FILE, layer="rates_of_change")
-            shorelines_gdf = gpd.read_file(OUTPUT_FILE, layer="annual_shorelines")
-        except fiona.errors.DriverError:
+            shorelines_gdf = gpd.read_file(OUTPUT_FILE, layer="shorelines_annual")
+
+        except (fiona.errors.DriverError, ValueError):
+
             raise FileNotFoundError(
                 "Continental-scale annual shoreline and rates of "
                 "change layers are required for hotspot generation. "
@@ -264,51 +192,77 @@ def continental_cli(
             "year"
         )
 
-        # Extract hotspot points
-        hotspots_gdf = points_on_line(
-            shorelines_gdf, index=baseline_year, distance=hotspots
-        )
-
-        # Drop points with low observations and high angle variance
-        # TODO: Add a "certainty" column to points with a flag identifying these
+        # Drop uncertain points from calculation
         ratesofchange_gdf = ratesofchange_gdf.loc[
-            (ratesofchange_gdf.valid_obs >= 15) & (ratesofchange_gdf.angle_std <= 30)
-        ]
-        ratesofchange_gdf = ratesofchange_gdf.reset_index(drop=True)
+            ratesofchange_gdf.certainty == "good"
+        ].reset_index(drop=True)
 
         # Clip rates to remove extreme distances, as these are likely due to
         # modelling errors, not true coastal change
-        ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-200, 200)
+        ratesofchange_gdf["rate_time"] = ratesofchange_gdf.rate_time.clip(-250, 250)
 
-        #####################
-        # Generate hotspots #
-        #####################
+        ######################
+        # Calculate hotspots #
+        ######################
 
-        # Generate dictionary of polygon IDs and corresponding points
-        poly_points_dict = points_in_poly(
-            points=hotspots_gdf.geometry,
-            polygons=ratesofchange_gdf.buffer(hotspots * 2),
-        )
+        for i, radius in enumerate(hotspots_radius):
 
-        # Compute mean and number of obs for each polygon
-        hotspots_gdf[["rate_time", "n"]] = hotspots_gdf.apply(
-            lambda row: get_matching_data(
-                row.name, ratesofchange_gdf, poly_points_dict, min_n=hotspots / 30
-            ),
-            axis=1,
-        )
+            # Extract hotspot points
+            log.info(f"Calculating hotspots at {radius} m")
+            hotspots_gdf = points_on_line(
+                shorelines_gdf, index=str(baseline_year), distance=radius
+            )
 
-        # Export hotspots to file
-        hotspots_gdf.to_file(OUTPUT_FILE, layer="hotspots")
+            # Create polygon windows
+            buffered_gdf = hotspots_gdf[["geometry"]].copy()
+            buffered_gdf["geometry"] = buffered_gdf.buffer(radius)
+
+            # Spatial join rate of change points to each polygon, then
+            # aggregate/summarise values within each polygon
+            hotspot_values = (
+                ratesofchange_gdf.sjoin(buffered_gdf, predicate="within")
+                .groupby("index_right")["rate_time"]
+                .agg([("rate_time", "median"), ("n", "count")])
+            )
+
+            # Join aggregated values back to hotspot points
+            hotspots_gdf = hotspots_gdf.join(hotspot_values)
+
+            # Add hotspots radius attribute column
+            hotspots_gdf["radius_m"] = radius
+
+            # Drop any points with insufficient observations.
+            # We can obtain a sensible threshold by dividing the hotspots
+            # radius by 30 m along-shore rates of change point distance)
+            hotspots_gdf = hotspots_gdf.loc[hotspots_gdf.n > (radius / 30)]
+
+            # Export hotspots to file, incrementing name for each layer
+            layer_name = f"hotspots_zoom_{range(0, 10)[i + 1]}"
+
+            try:
+                hotspots_gdf.to_file(OUTPUT_FILE, layer=layer_name)
+            except ValueError as e:
+                log.exception(f"Failed to generate hotspots with error: {e}")
+                sys.exit(1)
+
         log.info("Writing hotspots complete")
+
     else:
+
         log.info("Not writing hotspots...")
 
+    #########################
+    # Add GeoPackage styles #
+    #########################
+
     if include_styles:
-        log.info("Writing styles in the geopackage file")
+
+        log.info("Writing styles in the GeoPackage file")
         styles = gpd.read_file(STYLES_FILE)
         styles.to_file(OUTPUT_FILE, layer="layer_styles")
+
     else:
+
         log.info("Not writing styles")
 
 
