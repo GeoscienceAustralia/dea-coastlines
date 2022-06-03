@@ -9,4 +9,4 @@ def test_styles_file():
 
     styles = gpd.read_file(STYLES_FILE)
 
-    assert styles.shape[0] == 3
+    assert styles.shape[0] == 5
