@@ -70,14 +70,14 @@ from coastlines.utils import configure_logging, STYLES_FILE
 )
 @click.option(
     "--hotspots_radius",
-    default=[10000, 2000, 500],
+    default=[15000, 4000, 1000],
     multiple=True,
     help="The distance (in metres) used to generate coastal "
     "change hotspots summary layers. This controls the spacing "
     "of each summary point, and the radius used to aggregate "
     "rates of change statistics around each point. "
     "The default generates three hotspot layers with radii "
-    "10000 m, 2000 m and 500 m. To specify multiple custom "
+    "15000 m, 4000 m and 1000 m. To specify multiple custom "
     "radii, repeat this argument, e.g. "
     "`--hotspots_radius 1000 --hotspots_radius 5000`.",
 )
