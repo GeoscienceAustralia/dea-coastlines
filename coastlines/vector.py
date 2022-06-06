@@ -1265,17 +1265,23 @@ def generate_vectors(
         )
 
         # Add certainty column to flag points with:
+        # - Extreme rate of change value (> 200 m per year change) that is more
+        #   likely to reflect modelling issues than real-world coastal change
         # - High angular variability: the nearest shorelines for each year do not
         #   fall on an approximate line, making rates of change invalid
         # - Insufficient observations: less than 15 valid annual shorelines, which
         #   make the resulting rates of change more likely to be inaccurate
         points_gdf["certainty"] = "good"
         points_gdf.loc[
+            points_gdf.rate_time.abs() > 200, "certainty"
+        ] = "extreme value (> 200 m)"
+        points_gdf.loc[
             points_gdf.angle_std > 30, "certainty"
         ] = "high angular variability"
         points_gdf.loc[
             points_gdf.valid_obs < 15, "certainty"
         ] = "insufficient observations"
+
         log.info(f"Study area {study_area}: Calculated all of time statistics")
 
         ################
