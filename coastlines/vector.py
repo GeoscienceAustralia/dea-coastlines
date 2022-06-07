@@ -1209,10 +1209,13 @@ def rocky_shoreline_flag(
         geomorphology_gdf[["rocky", "geometry"]],
         how="left",
         max_distance=300,
-    )["rocky"]
+    )
 
-    # Return boolean indicating whether point was rocky
-    return joined == True
+    # Return boolean indicating whether point was rocky; take max of
+    # each unique index value (i.e. True if there are both True and False)
+    # to account for edge case where nearest geomorphology is the corner
+    # of two vector features
+    return (joined["rocky"] == True).groupby(joined.index).max()
 
 
 def region_atttributes(gdf, region_gdf, attribute_col="TERRITORY1", rename_col=False):
@@ -1260,8 +1263,19 @@ def region_atttributes(gdf, region_gdf, attribute_col="TERRITORY1", rename_col=F
             dict(zip(attribute_col, rename_col)), axis=1
         )
 
-    # Spatial join region data to points and select only required fields
-    joined_df = gdf.sjoin(region_subset, how="left").drop("index_right", axis=1)
+    # Spatial join region data to points
+    if gdf.iloc[0].geometry.type == "Point":
+        joined_df = gdf.sjoin(region_subset, how="left").drop("index_right", axis=1)
+
+    # Or if data is not points, use overlay (overlay removes index on
+    # gdf1, so we need to reset to keep it as a columnm, then reapply)
+    else:
+        joined_df = gpd.overlay(
+            gdf.reset_index(),
+            region_subset,
+            how="union",
+            keep_geom_type=True,
+        ).set_index(gdf.index.name)
 
     return joined_df
 
@@ -1398,7 +1412,7 @@ def generate_vectors(
             yearly_ds,
             str(baseline_year),
             water_index,
-            max_valid_dist=3000,
+            max_valid_dist=5000,
         )
         log.info(
             f"Study area {study_area}: Calculated distances to each annual shoreline"
