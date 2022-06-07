@@ -4,17 +4,16 @@
 
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.rse.2021.112734-0e7fbf.svg)](https://doi.org/10.1016/j.rse.2021.112734)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://github.com/digitalearthafrica/deafrica-coastlines/actions/workflows/built-test-docker.yaml/badge.svg?)]([https://opensource.org/licenses/Apache-2.0](https://github.com/digitalearthafrica/deafrica-coastlines/actions/workflows/built-test-docker.yaml))
 
 **License:** The code in this repository is licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Digital Earth Africa data is licensed under the [Creative Commons by Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/).
 
-**Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastLines/issues/new). For questions or more information about this workflow, email Robbi.BishopTaylor@ga.gov.au.
+**Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/digitalearthafrica/deafrica-coastlines/issues). For questions or more information about this workflow, email Robbi.BishopTaylor@ga.gov.au.
 
 **To cite:** 
 > Bishop-Taylor, R., Nanson, R., Sagar, S., Lymburner, L. (2021). Mapping Australia's dynamic coastline at mean sea level using three decades of Landsat imagery. _Remote Sensing of Environment_, 267, 112734. Available: https://doi.org/10.1016/j.rse.2021.112734
 
 > Bishop-Taylor, R., Sagar, S., Lymburner, L., Alam, I., Sixsmith, J. (2019). Sub-pixel waterline extraction: characterising accuracy and sensitivity to indices and spectra. _Remote Sensing_, 11 (24):2984. Available: https://doi.org/10.3390/rs11242984
-
-> Nanson, R., Bishop-Taylor, R., Sagar, S., Lymburner, L., (2022). Geomorphic insights into Australia's coastal change using a national dataset derived from the multi-decadal Landsat archive. _Estuarine, Coastal and Shelf Science_, 265, p.107712. Available: https://doi.org/10.1016/j.ecss.2021.107712
 
 ---
 
@@ -42,9 +41,9 @@ The code in this repository is built on the Digital Earth Africa implementation 
 The code currently runs on the [Digital Earth Africa Sandbox](https://sandbox.digitalearth.africa/) infrastructure.
 
 #### Getting started
-Clone the `deafrica` branch of the `dea-coastlines` reposity:
+Clone the `deafrica-coastlines` repository:
 ```
-git clone -b deafrica https://github.com/GeoscienceAustralia/dea-coastlines.git
+git clone https://github.com/digitalearthafrica/deafrica-coastlines.git
 ```
 
 #### Python modules
@@ -69,13 +68,14 @@ Code in this repository is included in the `coastlines` Python package which con
 3. [`coastlines.continental`](coastlines/continental.py): This module combines tiled layers into seamless continental-scale vector files:
 
     * Combines multiple output shoreline and rates of change statistics point vectors into single continental datasets
-    * Aggregates this data to produce a moving window coastal change hotspot dataset that summarises coastal change at regional and continental scale.
+    * Aggregates this data to produce moving window coastal change hotspot datasets that summarise coastal change at regional and continental scale.
     
     
 #### Jupyter notebooks
-An interactive walk-through of each step of the tiled raster and vector DEA Coastlines workflow is provided in the following Jupyter Notebooks. These notebooks can be used to assist in prototyping or troubleshooting:
+An interactive walk-through of each step of the tiled raster and vector DEA Coastlines workflow and the continental layer generation is provided in the following Jupyter Notebooks. These notebooks can be run on the DE Africa Sandbox to assist in prototyping or troubleshooting:
 * [DE Africa Coastlines raster generation](notebooks/DEAfricaCoastlines_generation_raster.ipynb)
 * [DE Africa Coastlines vector generation](notebooks/DEAfricaCoastlines_generation_vector.ipynb)
+* [DE Africa Coastlines continental hotspots](notebooks/DEAfricaCoastlines_generation_continental.ipynb)
 
 ### Running a DE Africa Coastlines analysis using the command-line interface (CLI)
 
@@ -98,11 +98,9 @@ data/interim/raster/{unique_analysis_name}/{unique_analysis_name}_{study_area_na
 data/interim/vector/{unique_analysis_name}/{unique_analysis_name}_{study_area_name}
 ```
 
-Once all study area grid cells have been processed, these are combined into continental-scale output vector files using [`coastlines.continental`](coastlines/continental.py). These final outputs are exported to:
+Once all study area grid cells have been processed, these are combined into a continental-scale output GeoPackage vector file using [`coastlines.continental`](coastlines/continental.py). This final output is exported to:
 ```
-data/processed/{unique_analysis_name}/DEAfricaCoastlines_annualshorelines_{unique_analysis_name}.shp
-data/processed/{unique_analysis_name}/DEAfricaCoastlines_ratesofchange_{unique_analysis_name}.shp
-data/processed/{unique_analysis_name}/DEAfricaCoastlines_hotspots_{unique_analysis_name}_{hotspot_radius}.shp
+data/processed/{unique_analysis_name}/coastlines_{continental_version}.gpkg
 ```
 
 ---
