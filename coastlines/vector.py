@@ -25,7 +25,7 @@ import odc.algo
 import pandas as pd
 import xarray as xr
 from affine import Affine
-from dea_tools.spatial import subpixel_contours, xr_vectorize
+from dea_tools.spatial import subpixel_contours, xr_vectorize, xr_rasterize
 from rasterio.features import sieve
 from rasterio.transform import array_bounds
 from scipy.stats import circstd, circmean, linregress
@@ -405,6 +405,7 @@ def contours_preprocess(
     mask_landcover=True,
     mask_ndwi=True,
     mask_temporal=True,
+    mask_modifications=None,
 ):
     """
     Prepares and preprocesses DE Africa Coastlines raster data to
@@ -467,6 +468,17 @@ def contours_preprocess(
         neighbouring timesteps. True land, however, is likely to appear
         in proximity to land before or after the specific timestep.
         Defaults to True.
+    mask_modifications : geopandas.GeoDataFrame, optional
+        An optional polygon dataset including features to remove or add
+        to the all-time coastal mask. This should include a column/field
+        named 'type' that contains two possible values:
+            - 'add': features to add to the coastal mask (e.g. for
+                     including areas of missing shorelines that were
+                     previously removed by the coastal mask)
+            - 'remove': features to remove from the coastal mask (e.g.
+                        areas of non-coastal rivers or estuaries,
+                        irrigated fields or aquaculture that you wish
+                        to exclude from the analysis)
 
     Returns:
     --------
@@ -556,6 +568,25 @@ def contours_preprocess(
     coastal_mask = coastal_masking(
         ds=all_time, tide_points_gdf=tide_points_gdf, buffer=buffer_pixels, closing=15
     )
+
+    # Optionally modify the coastal mask using manually supplied polygons to
+    # add missing areas of shoreline, or remove unwanted areas from the mask.
+    if mask_modifications is not None:
+
+        # Only proceed if there are polygons available
+        if len(mask_modifications.index) > 0:
+
+            # Convert type column to integer, with 1 representing pixels to add
+            # to the coastal mask, and 2 representing pixels to remove from the mask
+            mask_modifications = mask_modifications.replace({"add": 1, "remove": 2})
+
+            # Rasterise polygons into extent of satellite data
+            modifications_da = xr_rasterize(
+                mask_modifications, da=yearly_ds, attribute_col="type"
+            )
+
+            # Apply modifications to mask
+            coastal_mask = coastal_mask.where(modifications_da == 0, modifications_da)
 
     # Because the output of `coastal_masking` contains values of 2 that
     # represent pixels inland of the coastal buffer and values of 1 in
@@ -1131,6 +1162,110 @@ def contour_certainty(contours_gdf, certainty_masks):
     return contours_gdf
 
 
+def rocky_shoreline_flag(
+    points_gdf,
+    geomorphology_gdf,
+    rocky_query="(Preds == 'Bedrock') and (Probs > 0.75)",
+    max_distance=300,
+):
+    """
+    Identifies rate of change points that are potentially being part
+    of a rocky shoreline using geomorphology classification data.
+    The input geomorphology data should contain attributes that can
+    be queried to identify rocky shorelines.
+
+    This can be important as deep shadows in areas of rocky shorelines
+    can produce misleading impressions of coastal change (particularly
+    in non-terrain corrected satellite data).
+
+    Parameters:
+    -----------
+    points_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing rates of change points.
+    geomorphology_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing geomorphology classification
+        data that can be analysed to identify rocky shorelines.
+    rocky_query : str, optional
+        A string that can be passed as an input to the Pandas `.eval`
+        method to filter features from `geomorphology_gdf` to identify
+        rocky shorelines.
+    max_distance : int, optional
+        The maximum distance to join geomorphology features to each
+        rate of change point. Defaults to 300 metres.
+
+    Returns:
+    --------
+    pandas.Series
+        A column with True if a point is likely to be a rocky shoreline;
+        otherwise False.
+    """
+
+    # Classify geomorphology data to rocky shores or not using query
+    geomorphology_gdf["rocky"] = geomorphology_gdf.eval(rocky_query)
+
+    # Join classified geomorphology data to points if within max dist
+    joined = gpd.sjoin_nearest(
+        points_gdf,
+        geomorphology_gdf[["rocky", "geometry"]],
+        how="left",
+        max_distance=300,
+    )["rocky"]
+
+    # Return boolean indicating whether point was rocky
+    return joined == True
+
+
+def region_atttributes(gdf, region_gdf, attribute_col="TERRITORY1", rename_col=False):
+    """
+    Produces an attribute column for each rates of change point or
+    annual shoreline in the dataset by spatially joining regions from an
+    external vector file. This can be used, for example, to assign
+    a "country" or "region" column to each spatial point or coastline.
+
+    Parameters:
+    -----------
+    gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing rates of change points or
+        annual shoreline vectors.
+    region_gdf : geopandas.GeoDataFrame
+        A `geopandas.GeoDataFrame` containing region data that will be
+        spatially joined to feature in `gdf`.
+    attribute_col : str or list, optional
+        A string (or list of strings) providing the names of the
+        attribute columns from `region_gdf` you wish to obtain.
+    rename_col : str or list, optional
+        An option string (or list of strings) giving new names for
+        each attribute columns specified in `attribute_col`. If passing
+        a list, ensure this is the same length as `attribute_col`.
+
+    Returns:
+    --------
+    geopandas.GeoDataFrame
+        The `geopandas.GeoDataFrame` provided to `gdf` with one or multiple
+        additional attribute columns added from `region_gdf`.
+    """
+
+    # Wrap values in list if provided as strings
+    if not isinstance(attribute_col, (list, tuple)):
+        attribute_col = [attribute_col]
+        rename_col = [rename_col]
+
+    # Select subset of attribute columns to join (need to include
+    # geometry as well to enable spatial join)
+    region_subset = region_gdf[[*attribute_col, "geometry"]]
+
+    # Rename columns if requested
+    if rename_col:
+        region_subset = region_subset.rename(
+            dict(zip(attribute_col, rename_col)), axis=1
+        )
+
+    # Spatial join region data to points and select only required fields
+    joined_df = gdf.sjoin(region_subset, how="left").drop("index_right", axis=1)
+
+    return joined_df
+
+
 def generate_vectors(
     config,
     study_area,
@@ -1187,18 +1322,33 @@ def generate_vectors(
 
     # Tide points
     tide_points_gdf = gpd.read_file(
-        config["Input files"]["coastal_points_path"], bbox=bbox
+        config["Input files"]["points_path"], bbox=bbox
     ).to_crs(yearly_ds.crs)
     log.info(f"Study area {study_area}: Loaded tide modelling points")
 
     # Study area polygon
     gridcell_gdf = (
-        gpd.read_file(config["Input files"]["coastal_grid_path"], bbox=bbox)
+        gpd.read_file(config["Input files"]["grid_path"], bbox=bbox)
         .set_index("id")
         .to_crs(str(yearly_ds.crs))
     )
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
+
+    # Coastal mask modifications
+    modifications_gdf = gpd.read_file(
+        config["Input files"]["modifications_path"], bbox=bbox
+    ).to_crs(str(yearly_ds.crs))
+
+    # Geomorphology dataset
+    geomorphology_gdf = gpd.read_file(
+        config["Input files"]["geomorphology_path"], bbox=bbox
+    ).to_crs(str(yearly_ds.crs))
+
+    # Region attribute dataset
+    region_gdf = gpd.read_file(
+        config["Input files"]["region_attributes_path"], bbox=bbox
+    ).to_crs(str(yearly_ds.crs))
 
     ##############################
     # Extract shoreline contours #
@@ -1212,6 +1362,7 @@ def generate_vectors(
         index_threshold,
         tide_points_gdf,
         buffer_pixels=33,
+        mask_modifications=modifications_gdf,
     )
     # Extract annual shorelines
     contours_gdf = subpixel_contours(
@@ -1263,15 +1414,21 @@ def generate_vectors(
         points_gdf[stats_list] = points_gdf.apply(
             lambda x: all_time_stats(x, initial_year=start_year), axis=1
         )
+        log.info(f"Study area {study_area}: Calculated all of time statistics")
 
         # Add certainty column to flag points with:
-        # - Extreme rate of change value (> 200 m per year change) that is more
+        # - Likely rocky shorelines: Rates of change can be unreliable in areas
+        #   with steep rocky/bedrock shorelines due to terrain shadow.
+        # - Extreme rate of change value (> 200 m per year change): these are more
         #   likely to reflect modelling issues than real-world coastal change
         # - High angular variability: the nearest shorelines for each year do not
         #   fall on an approximate line, making rates of change invalid
         # - Insufficient observations: less than 15 valid annual shorelines, which
         #   make the resulting rates of change more likely to be inaccurate
         points_gdf["certainty"] = "good"
+        points_gdf.loc[
+            rocky_shoreline_flag(points_gdf, geomorphology_gdf), "certainty"
+        ] = "likely rocky shoreline"
         points_gdf.loc[
             points_gdf.rate_time.abs() > 200, "certainty"
         ] = "extreme value (> 200 m)"
@@ -1282,11 +1439,16 @@ def generate_vectors(
             points_gdf.valid_obs < 15, "certainty"
         ] = "insufficient observations"
 
-        log.info(f"Study area {study_area}: Calculated all of time statistics")
+        log.info(f"Study area {study_area}: Calculated rate of change certainty flags")
 
         ################
         # Export stats #
         ################
+
+        # Add region attributes
+        points_gdf = region_atttributes(
+            points_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
+        )
 
         if points_gdf is not None and len(points_gdf) > 0:
 
@@ -1305,6 +1467,7 @@ def generate_vectors(
                     "max_year": "int:4",
                     "min_year": "int:4",
                     "certainty": "str:25",
+                    "country": "str:32",
                 }
             )
             col_schema = schema_dict.items()
@@ -1340,6 +1503,11 @@ def generate_vectors(
     # Add tide datum details (this supports future addition of extra tide datums)
     contours_gdf["tide_datum"] = "0 m AMSL (approx)"
 
+    # Add region attributes
+    contours_gdf = region_atttributes(
+        contours_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
+    )
+
     # Clip annual shorelines to study area extent
     contour_path = (
         f"{output_dir}/annualshorelines_"
@@ -1353,9 +1521,7 @@ def generate_vectors(
 
     # Export rates of change and annual shorelines as ESRI shapefiles
     contours_gdf.reset_index().to_file(f"{contour_path}.shp")
-    log.info(
-        f"Study area {study_area}: Output rates of change points and annual shorelines written to {output_dir}"
-    )
+    log.info(f"Study area {study_area}: Output vector files written to {output_dir}")
 
 
 @click.command()

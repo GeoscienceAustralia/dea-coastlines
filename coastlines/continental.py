@@ -71,14 +71,14 @@ from coastlines.utils import configure_logging, STYLES_FILE
 )
 @click.option(
     "--hotspots_radius",
-    default=[20000, 5000, 500],
+    default=[20000, 10000, 2000],
     multiple=True,
     help="The distance (in metres) used to generate coastal "
     "change hotspots summary layers. This controls the spacing "
     "of each summary point, and the radius used to aggregate "
     "rates of change statistics around each point. "
     "The default generates three hotspot layers with radii "
-    "20000 m, 5000 m and 500 m. To specify multiple custom "
+    "20000 m, 10000 m and 2000 m. To specify multiple custom "
     "radii, repeat this argument, e.g. "
     "`--hotspots_radius 1000 --hotspots_radius 5000`.",
 )
@@ -207,7 +207,7 @@ def continental_cli(
             # Extract hotspot points
             log.info(f"Calculating {radius} m hotspots")
             hotspots_gdf = points_on_line(
-                shorelines_gdf, index=str(baseline_year), distance=radius
+                shorelines_gdf, index=str(baseline_year), distance=int(radius / 2)
             )
 
             # Create polygon windows by buffering points
