@@ -1596,7 +1596,7 @@ def generate_vectors(
     type=int,
     default=2020,
     help="The annual shoreline used as a baseline from "
-    "white to generate the rates of change point statistics. "
+    "which to generate the rates of change point statistics. "
     "This is typically the most recent annual shoreline in "
     "the dataset (i.e. the same as `--end_year`).",
 )
