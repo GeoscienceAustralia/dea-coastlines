@@ -22,6 +22,7 @@ REQUIRED = [
     "numpy",
     "odc_ui",
     "pandas",
+    "pygeos",
     "pyproj",
     "pyTMD",
     "pytz",
