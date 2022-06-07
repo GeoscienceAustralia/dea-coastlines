@@ -41,10 +41,15 @@ The code in this repository is built on the Digital Earth Africa implementation 
 The code currently runs on the [Digital Earth Africa Sandbox](https://sandbox.digitalearth.africa/) infrastructure.
 
 #### Getting started
+
 Clone the `deafrica-coastlines` repository:
 ```
 git clone https://github.com/digitalearthafrica/deafrica-coastlines.git
 ```
+
+##### FES2014 tidal model
+DE Africa Coastlines uses the FES2014 tidal model to account for the influence of tide on shoreline positions. 
+To install this tidal model, follow the [Setting up tidal models for DE Africa Coastlines guide on the Wiki](https://github.com/digitalearthafrica/deafrica-coastlines/wiki/Setting-up-tidal-models-for-DE-Africa-Coastlines).
 
 #### Python modules
 
