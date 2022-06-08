@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite Bishop-Taylor et al. 2019."
+authors:
+  - given-names: Robbi
+    family-names: Bishop-Taylor
+    affiliation: Geoscience Australia
+    orcid: 'https://orcid.org/0000-0002-1533-2599'
+  - given-names: Rachel
+    family-names: Nanson
+    affiliation: Geoscience Australia
+  - given-names: Stephen
+    family-names: Sagar
+    affiliation: Geoscience Australia
+  - given-names: Leo
+    family-names: Lymburner
+    affiliation: Geoscience Australia
+title: "Digital Earth Australia Coastlines"
+doi: 10.1016/j.rse.2021.112734
+date-released: 2020-03-15
+url: "https://github.com/GeoscienceAustralia/dea-coastlines"
+preferred-citation:
+  type: article
+  authors:
+  - given-names: Robbi
+    family-names: Bishop-Taylor
+    affiliation: Geoscience Australia
+    orcid: 'https://orcid.org/0000-0002-1533-2599'
+  - given-names: Rachel
+    family-names: Nanson
+    affiliation: Geoscience Australia
+  - given-names: Stephen
+    family-names: Sagar
+    affiliation: Geoscience Australia
+  - given-names: Leo
+    family-names: Lymburner
+    affiliation: Geoscience Australia
+  doi: "10.1016/j.rse.2021.112734"
+  journal: "Remote Sensing of Environment"
+  title: "Mapping Australia's dynamic coastline at mean sea level using three decades of Landsat imagery"
+  issue: 267
+  volume: 112734
+  year: 2019
+keywords:
+  - DEA Coastlines
+  - Coastal change
+  - Erosion
+  - Landsat
+  - Earth Observation
+  - Digital Earth Australia
+license: Apache-2.0
