@@ -1,3 +1,5 @@
+> **Note: This branch contains the Australia-specific implementation of DEA Coastlines.** For a more flexible implementation adapted to globally available USGS Collection 2 Level 2 Landsat data, we recommend using the [Digital Earth Africa Coastlines](https://github.com/digitalearthafrica/deafrica-coastlines/) implementation instead.
+
 ![Digital Earth Australia Coastlines](visualisation/images/DEACoastlines_header.gif)
 
 # Digital Earth Australia Coastlines
@@ -13,8 +15,12 @@
 
 **Contact:** For assistance with any of the Python code or Jupyter Notebooks in this repository, please post a [Github issue](https://github.com/GeoscienceAustralia/DEACoastLines/issues/new). For questions or more information about this product, email dea@ga.gov.au or sign up to the [Open Data Cube Slack](https://join.slack.com/t/opendatacube/shared_invite/zt-d6hu7l35-CGDhSxiSmTwacKNuXWFUkg) and post on the [`#dea-coastlines`](https://app.slack.com/client/T0L4V0TFT/C018X6J9HLY/details/) channel.
 
-**Remote Sensing of Environment paper:** 
+**To cite:** 
 > Bishop-Taylor, R., Nanson, R., Sagar, S., Lymburner, L. (2021). Mapping Australia's dynamic coastline at mean sea level using three decades of Landsat imagery. _Remote Sensing of Environment_, 267, 112734. Available: https://doi.org/10.1016/j.rse.2021.112734
+
+> Nanson, R., Bishop-Taylor, R., Sagar, S., Lymburner, L., (2022). Geomorphic insights into Australia's coastal change using a national dataset derived from the multi-decadal Landsat archive. _Estuarine, Coastal and Shelf Science_, 265, p.107712. Available: https://doi.org/10.1016/j.ecss.2021.107712
+
+> Bishop-Taylor, R., Sagar, S., Lymburner, L., Alam, I., Sixsmith, J. (2019). Sub-pixel waterline extraction: characterising accuracy and sensitivity to indices and spectra. _Remote Sensing_, 11 (24):2984. Available: https://doi.org/10.3390/rs11242984
 
 ---
 
