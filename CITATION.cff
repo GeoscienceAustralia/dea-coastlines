@@ -9,7 +9,6 @@ message: >-
   Please cite Bishop-Taylor et al. 2019 if you use
   this code
 type: article
-journal: "Remote Sensing of Environment"
 authors:
   - given-names: Robbi
     family-names: Bishop-Taylor
