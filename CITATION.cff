@@ -15,9 +15,7 @@ authors:
     family-names: Lymburner
     affiliation: Geoscience Australia
 title: "Digital Earth Africa Coastlines"
-version: 1.0.0
 doi: 10.1016/j.rse.2021.112734
-date-released: 2022-01-01
 url: "https://github.com/digitalearthafrica/deafrica-coastlines/"
 preferred-citation:
   type: article
