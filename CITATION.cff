@@ -1,14 +1,5 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
 cff-version: 1.2.0
-title: >-
-  Mapping Australia's dynamic coastline at mean sea
-  level using three decades of Landsat imagery
-message: >-
-  Please cite Bishop-Taylor et al. 2019 if you use
-  this code
-type: dataset
+message: "If you use this software, please cite Bishop-Taylor et al. 2019."
 authors:
   - given-names: Robbi
     family-names: Bishop-Taylor
@@ -23,12 +14,33 @@ authors:
   - given-names: Leo
     family-names: Lymburner
     affiliation: Geoscience Australia
-identifiers:
-  - type: doi
-    value: 10.1016/j.rse.2021.112734
-    description: Bishop-Taylor et al. 2019
-repository-code: >-
-  https://github.com/digitalearthafrica/deafrica-coastlines/
+title: "Digital Earth Africa Coastlines"
+version: 1.0.0
+doi: 10.1016/j.rse.2021.112734
+date-released: 2022-01-01
+url: "https://github.com/digitalearthafrica/deafrica-coastlines/"
+preferred-citation:
+  type: article
+  authors:
+  - given-names: Robbi
+    family-names: Bishop-Taylor
+    affiliation: Geoscience Australia
+    orcid: 'https://orcid.org/0000-0002-1533-2599'
+  - given-names: Rachel
+    family-names: Nanson
+    affiliation: Geoscience Australia
+  - given-names: Stephen
+    family-names: Sagar
+    affiliation: Geoscience Australia
+  - given-names: Leo
+    family-names: Lymburner
+    affiliation: Geoscience Australia
+  doi: "10.1016/j.rse.2021.112734"
+  journal: "Remote Sensing of Environment"
+  title: "Mapping Australia's dynamic coastline at mean sea level using three decades of Landsat imagery"
+  issue: 267
+  volume: 112734
+  year: 2019
 keywords:
   - DEA Coastlines
   - DE Africa Coastlines
