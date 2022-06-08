@@ -1,0 +1,42 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Mapping Australia's dynamic coastline at mean sea
+  level using three decades of Landsat imagery
+message: >-
+  Please cite Bishop-Taylor et al. 2019 if you use
+  this code
+type: article
+journal: "Remote Sensing of Environment"
+authors:
+  - given-names: Robbi
+    family-names: Bishop-Taylor
+    affiliation: Geoscience Australia
+    orcid: 'https://orcid.org/0000-0002-1533-2599'
+  - given-names: Rachel
+    family-names: Nanson
+    affiliation: Geoscience Australia
+  - given-names: Stephen
+    family-names: Sagar
+    affiliation: Geoscience Australia
+  - given-names: Leo
+    family-names: Lymburner
+    affiliation: Geoscience Australia
+identifiers:
+  - type: doi
+    value: 10.1016/j.rse.2021.112734
+    description: Bishop-Taylor et al. 2019
+repository-code: >-
+  https://github.com/digitalearthafrica/deafrica-coastlines/
+keywords:
+  - DEA Coastlines
+  - DE Africa Coastlines
+  - Coastal change
+  - Erosion
+  - Landsat
+  - Earth Observation
+  - Digital Earth Africa
+  - Digital Earth Australia
+license: Apache-2.0
