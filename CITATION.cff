@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite Bishop-Taylor et al. 2019."
+message: "If you use this software, please cite Bishop-Taylor et al. 2021."
 authors:
   - given-names: Robbi
     family-names: Bishop-Taylor
@@ -38,7 +38,7 @@ preferred-citation:
   title: "Mapping Australia's dynamic coastline at mean sea level using three decades of Landsat imagery"
   issue: 267
   volume: 112734
-  year: 2019
+  year: 2021
 keywords:
   - DEA Coastlines
   - DE Africa Coastlines
