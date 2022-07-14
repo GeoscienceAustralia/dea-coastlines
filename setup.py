@@ -39,9 +39,9 @@ REQUIRED = [
 ]
 
 # Package metadata
-NAME = "deafrica_coastlines"
-DESCRIPTION = "Tools for running Digital Earth Africa Coastlines"
-URL = "https://github.com/digitalearthafrica/deafrica-coastlines"
+NAME = "dea_coastlines"
+DESCRIPTION = "Tools for running Digital Earth Australia Coastlines"
+URL = "https://github.com/GeoscienceAustralia/dea-coastlines"
 EMAIL = "Robbi.BishopTaylor@ga.gov.au"
 AUTHOR = "Robbi Bishop-Taylor"
 REQUIRES_PYTHON = ">=3.8.0"

@@ -1,9 +1,0 @@
-Virtual product:
-    virtual_product_path: configs/dea_virtual_product_landsat.yaml
-    virtual_product_name: ls_nbart_norm
-Input files:
-    grid_path: data/raw/50km_albers_grid_clipped.geojson
-    points_path: data/raw/tide_points_coastal.geojson
-    modifications_path: data/raw/estuary_mask_modifications.geojson
-    geomorphology_path: https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/coastal_geomorphology_maoetal2022.geojson
-    region_attributes_path: https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/countries_eez_deafrica.geojson
