@@ -1,4 +1,4 @@
-> **Note: This branch contains code that is currently being refactored from the [Digital Earth Africa Coastlines](https://github.com/digitalearthafrica/deafrica-coastlines/) repository. It is unlikely to work correctly.
+> **Note: This branch contains code that is currently being refactored from the [Digital Earth Africa Coastlines](https://github.com/digitalearthafrica/deafrica-coastlines/) repository. It is unlikely to work correctly.**
 
 ![Digital Earth Australia Coastlines](visualisation/images/DEACoastlines_header.gif)
 
