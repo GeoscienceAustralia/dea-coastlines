@@ -82,7 +82,7 @@ Code in this repository is included in the `coastlines` Python package which con
     
     
 #### Jupyter notebooks
-An interactive walk-through of each step of the tiled raster and vector DEA Coastlines workflow and the continental layer generation is provided in the following Jupyter Notebooks. These notebooks can be run on the DE Africa Sandbox to assist in prototyping or troubleshooting:
+An interactive walk-through of each step of the tiled raster and vector DEA Coastlines workflow and the continental layer generation is provided in the following Jupyter Notebooks. These notebooks can be run on the [DEA Sandbox](https://app.sandbox.dea.ga.gov.au/) to assist in prototyping or troubleshooting:
 * [DEA Coastlines raster generation](notebooks/DEACoastlines_generation_raster.ipynb)
 * [DEA Coastlines vector generation](notebooks/DEACoastlines_generation_vector.ipynb)
 * [DEA Coastlines continental hotspots](notebooks/DEACoastlines_generation_continental.ipynb)
@@ -90,7 +90,7 @@ An interactive walk-through of each step of the tiled raster and vector DEA Coas
 ### Running a DEA Coastlines analysis using the command-line interface (CLI)
 
 These three modules have a command-line interface that can be used to automate each stage of the analysis. An example of using these tools is provided in the following Jupyter Notebook:
-* [DE Africa Coastlines generation using command line tools](notebooks/DEACoastlines_generation_CLI.ipynb)
+* [DEA Coastlines generation using command line tools](notebooks/DEACoastlines_generation_CLI.ipynb)
 
 For help using these command line tools, run:
 ```
