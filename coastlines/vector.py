@@ -613,7 +613,7 @@ def contours_preprocess(
 
     # Generate annual vector polygon masks containing information
     # about the certainty of each shoreline feature
-    certainty_masks = certainty_masking(yearly_ds)
+    certainty_masks = certainty_masking(yearly_ds, stdev_threshold=0.3)
 
     return masked_ds, certainty_masks
 
@@ -1158,6 +1158,12 @@ def contour_certainty(contours_gdf, certainty_masks):
 
     # Combine into a single dataframe
     contours_gdf = pd.concat(out_list).sort_index()
+    
+     # Finally, set all 1991 and 1992 coastlines north of -23 degrees
+    # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
+    pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) &
+                    (contours_gdf.index.isin(['1991', '1992'])))
+    contours_gdf.loc[pinatubo_lat, 'certainty'] = 'aerosol issues'
 
     return contours_gdf
 

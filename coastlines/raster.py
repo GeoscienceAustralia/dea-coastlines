@@ -877,6 +877,41 @@ def multiprocess_apply(ds, dim, func):
     return xr.concat(out_list, dim=ds[dim])
 
 
+def parallel_apply(ds, dim, func):
+    """
+    Applies a custom function along the dimension of an xarray.Dataset,
+    then combines the output to match the original dataset.
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        A dataset with a dimension `dim` to apply the custom function
+        along.
+    dim : string
+        The dimension along which the custom function will be applied.
+    func : function
+        The function that will be applied in parallel to each array
+        along dimension `dim`. To specify custom parameters, use
+        `functools.partial`.
+    Returns:
+    --------
+    xarray.Dataset
+        A concatenated dataset containing an output for each array
+        along the input `dim` dimension.
+    """
+
+    from concurrent.futures import ProcessPoolExecutor
+    from tqdm import tqdm
+
+    with ProcessPoolExecutor() as executor:
+
+        # Apply func in parallel
+        to_iterate = [group for (i, group) in ds.groupby(dim)]
+        out_list = tqdm(executor.map(func, to_iterate), total=len(to_iterate))
+
+    # Combine to match the original dataset
+    return xr.concat(out_list, dim=ds[dim])
+
+
 def load_tidal_subset(year_ds, tide_cutoff_min, tide_cutoff_max):
     """
     For a given year of data, thresholds data to keep observations
