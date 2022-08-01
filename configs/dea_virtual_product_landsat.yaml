@@ -9,10 +9,11 @@ products:
             &ls8_nbart
             product: ga_ls8c_ard_3
             measurements: [nbart_blue, nbart_green, nbart_red, nbart_nir, 
-                           nbart_swir_1, nbart_swir_2, oa_nbart_contiguity, 
-                           oa_fmask]
+                           nbart_swir_1, nbart_swir_2, 
+                           oa_nbart_contiguity, oa_fmask]
             gqa_iterative_mean_xy: [0, 1]
             group_by: solar_day
+#             cloud_cover: [0, 90]
     
     # Loads Landsat 7 data based on bands included in the `ls8_nbart` product
     ls7_nbart:
@@ -59,11 +60,11 @@ products:
                  swir2: 
                      formula: nbart_swir_2
                      dtype: float32
-                 fmask: oa_fmask
+                 cloud_mask: oa_fmask
                  contiguity: oa_nbart_contiguity
     
     # Takes the `ls_nbart` product containing Landsat 5, 7 and 8 data, 
-    # and normnalises spectral band values so they are between 0 and 1.0. 
+    # and normalises spectral band values so they are between 0 and 1.0. 
     # (compared to the default of 0 to 10,000).
     ls_nbart_norm:
          recipe:
@@ -89,7 +90,7 @@ products:
                  swir2: 
                      formula: swir2 * 0.0001
                      dtype: float32
-                 fmask: fmask
+                 cloud_mask: cloud_mask
                  contiguity: contiguity
     
     # Takes the `ls_nbart_norm` product containing normalised Landsat 5, 
@@ -100,7 +101,7 @@ products:
             recipe:
                 &ls_nbart_masked
                 transform: apply_mask
-                mask_measurement_name: mask
+                mask_measurement_name: cloud_mask
                 input:
                     transform: expressions
                     input: *ls_nbart_norm
@@ -111,14 +112,17 @@ products:
                         nir: nir
                         swir1: swir1
                         swir2: swir2
-                        mask:
-                            formula: ((fmask == 1) | (fmask == 4) | (fmask == 5)) & (contiguity == 1)
+                        cloud_mask:
+                            formula: ((cloud_mask == 1) | (cloud_mask == 4) | (cloud_mask == 5)) & (contiguity == 1)
                             
-    ls_nbart_mndwi:
+    ls_nbart_ndwi:
          recipe:
              transform: expressions
              input: *ls_nbart_norm    
              output:
-                 fmask: fmask
+                 cloud_mask: cloud_mask
+                 contiguity: contiguity
+                 ndwi:
+                    formula: (green - nir) / (green + nir)
                  mndwi:
                     formula: (green - swir1) / (green + swir1)

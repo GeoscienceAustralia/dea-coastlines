@@ -36,5 +36,5 @@ RUN pip install /code
 
 CMD ["python", "--version"]
 
-RUN  deafricacoastlines-raster --help \
-  && deafricacoastlines-vector --help
+RUN  deacoastlines-raster --help \
+  && deacoastlines-vector --help

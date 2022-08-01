@@ -243,7 +243,7 @@ def terrain_shadow_masking(dc, query, ds, dem_product="dem_cop_30"):
 
 
 def load_water_index(
-    dc, query, yaml_path, product_name="ls_nbart_mndwi", mask_terrain_shadow=True
+    dc, query, yaml_path, product_name="ls_nbart_ndwi", mask_terrain_shadow=True
 ):
     """
     This function uses virtual products to load Landsat 5, 7, 8 and 9 data,
@@ -279,76 +279,49 @@ def load_water_index(
         An `xarray.Dataset` containing a time series of water index
         data (e.g. MNDWI) for the provided datacube query
     """
-    import mock
-
-    def custom_native_geobox(ds, measurements=None, basis=None):
-        """
-        Obtains native geobox info from dataset metadata
-        """
-        geotransform = ds.metadata_doc["grids"]["default"]["transform"]
-        shape = ds.metadata_doc["grids"]["default"]["shape"]
-        crs = CRS(ds.metadata_doc["crs"])
-        affine = Affine(
-            geotransform[0], 0.0, geotransform[2], 0.0, geotransform[4], geotransform[5]
-        )
-
-        return GeoBox(width=shape[1], height=shape[0], affine=affine, crs=crs)
 
     # Load in virtual product catalogue and select MNDWI product
     catalog = catalog_from_file(yaml_path)
     product = catalog[product_name]
 
-    # Construct a new version of the product using most common CRS
-    # Determine geobox with custom function to increase lazy loading
-    # speed (will eventually be done automatically within virtual
-    # products)
-    with mock.patch(
-        "datacube.virtual.impl.native_geobox", side_effect=custom_native_geobox
-    ):
+    # Identify most common CRS
+    bag = product.query(dc, **query)
+    crs_list = [str(i.crs) for i in bag.contained_datasets()]
+    crs_counts = Counter(crs_list)
+    crs = crs_counts.most_common(1)[0][0]
 
-        # Identify most common CRS
-        bag = product.query(dc, **query)
-        crs_list = [str(i.crs) for i in bag.contained_datasets()]
-        crs_counts = Counter(crs_list)
-        crs = crs_counts.most_common(1)[0][0]
-
-        # Pass CRS to product load
-        settings = dict(
-            output_crs=crs,
-            resolution=(-30, 30),
-            align=(15, 15),
-            skip_broken_datasets=True,  # To remove on prod
-            resampling={"pixel_quality": "nearest", "*": "cubic"},
-        )
-        box = product.group(bag, **settings, **query)
-        ds = product.fetch(box, **settings, **query)
+    # Pass CRS to product load
+    settings = dict(
+        output_crs=crs,
+        resolution=(-30, 30),
+        align=(15, 15),
+        skip_broken_datasets=True,
+        resampling={
+            "oa_nbart_contiguity": "nearest",
+            "oa_fmask": "nearest",
+            "*": "cubic",
+        },
+    )
+    box = product.group(bag, **settings, **query)
+    ds = product.fetch(box, **settings, **query)
 
     # Rechunk if smallest chunk is less than 10
-    if ((len(ds.x) % 3000) <= 10) or ((len(ds.y) % 3000) <= 10):
-        ds = ds.chunk({"x": 3200, "y": 3200})
+    if ((len(ds.x) % 2048) <= 10) or ((len(ds.y) % 2048) <= 10):
+        ds = ds.chunk({"x": 3000, "y": 3000})
 
     # Extract boolean mask
     mask = odc.algo.enum_to_bool(
-        ds.fmask, categories=['nodata', 'cloud', 'shadow', 'snow'])
+        ds.cloud_mask, categories=["nodata", "cloud", "shadow", "snow"]
+    )
 
     # Close mask to remove small holes in cloud, open mask to
     # remove narrow false positive cloud, then dilate
-    mask_cleaned = odc.algo.mask_cleanup(mask=mask,
-                                         mask_filters=[('closing', 2),
-                                                       ('opening', 10),
-                                                       ('dilation', 5)])
+    mask_cleaned = odc.algo.mask_cleanup(
+        mask=mask, mask_filters=[("closing", 2), ("opening", 10), ("dilation", 5)]
+    )
 
-    # Add new mask as nodata pixels
-    ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan).drop('fmask')
-
-    # Mask any invalid pixel values outside of 0 and 1
-#     ds["green"] = ds.green.where((ds.green >= 0) & (ds.green <= 1))
-#     ds["swir_1"] = ds.swir_1.where((ds.swir_1 >= 0) & (ds.swir_1 <= 1))
-#     ds["nir"] = ds.nir.where((ds.nir >= 0) & (ds.nir <= 1))
-
-    # Calculate MNDWI
-    ds[["mndwi"]] = (ds.green - ds.swir1) / (ds.green + ds.swir1)
-    ds[["ndwi"]] = (ds.green - ds.nir) / (ds.green + ds.nir)
+    # Add new mask to nodata pixels
+    ds = odc.algo.erase_bad(ds, mask_cleaned, nodata=np.nan)
 
     # Apply terrain mask to remove deep shadows that can be
     # be mistaken for water
@@ -753,17 +726,16 @@ def interpolate_tide(timestep, tidepoints_gdf, method="rbf", factor=50):
     return out_tide.astype("float32")
 
 
-def tide_cutoffs(ds, tidepoints_gdf, tide_centre=0.0, method="rbf", factor=50):
+def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
     """
     Based on the entire time-series of tide heights, compute the max
     and min satellite-observed tide height for each pixel, then
     calculate tide cutoffs used to restrict our data to satellite
     observations centred over mid-tide (0 m Above Mean Sea Level).
 
-    These tide cutoffs for each tide modelling point are then
-    spatially interpolated into the extent of the input satellite
-    imagery so they can be used to mask out low and high tide
-    satellite pixels.
+    These tide cutoffs are spatially interpolated into the extent of
+    the input satellite imagery so they can be used to mask out low
+    and high tide satellite pixels.
 
     Parameters:
     -----------
@@ -772,29 +744,18 @@ def tide_cutoffs(ds, tidepoints_gdf, tide_centre=0.0, method="rbf", factor=50):
         data (e.g. MNDWI) for the provided datacube query. This is
         used to define the spatial extents into which tide height
         cutoffs will be interpolated.
-    tidepoints_gdf : geopandas.GeoDataFrame
-        An `geopandas.GeoDataFrame` containing modelled tide heights.
+    tides_lowres : xarray.Dataset
+        A low-res `xarray.Dataset` containing tide heights for each
+        timestep in `ds`, as produced by the `pixel_tides` function.
     tide_centre : float, optional
         The central tide height used to compute the min and max
         tide height cutoffs. Tide heights will be masked so all
         satellite observations are approximiately centred over this
         value. The default is 0.0 which represents 0 m Above Mean
         Sea Level.
-    method : string, optional
-        The method used to interpolate between point values. This string
-        is either passed to `scipy.interpolate.griddata` (for 'linear',
-        'nearest' and 'cubic' methods), or used to specify Radial Basis
-        Function interpolation using `scipy.interpolate.Rbf` ('rbf').
-        Defaults to 'rbf'.
-    factor : int, optional
-        An optional integer that can be used to subsample the spatial
-        interpolation extent to obtain faster interpolation times, then
-        up-sample this array back to the original dimensions of the
-        data as a final step. For example, setting `factor=10` will
-        interpolate ata into a grid that has one tenth of the
-        resolution of `ds`. This approach will be significantly faster
-        than interpolating at full resolution, but will potentially
-        produce less accurate or reliable results.
+    resampling : string, optional
+        The resampling method used when reprojecting low resolution
+        tides to higher resolution. Defaults to "bilinear".
 
     Returns:
     --------
@@ -803,42 +764,21 @@ def tide_cutoffs(ds, tidepoints_gdf, tide_centre=0.0, method="rbf", factor=50):
         into the extent of `ds`.
     """
 
-    # Group by unique points and calculate min and max tide
-    tidepoints_stats = tidepoints_gdf.groupby(
-        [tidepoints_gdf.geometry.x, tidepoints_gdf.geometry.y]
-    ).tide_m.agg(min_tide=np.min, max_tide=np.max)
+    # Calculate min and max tides
+    tide_min = tides_lowres.min(dim="time")
+    tide_max = tides_lowres.max(dim="time")
 
-    # Use min and max time to calculate tide cutoffs
-    tidepoints_stats["tide_cutoff_buffer"] = (
-        tidepoints_stats.max_tide - tidepoints_stats.min_tide
-    ) * 0.25
-    tidepoints_stats["tide_cutoff_min"] = (
-        tide_centre - tidepoints_stats.tide_cutoff_buffer
+    # Identify cutoffs
+    tide_cutoff_buffer = (tide_max - tide_min) * 0.25
+    tide_cutoff_min = tide_centre - tide_cutoff_buffer
+    tide_cutoff_max = tide_centre + tide_cutoff_buffer
+
+    # Reproject into original geobox
+    tide_cutoff_min = tide_cutoff_min.odc.reproject(
+        ds.odc.geobox, resampling=resampling
     )
-    tidepoints_stats["tide_cutoff_max"] = (
-        tide_centre + tidepoints_stats.tide_cutoff_buffer
-    )
-
-    # Get lists of x, y and z (tide height) data to interpolate
-    x_coords = tidepoints_stats.index.get_level_values(0)
-    y_coords = tidepoints_stats.index.get_level_values(1)
-
-    tide_cutoff_min = interpolate_2d(
-        ds=ds,
-        x_coords=x_coords,
-        y_coords=y_coords,
-        z_coords=tidepoints_stats.tide_cutoff_min,
-        method=method,
-        factor=factor,
-    )
-
-    tide_cutoff_max = interpolate_2d(
-        ds=ds,
-        x_coords=x_coords,
-        y_coords=y_coords,
-        z_coords=tidepoints_stats.tide_cutoff_max,
-        method=method,
-        factor=factor,
+    tide_cutoff_max = tide_cutoff_max.odc.reproject(
+        ds.odc.geobox, resampling=resampling
     )
 
     return tide_cutoff_min, tide_cutoff_max

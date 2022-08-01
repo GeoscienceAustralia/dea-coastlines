@@ -1,6 +1,6 @@
 Virtual product:
     virtual_product_path: configs/dea_virtual_product_landsat.yaml
-    virtual_product_name: ls_nbart_norm
+    virtual_product_name: ls_nbart_ndwi
 Input files:
     grid_path: data/raw/50km_albers_grid_clipped.geojson
     points_path: data/raw/tide_points_coastal.geojson

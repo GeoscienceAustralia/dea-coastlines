@@ -16,10 +16,9 @@ REQUIRED = [
     "dea_tools",
     "fiona",
     "geopandas",
-    "geopy",
     "matplotlib",
-    "mock",
     "numpy",
+    "odc-geo"
     "odc_ui",
     "pandas",
     "pygeos",
@@ -27,8 +26,6 @@ REQUIRED = [
     "pyTMD",
     "pytz",
     "rasterio",
-    "rasterstats",
-    "Rtree",
     "setuptools-scm",
     "scikit_image",
     "scikit_learn",
@@ -56,15 +53,15 @@ setup_kwargs = {
     "author_email": EMAIL,
     "python_requires": REQUIRES_PYTHON,
     "url": URL,
-    "install_requires": REQUIRED if not IS_SANDBOX else ["mock", "dea_tools", "pyTMD"],
+    "install_requires": REQUIRED if not IS_SANDBOX else ["dea_tools", "pyTMD", "odc-geo"],
     "packages": find_packages(),
     "include_package_data": True,
     "license": "Apache License 2.0",
     "entry_points": {
         "console_scripts": [
-            "deafricacoastlines-raster = coastlines.raster:generate_rasters_cli",
-            "deafricacoastlines-vector = coastlines.vector:generate_vectors_cli",
-            "deafricacoastlines-continental = coastlines.continental:continental_cli",
+            "deacoastlines-raster = coastlines.raster:generate_rasters_cli",
+            "deacoastlines-vector = coastlines.vector:generate_vectors_cli",
+            "deacoastlines-continental = coastlines.continental:continental_cli",
         ]
     },
 }
