@@ -21,26 +21,29 @@
 import os
 import sys
 import warnings
-import multiprocessing
+import multiprocess
 from functools import partial
 from collections import Counter
 
 import pytz
 import dask
 import click
-import datacube
-import odc.algo
 import numpy as np
 import pandas as pd
 import xarray as xr
 import geopandas as gpd
 from affine import Affine
 from shapely.geometry import shape
+
+import datacube
+import odc.algo
+import odc.geo.xr
 from datacube.utils.aws import configure_s3_access
 from datacube.utils.cog import write_cog
 from datacube.utils.geometry import CRS, GeoBox, Geometry
 from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file
+
 from dea_tools.dask import create_local_dask_cluster
 from dea_tools.spatial import interpolate_2d
 
@@ -336,7 +339,7 @@ def model_tides(
     y,
     time,
     model="FES2014",
-    directory="tide_models",
+    directory="~/tide_models_clipped",
     epsg=4326,
     method="bilinear",
     extrapolate=True,
@@ -578,43 +581,62 @@ def model_tides(
     ).set_index("time")
 
 
-def model_tide_points(
+def pixel_tides(
     ds,
-    points_gdf,
-    extent_buffer=0.05,
-    tide_model="FES2014",
-    directory="/var/share",
+    resample_func=None,
+    times=None,
+    calculate_quantiles=None,
+    resolution=5000,
+    buffer=12000,
+    model="FES2014",
+    directory="~/tide_models_clipped",
 ):
     """
-    Takes an xarray.Dataset (`ds`), extracts a subset of tide modelling
-    points from a geopandas.GeoDataFrame based on`ds`'s extent, then
-    uses the `model_tides` function based on `pyTMD` to model tide
-    heights for every point at every time step in `ds`.
-
-    The output is a geopandas.GeoDataFrame with a "time" index
-    (matching the time steps in `ds`), and a "tide_m" column giving the
-    tide heights at each point location.
+    Obtain tide heights for each pixel in a dataset by modelling
+    tides into a low-resolution grid surrounding the dataset,
+    then (optionally) spatially reprojecting this low-res data back
+    into the original higher resolution dataset extent and resolution.
 
     Parameters:
     -----------
     ds : xarray.Dataset
-        An `xarray.Dataset` containing a time series of water index
-        data (e.g. MNDWI) for the provided datacube query.
-    points_gdf : geopandas.GeoDataFrame
-        A `geopandas.GeoDataFrame` containing spatial points used to
-        model tides.
-    extent_buffer : float, optional
-        A float giving the extent in degrees to buffer the satellite
-        imagery dataset (`ds`) when selecting spatial points used
-        to model tides. This buffer creates overlap between analysis
-        areas, which ensures that modelled tides are seamless when
-        clipped back to the dataset extent in a subsequent step.
-    tide_model : string
+        A dataset whose geobox (`ds.odc.geobox`) will be used to define
+        the spatial extent of the low resolution tide modelling grid.
+    resample_func : function, optional
+        A function to use to re-project low resolution tides back into
+        `ds`'s original higher resolution grid. If you do not want low
+        resolution tides to be re-projected back to higher resolution,
+        set this to `None`.
+    times : list or pandas.Series, optional
+        By default, the function will model tides using the times
+        contained in the `time` dimension of `ds`. This param can be used
+        to model tides for a custom set of times instead, for example:
+        `times=pd.date_range(start="2000", end="2020", freq="30min")`
+    calculate_quantiles : list or np.array, optional
+        Rather than returning all individual tides, low-resolution tides
+        can be first aggregated using a quantile calculation by passing in
+        a list or array of quantiles to compute. For example, this could
+        be used to calculate the min/max tide across all times:
+        `calculate_quantiles=[0.0, 1.0]`.
+    resolution: int, optional
+        The desired resolution of the low-resolution grid used for tide
+        modelling. Defaults to 5000 for a 5,000 m grid (assuming `ds`'s
+        CRS uses project/metre units).
+    buffer : int, optional
+        The amount by which to buffer the higher resolution grid extent
+        when creating the new low resolution grid. This buffering is
+        important as it ensures that ensure pixel-based tides are seamless
+        across dataset boundaries. This buffer will eventually be clipped
+        away when the low-resolution data is re-projected back to the
+        resolution and extent of the higher resolution dataset. Defaults
+        to 12,000 m to ensure that at least two 5,000 m pixels occur
+        outside of the dataset bounds.
+    model : string, optional
         The tide model used to model tides. Options include:
         - FES2014
         - TPXO8-atlas
         - TPXO9-atlas-v5
-    directory : string
+    directory : string, optional
         The directory containing tide model data files. These
         data files should be stored in sub-folders for each
         model that match the structure provided by `pyTMD`:
@@ -627,103 +649,90 @@ def model_tide_points(
 
     Returns:
     --------
-    tidepoints_gdf : geopandas.GeoDataFrame
-        An `geopandas.GeoDataFrame` containing modelled tide heights
-        with an index based on each timestep in `ds`.
+    If `resample_func` is None:
+
+        tides_lowres : xr.DataArray
+            A low resolution data array giving either tide heights every
+            timestep in `ds` (if `times` is None), tide heights at every
+            time in `times` (if `times` is not None), or tide height quantiles
+            for every quantile provided by `calculate_quantiles`.
+
+    If `sample_func` is not None:
+
+        tides_highres, tides_lowres : tuple of xr.DataArrays
+            In addition to `tides_lowres` (see above), a high resolution
+            array of tide heights will be generated that matches the
+            exact spatial resolution and extent of `ds`. This will contain
+            either tide heights every timestep in `ds` (if `times` is None),
+            tide heights at every time in `times` (if `times` is not None),
+            or tide height quantiles for every quantile provided by
+            `calculate_quantiles`.
     """
 
-    # Obtain extent of loaded data, and buffer to ensure that tides
-    # are modelled reliably and comparably across grid tiles
-    ds_extent = shape(ds.geobox.geographic_extent.json)
-    buffered = ds_extent.buffer(extent_buffer)
-    subset_gdf = points_gdf[points_gdf.geometry.intersects(buffered)]
+    from odc.geo.geobox import GeoBox
 
-    # Extract lon, lat from tides, and time from satellite data
-    x_vals = subset_gdf.geometry.x.tolist()
-    y_vals = subset_gdf.geometry.y.tolist()
-    observed_datetimes = ds.time.data.astype("M8[s]").astype("O").tolist()
+    # Create a new reduced resolution (5km) tide modelling grid after
+    # first buffering the grid by 12km (i.e. at least two 5km pixels)
+    print("Creating reduced resolution tide modelling array")
+    buffered_geobox = ds.odc.geobox.buffered(buffer)
+    rescaled_geobox = GeoBox.from_bbox(
+        bbox=buffered_geobox.boundingbox, resolution=resolution
+    )
+    rescaled_ds = odc.geo.xr.xr_zeros(rescaled_geobox)
 
-    # Model tides for each coordinate and time
-    tidepoints_df = model_tides(
-        x=x_vals, y=y_vals, time=ds.time.values, directory=directory, model=tide_model
+    # Flatten grid to 1D, then add time dimension. If custom times are
+    # provided use these, otherwise use times from `ds`
+    time_coords = ds.coords["time"] if times is None else times
+    flattened_ds = rescaled_ds.stack(z=("x", "y"))
+    flattened_ds = flattened_ds.expand_dims(dim={"time": time_coords.values})
+
+    # Model tides for each timestep and x/y grid cell
+    print(f"Modelling tides using {model} tide model")
+    tide_df = model_tides(
+        x=flattened_ds.x,
+        y=flattened_ds.y,
+        time=flattened_ds.time,
+        model=model,
+        directory=directory,
+        epsg=ds.odc.geobox.crs.epsg,
     )
 
-    # Convert data to spatial geopandas.GeoDataFrame
-    tidepoints_gdf = gpd.GeoDataFrame(
-        data={"time": tidepoints_df.index, "tide_m": tidepoints_df.tide_m},
-        geometry=gpd.points_from_xy(tidepoints_df.x, tidepoints_df.y),
-        crs="EPSG:4326",
+    # Insert modelled tide values back into flattened array, then unstack
+    # back to 3D (x, y, time)
+    tides_lowres = (
+        tide_df.set_index(["x", "y"], append=True)
+        .to_xarray()
+        .tide_m.reindex_like(rescaled_ds)
+        .transpose(*list(ds.dims.keys()))
+        .astype(np.float32)
     )
 
-    # Reproject to satellite data CRS
-    tidepoints_gdf = tidepoints_gdf.to_crs(crs=ds.crs)
+    # Optionally calculate and return quantiles rather than raw data
+    if calculate_quantiles is not None:
 
-    # Fix time and set to index
-    tidepoints_gdf["time"] = pd.to_datetime(tidepoints_gdf["time"], utc=True)
-    tidepoints_gdf = tidepoints_gdf.set_index("time")
+        print("Computing tide quantiles")
+        tides_lowres = tides_lowres.quantile(q=calculate_quantiles, dim="time")
+        reproject_dim = "quantile"
 
-    return tidepoints_gdf
+    else:
+        reproject_dim = "time"
 
+    # Ensure CRS is present
+    tides_lowres = tides_lowres.odc.assign_crs(ds.odc.geobox.crs)
 
-def interpolate_tide(timestep, tidepoints_gdf, method="rbf", factor=50):
-    """
-    Extract a subset of tide modelling point data for a given time-step,
-    then interpolate these tides into the extent of the xarray dataset.
+    # Reproject each timestep into original high resolution grid
+    if resample_func:
 
-    Parameters:
-    -----------
-    timestep_tuple : tuple
-        A tuple of x, y and time values sourced from `ds`. These values
-        are used to set up the x and y grid into which tide heights for
-        each timestep are interpolated. For example:
-        `(ds.x.values, ds.y.values, ds.time.values)`
-    tidepoints_gdf : geopandas.GeoDataFrame
-        An `geopandas.GeoDataFrame` containing modelled tide heights
-        with an index based on each timestep in `ds`.
-    method : string, optional
-        The method used to interpolate between point values. This string
-        is either passed to `scipy.interpolate.griddata` (for 'linear',
-        'nearest' and 'cubic' methods), or used to specify Radial Basis
-        Function interpolation using `scipy.interpolate.Rbf` ('rbf').
-        Defaults to 'rbf'.
-    factor : int, optional
-        An optional integer that can be used to subsample the spatial
-        interpolation extent to obtain faster interpolation times, then
-        up-sample this array back to the original dimensions of the
-        data as a final step. For example, setting `factor=10` will
-        interpolate ata into a grid that has one tenth of the
-        resolution of `ds`. This approach will be significantly faster
-        than interpolating at full resolution, but will potentially
-        produce less accurate or reliable results.
+        print("Reprojecting tides into original array")
+        tides_highres = parallel_apply(
+            tides_lowres, reproject_dim, odc.algo.xr_reproject, ds.odc.geobox.compat
+        )
 
-    Returns:
-    --------
-    out_tide : xarray.DataArray
-        A 2D array containing tide heights interpolated into the extent
-        of the input data.
-    """
+        return tides_highres, tides_lowres
 
-    # Extract subset of observations based on timestamp of imagery
-    time_string = str(timestep.time.values)[0:19].replace("T", " ")
-    tidepoints_subset = tidepoints_gdf.loc[time_string]
-
-    # Get lists of x, y and z (tide height) data to interpolate
-    x_coords = tidepoints_subset.geometry.x.values.astype("float32")
-    y_coords = tidepoints_subset.geometry.y.values.astype("float32")
-    z_coords = tidepoints_subset.tide_m.values.astype("float32")
-
-    # Interpolate tides into the extent of the satellite timestep
-    out_tide = interpolate_2d(
-        ds=timestep,
-        x_coords=x_coords,
-        y_coords=y_coords,
-        z_coords=z_coords,
-        method=method,
-        factor=factor,
-    )
-
-    # Return data as a Float32 to conserve memory
-    return out_tide.astype("float32")
+    else:
+        print("Returning low resolution tide array")
+        return tides_lowres
 
 
 def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
@@ -808,16 +817,19 @@ def multiprocess_apply(ds, dim, func):
         along the input `dim` dimension.
     """
 
-    pool = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
-    out_list = pool.map(func, iterable=[group for (i, group) in ds.groupby(dim)])
-    pool.close()
-    pool.join()
+    from tqdm import tqdm
+
+    with multiprocess.Pool(multiprocess.cpu_count() - 1) as pool:
+
+        # Apply func in parallel
+        to_iterate = [group for (i, group) in ds.groupby(dim)]
+        out_list = list(tqdm(pool.map(func, to_iterate), total=len(to_iterate)))
 
     # Combine to match the original dataset
     return xr.concat(out_list, dim=ds[dim])
 
 
-def parallel_apply(ds, dim, func):
+def parallel_apply(ds, dim, func, *args):
     """
     Applies a custom function along the dimension of an xarray.Dataset,
     then combines the output to match the original dataset.
@@ -830,8 +842,10 @@ def parallel_apply(ds, dim, func):
         The dimension along which the custom function will be applied.
     func : function
         The function that will be applied in parallel to each array
-        along dimension `dim`. To specify custom parameters, use
-        `functools.partial`.
+        along dimension `dim`. The first argument passed to this
+        function should be the array along `dim`.
+    *args :
+        Any number of arguments that will be passed to `func`.
     Returns:
     --------
     xarray.Dataset
@@ -841,12 +855,14 @@ def parallel_apply(ds, dim, func):
 
     from concurrent.futures import ProcessPoolExecutor
     from tqdm import tqdm
+    from itertools import repeat
 
     with ProcessPoolExecutor() as executor:
 
         # Apply func in parallel
-        to_iterate = [group for (i, group) in ds.groupby(dim)]
-        out_list = tqdm(executor.map(func, to_iterate), total=len(to_iterate))
+        groups = [group for (i, group) in ds.groupby(dim)]
+        to_iterate = (groups, *(repeat(i, len(groups)) for i in args))
+        out_list = list(tqdm(executor.map(func, *to_iterate), total=len(groups)))
 
     # Combine to match the original dataset
     return xr.concat(out_list, dim=ds[dim])
@@ -1053,9 +1069,6 @@ def generate_rasters(
     # Load supplementary data #
     ###########################
 
-    # Tide points are used to model tides across the extent of the satellite data
-    points_gdf = gpd.read_file(config["Input files"]["points_path"])
-
     # Grid cells used to process the analysis
     gridcell_gdf = (
         gpd.read_file(config["Input files"]["grid_path"])
@@ -1064,9 +1077,7 @@ def generate_rasters(
     )
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
-    log.info(
-        f"Study area {study_area}: Loaded tide modelling points and study area grid"
-    )
+    log.info(f"Study area {study_area}: Loaded study area grid")
 
     ################
     # Loading data #
@@ -1078,7 +1089,7 @@ def generate_rasters(
     query = {
         "geopolygon": geopoly.buffer(0.05),
         "time": (str(start_year - 1), str(end_year + 1)),
-        "dask_chunks": {"time": 1, "x": 3000, "y": 3000},
+        "dask_chunks": {"time": 1, "x": 2048, "y": 2048},
     }
 
     # Load virtual product
@@ -1088,6 +1099,7 @@ def generate_rasters(
             query,
             yaml_path=config["Virtual product"]["virtual_product_path"],
             product_name=config["Virtual product"]["virtual_product_name"],
+            mask_terrain_shadow=False,
         )
     except (ValueError, IndexError):
         raise ValueError(f"Study area {study_area}: No valid data found")
@@ -1097,39 +1109,20 @@ def generate_rasters(
     # Tidal modelling #
     ###################
 
-    # Model tides at each point in a provided geopandas.GeoDataFrame
-    # based on all timesteps observed by Landsat. This returns a new
-    # geopandas.GeoDataFrame with a "time" index (matching every time
-    # step in our Landsat data), and a "tide_m" column giving the tide
-    # heights at each point location at that time.
-    tidepoints_gdf = model_tide_points(ds, points_gdf, directory="/var/share")
-
-    # Test if there is data and skip rest of the analysis if not
-    if tidepoints_gdf.geometry.unique().shape[0] <= 1:
-        raise Exception(
-            f"Study area {study_area} has 1 or less tidal points so cannot interpolate tide data"
-        )
-    log.info(
-        f"Study area {study_area}: Modelled tide heights for each tide modelling point"
-    )
-
-    # For each satellite timestep, spatially interpolate our modelled
-    # tide height points into the spatial extent of our satellite image,
-    # and add this new data as a new variable in our satellite dataset.
-    # This allows each satellite pixel to be analysed and filtered
-    # based on the tide height at the exact moment of each satellite
-    # image acquisition.
-    log.info(f"Study area {study_area}: Started spatially interpolating tide heights")
-    ds["tide_m"] = multiprocess_apply(
-        ds=ds, dim="time", func=partial(interpolate_tide, tidepoints_gdf=tidepoints_gdf)
-    )
-    log.info(f"Study area {study_area}: Finished spatially interpolating tide heights")
+    # For each satellite timestep, model tide heights into a low-resolution
+    # 5 x 5 km grid (matching resolution of the FES2014 tidal model), then
+    # reproject modelled tides into the spatial extent of our satellite image.
+    # Add  this new data as a new variable in our satellite dataset to allow
+    # each satellite pixel to be analysed and filtered/masked based on the
+    # tide height at the exact moment of satellite image acquisition.
+    ds["tide_m"], tides_lowres = pixel_tides(ds, resample_func=True)
+    log.info(f"Study area {study_area}: Finished modelling tide heights")
 
     # Based on the entire time-series of tide heights, compute the max
     # and min satellite-observed tide height for each pixel, then
     # calculate tide cutoffs used to restrict our data to satellite
     # observations centred over mid-tide (0 m Above Mean Sea Level).
-    tide_cutoff_min, tide_cutoff_max = tide_cutoffs(ds, tidepoints_gdf)
+    tide_cutoff_min, tide_cutoff_max = tide_cutoffs(ds, tides_lowres, tide_centre=0.0)
     log.info(
         f"Study area {study_area}: Calculating low and high tide cutoffs for each pixel"
     )

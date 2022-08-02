@@ -16,7 +16,6 @@ REQUIRED = [
     "dea_tools",
     "fiona",
     "geopandas",
-    "intertidal",
     "matplotlib",
     "numpy",
     "odc-geo"
