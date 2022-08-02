@@ -16,6 +16,7 @@ REQUIRED = [
     "dea_tools",
     "fiona",
     "geopandas",
+    "intertidal",
     "matplotlib",
     "numpy",
     "odc-geo"
@@ -53,7 +54,7 @@ setup_kwargs = {
     "author_email": EMAIL,
     "python_requires": REQUIRES_PYTHON,
     "url": URL,
-    "install_requires": REQUIRED if not IS_SANDBOX else ["dea_tools", "pyTMD", "odc-geo"],
+    "install_requires": REQUIRED if not IS_SANDBOX else ["dea_tools", "pyTMD", "odc-geo", "intertidal"],
     "packages": find_packages(),
     "include_package_data": True,
     "license": "Apache License 2.0",
