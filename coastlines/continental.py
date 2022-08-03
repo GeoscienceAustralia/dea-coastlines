@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code combines individual datasets into continental DE Africa
+# This code combines individual datasets into continental DEA
 # Coastlines layers:
 #
 #     * Combines output shorelines and rates of change statistics point

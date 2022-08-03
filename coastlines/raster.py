@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code conducts raster generation for DE Africa Coastlines:
+# This code conducts raster generation for DEA Coastlines:
 
 #     * Load stack of all available Landsat 5, 7, 8 and 9 satellite imagery
 #       for a location using ODC Virtual Products

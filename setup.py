@@ -53,7 +53,7 @@ setup_kwargs = {
     "author_email": EMAIL,
     "python_requires": REQUIRES_PYTHON,
     "url": URL,
-    "install_requires": REQUIRED if not IS_SANDBOX else ["dea_tools", "pyTMD", "odc-geo", "intertidal"],
+    "install_requires": REQUIRED if not IS_SANDBOX else [],
     "packages": find_packages(),
     "include_package_data": True,
     "license": "Apache License 2.0",

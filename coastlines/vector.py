@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This code conducts vector subpixel shoreline extraction for DE Africa
+# This code conducts vector subpixel shoreline extraction for DEA
 # Coastlines:
 #
 #     * Apply morphological extraction algorithms to mask annual median
@@ -318,7 +318,7 @@ def certainty_masking(yearly_ds, obs_threshold=5, stdev_threshold=0.25, sieve_si
     Parameters:
     -----------
     yearly_ds : xarray.Dataset
-        An `xarray.Dataset` containing annual DE Africa Coastlines
+        An `xarray.Dataset` containing annual DEA Coastlines
         rasters.
     obs_threshold : int, optional
         The minimum number of post-gapfilling Landsat observations
@@ -408,7 +408,7 @@ def contours_preprocess(
     mask_modifications=None,
 ):
     """
-    Prepares and preprocesses DE Africa Coastlines raster data to
+    Prepares and preprocesses DEA Coastlines raster data to
     restrict the analysis to coastal shorelines, and extract data
     that is used to assess the certainty of extracted shorelines.
 
@@ -425,9 +425,9 @@ def contours_preprocess(
     Parameters:
     -----------
     yearly_ds : xarray.Dataset
-        An `xarray.Dataset` containing annual DE Africa Coastlines rasters.
+        An `xarray.Dataset` containing annual DEA Coastlines rasters.
     gapfill_ds : xarray.Dataset
-        An `xarray.Dataset` containing three-year gapfill DE Africa Coastlines
+        An `xarray.Dataset` containing three-year gapfill DEA Coastlines
         rasters.
     water_index : string
         A string giving the name of the water index included in the
@@ -439,8 +439,8 @@ def contours_preprocess(
         Spatial points located within the ocean. These points are used
         by the `mask_ocean` to ensure that all coastlines are directly
         connected to the ocean. These may be obtained from the tidal
-        modelling points used in the raster generation part of the DE
-        Africa CoastLines analysis, as these are guaranteed to be
+        modelling points used in the raster generation part of the DEA
+        Coastlines analysis, as these are guaranteed to be
         located in coastal or marine waters.
     buffer_pixels : int, optional
         The number of pixels by which to buffer the all time shoreline
