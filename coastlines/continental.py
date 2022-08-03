@@ -71,14 +71,14 @@ from coastlines.utils import configure_logging, STYLES_FILE
 )
 @click.option(
     "--hotspots_radius",
-    default=[20000, 10000, 2000],
+    default=[10000, 5000, 1000],
     multiple=True,
     help="The distance (in metres) used to generate coastal "
     "change hotspots summary layers. This controls the spacing "
     "of each summary point, and the radius used to aggregate "
     "rates of change statistics around each point. "
     "The default generates three hotspot layers with radii "
-    "20000 m, 10000 m and 2000 m. To specify multiple custom "
+    "10000 m, 5000 m and 1000 m. To specify multiple custom "
     "radii, repeat this argument, e.g. "
     "`--hotspots_radius 1000 --hotspots_radius 5000`.",
 )
@@ -137,7 +137,7 @@ def continental_cli(
         os.system(
             f"ogrmerge.py -o "
             f"{OUTPUT_FILE} {shoreline_paths} "
-            f"-single -overwrite_ds -t_srs epsg:6933 "
+            f"-single -overwrite_ds -t_srs epsg:3577 "
             f"-nln shorelines_annual"
         )
         log.info("Merging annual shorelines complete")
@@ -151,7 +151,7 @@ def continental_cli(
         os.system(
             f"ogrmerge.py "
             f"-o {OUTPUT_FILE} {ratesofchange_paths} "
-            f"-single -update -t_srs epsg:6933 "
+            f"-single -update -t_srs epsg:3577 "
             f"-nln rates_of_change"
         )
         log.info("Merging rates of change points complete")

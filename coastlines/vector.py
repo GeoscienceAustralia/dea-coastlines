@@ -1158,12 +1158,13 @@ def contour_certainty(contours_gdf, certainty_masks):
 
     # Combine into a single dataframe
     contours_gdf = pd.concat(out_list).sort_index()
-    
-     # Finally, set all 1991 and 1992 coastlines north of -23 degrees
+
+    # Finally, set all 1991 and 1992 coastlines north of -23 degrees
     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
-    pinatubo_lat = ((contours_gdf.centroid.to_crs('EPSG:4326').y > -23) &
-                    (contours_gdf.index.isin(['1991', '1992'])))
-    contours_gdf.loc[pinatubo_lat, 'certainty'] = 'aerosol issues'
+    pinatubo_lat = (contours_gdf.centroid.to_crs("EPSG:4326").y > -23) & (
+        contours_gdf.index.isin(["1991", "1992"])
+    )
+    contours_gdf.loc[pinatubo_lat, "certainty"] = "aerosol issues"
 
     return contours_gdf
 
@@ -1355,10 +1356,10 @@ def generate_vectors(
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
 
-    # Coastal mask modifications
-    modifications_gdf = gpd.read_file(
-        config["Input files"]["modifications_path"], bbox=bbox
-    ).to_crs(str(yearly_ds.crs))
+    #     # Coastal mask modifications
+    #     modifications_gdf = gpd.read_file(
+    #         config["Input files"]["modifications_path"], bbox=bbox
+    #     ).to_crs(str(yearly_ds.crs))
 
     # Geomorphology dataset
     geomorphology_gdf = gpd.read_file(
@@ -1382,11 +1383,15 @@ def generate_vectors(
         index_threshold,
         tide_points_gdf,
         buffer_pixels=33,
-        mask_modifications=modifications_gdf,
+        mask_landcover=False,
+        mask_modifications=None,
     )
     # Extract annual shorelines
     contours_gdf = subpixel_contours(
-        da=masked_ds, z_values=index_threshold, min_vertices=10, dim="year"
+        da=masked_ds,
+        z_values=index_threshold + 1e-12,
+        min_vertices=10,
+        dim="year",
     ).set_index("year")
     log.info(f"Study area {study_area}: Extracted annual shorelines")
 
@@ -1439,24 +1444,57 @@ def generate_vectors(
         # Add certainty column to flag points with:
         # - Likely rocky shorelines: Rates of change can be unreliable in areas
         #   with steep rocky/bedrock shorelines due to terrain shadow.
-        # - Extreme rate of change value (> 200 m per year change): these are more
+        # - Extreme rate of change value (> 50 m per year change): these are more
         #   likely to reflect modelling issues than real-world coastal change
         # - High angular variability: the nearest shorelines for each year do not
         #   fall on an approximate line, making rates of change invalid
-        # - Insufficient observations: less than 15 valid annual shorelines, which
+        # - Insufficient observations: less than 25 valid annual shorelines, which
         #   make the resulting rates of change more likely to be inaccurate
+        rocky = [
+            "Bedrock breakdown debris (cobbles/boulders)",
+            "Boulder (rock) beach",
+            "Cliff (>5m) (undiff)",
+            "Colluvium (talus) undiff",
+            "Flat boulder deposit (rock) undiff",
+            "Hard bedrock shore",
+            "Hard bedrock shore inferred",
+            "Hard rock cliff (>5m)",
+            "Hard rocky shore platform",
+            "Rocky shore (undiff)",
+            "Rocky shore platform (undiff)",
+            "Sloping hard rock shore",
+            "Sloping rocky shore (undiff)",
+            "Soft `bedrock¿ cliff (>5m)",
+            "Steep boulder talus",
+            "Hard rocky shore platform",
+        ]
+
+        # Initialise certainty column with good values
         points_gdf["certainty"] = "good"
+
+        # Flag rocky shorelines
         points_gdf.loc[
-            rocky_shoreline_flag(points_gdf, geomorphology_gdf), "certainty"
-        ] = "likely rocky shoreline"
+            rocky_shoreline_flag(
+                points_gdf,
+                geomorphology_gdf,
+                rocky_query=f"(INTERTD1_V in {rocky}) & (INTERTD2_V in {rocky + ['Unclassified']})",
+            ),
+            "certainty",
+        ] = "likely rocky coastline"
+
+        # Flag extreme rates of change
         points_gdf.loc[
-            points_gdf.rate_time.abs() > 200, "certainty"
-        ] = "extreme value (> 200 m)"
+            points_gdf.rate_time.abs() > 50, "certainty"
+        ] = "extreme value (> 50 m)"
+
+        # Flag points where change does not fall on a line
         points_gdf.loc[
             points_gdf.angle_std > 30, "certainty"
         ] = "high angular variability"
+
+        # Flag shorelines with less than X valid shorelines
         points_gdf.loc[
-            points_gdf.valid_obs < 15, "certainty"
+            points_gdf.valid_obs < 25, "certainty"
         ] = "insufficient observations"
 
         log.info(f"Study area {study_area}: Calculated rate of change certainty flags")
@@ -1467,7 +1505,7 @@ def generate_vectors(
 
         # Add region attributes
         points_gdf = region_atttributes(
-            points_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
+            points_gdf, region_gdf, attribute_col="ID_Primary", rename_col="id_primary"
         )
 
         if points_gdf is not None and len(points_gdf) > 0:
@@ -1482,12 +1520,12 @@ def generate_vectors(
                     "outl_time": "str:80",
                     "angle_mean": "int:3",
                     "angle_std": "int:3",
-                    "valid_obs": "int:2",
-                    "valid_span": "int:2",
+                    "valid_obs": "int:4",
+                    "valid_span": "int:4",
                     "max_year": "int:4",
                     "min_year": "int:4",
                     "certainty": "str:25",
-                    "country": "str:32",
+                    "id_primary": "str:10",
                 }
             )
             col_schema = schema_dict.items()
@@ -1525,9 +1563,9 @@ def generate_vectors(
 
     # Add region attributes
     contours_gdf = region_atttributes(
-        contours_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
+        contours_gdf, region_gdf, attribute_col="ID_Primary", rename_col="id_primary"
     )
-
+    
     # Clip annual shorelines to study area extent
     contour_path = (
         f"{output_dir}/annualshorelines_"
