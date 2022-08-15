@@ -19,13 +19,13 @@ import warnings
 import click
 import pyproj
 import datacube
-import geopandas as gpd
-import numpy as np
 import odc.algo
+import numpy as np
 import pandas as pd
 import xarray as xr
+import geohash as gh
+import geopandas as gpd
 from affine import Affine
-from dea_tools.spatial import subpixel_contours, xr_vectorize, xr_rasterize
 from rasterio.features import sieve
 from rasterio.transform import array_bounds
 from scipy.stats import circstd, circmean, linregress
@@ -35,6 +35,7 @@ from skimage.measure import label, regionprops
 from skimage.morphology import binary_closing, binary_dilation, dilation, disk
 
 from coastlines.utils import configure_logging, load_config
+from dea_tools.spatial import subpixel_contours, xr_vectorize, xr_rasterize
 
 # Hide specific warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -1287,6 +1288,65 @@ def region_atttributes(gdf, region_gdf, attribute_col="TERRITORY1", rename_col=F
     return joined_df
 
 
+def vector_schema(gdf, default="float:8.2"):
+    """
+    Creates a schema passed to `gdf.to_file(schema=...)` that
+    sets the dtype and precision of each DEA Coastlines column
+    in `gdf`.
+
+    This helps to greatly reduce the size of the output
+    files on disk.
+
+    Parameters:
+    -----------
+    gdf : geopandas.GeoDataFrame
+        The input vector dataset containing one or more columns/
+        attribute fields.
+    default : string, optional
+        An optional string giving the default dtype/precision of
+        any column in `gdf` that does not exist in the list of
+        custom fields below. Defaults to 'float:8.2' for a floating
+        point column with two decimal places precision.
+
+    Returns:
+    --------
+    schema_dict : dict
+        A dictionary mapping all columns in `gdf` to a dtype/precision.
+        This can be passed to `gdf.to_file(schema=...)`.
+    """
+
+    # Create default value for all fields
+    schema_dict = {key: "float:8.2" for key in gdf.reset_index().columns}
+
+    # Update default to custom values
+    schema_dict.update(
+        {
+            "uid": "str:10",
+            "sig_time": "float:8.3",
+            "outl_time": "str:80",
+            "angle_mean": "int:3",
+            "angle_std": "int:3",
+            "valid_obs": "int:4",
+            "valid_span": "int:4",
+            "max_year": "int:4",
+            "min_year": "int:4",
+            "certainty": "str:25",
+            "id_primary": "str:10",
+            "year": "int:4",
+            "tide_datum": "str:20",
+            "wms_conf": "float:8.1",
+            "wms_grew": "int:1",
+            "wms_retr": "int:1",
+            "wms_sig": "int:1",
+        }
+    )
+
+    # Filter to columns in data
+    return {
+        key: schema_dict[key] for key in gdf.reset_index().columns if key != "geometry"
+    }
+
+
 def generate_vectors(
     config,
     study_area,
@@ -1499,55 +1559,51 @@ def generate_vectors(
 
         log.info(f"Study area {study_area}: Calculated rate of change certainty flags")
 
-        ################
-        # Export stats #
-        ################
-
         # Add region attributes
         points_gdf = region_atttributes(
             points_gdf, region_gdf, attribute_col="ID_Primary", rename_col="id_primary"
         )
 
+        # Generate a geohash UID for each point and set as index
+        uids = (
+            points_gdf.geometry.to_crs("EPSG:4326")
+            .apply(lambda x: gh.encode(x.y, x.x, precision=10))
+            .rename("uid")
+        )
+        points_gdf = points_gdf.set_index(uids)
+
+        log.info(f"Study area {study_area}: Added region attributes and geohash UIDs")
+
+        ################
+        # Export stats #
+        ################
+
         if points_gdf is not None and len(points_gdf) > 0:
 
-            # Set up scheme to optimise file size
-            schema_dict = {
-                key: "float:8.2" for key in points_gdf.columns if key != "geometry"
-            }
-            schema_dict.update(
-                {
-                    "sig_time": "float:8.3",
-                    "outl_time": "str:80",
-                    "angle_mean": "int:3",
-                    "angle_std": "int:3",
-                    "valid_obs": "int:4",
-                    "valid_span": "int:4",
-                    "max_year": "int:4",
-                    "min_year": "int:4",
-                    "certainty": "str:25",
-                    "id_primary": "str:10",
-                }
-            )
-            col_schema = schema_dict.items()
-
             # Clip stats to study area extent
-            stats_path = (
-                f"{output_dir}/ratesofchange_"
-                f"{study_area}_{vector_version}_"
-                f"{water_index}_{index_threshold:.2f}"
-            )
             points_gdf = points_gdf[points_gdf.intersects(gridcell_gdf.geometry.item())]
+
+            # Set output path
+            stats_path = (
+                f"{output_dir}/ratesofchange_{study_area}_"
+                f"{vector_version}_{water_index}_{index_threshold:.2f}"
+            )
 
             # Export to GeoJSON
             points_gdf.to_crs("EPSG:4326").to_file(
-                f"{stats_path}.geojson", driver="GeoJSON"
+                f"{stats_path}.geojson",
+                driver="GeoJSON",
             )
 
             # Export as ESRI shapefiles
             points_gdf.to_file(
                 f"{stats_path}.shp",
-                schema={"properties": col_schema, "geometry": "Point"},
+                schema={
+                    "properties": vector_schema(points_gdf),
+                    "geometry": "Point",
+                },
             )
+
         else:
             log.warning(f"Study area {study_area}: No points to process")
 
@@ -1559,26 +1615,34 @@ def generate_vectors(
     contours_gdf = contour_certainty(contours_gdf, certainty_masks)
 
     # Add tide datum details (this supports future addition of extra tide datums)
-    contours_gdf["tide_datum"] = "0 m AMSL (approx)"
+    contours_gdf["tide_datum"] = "0 m AMSL"
 
     # Add region attributes
     contours_gdf = region_atttributes(
         contours_gdf, region_gdf, attribute_col="ID_Primary", rename_col="id_primary"
-    )
+    )    
     
-    # Clip annual shorelines to study area extent
+    # Set output path
     contour_path = (
-        f"{output_dir}/annualshorelines_"
-        f"{study_area}_{vector_version}_"
+        f"{output_dir}/annualshorelines_{study_area}_{vector_version}_"
         f"{water_index}_{index_threshold:.2f}"
     )
-    contours_gdf["geometry"] = contours_gdf.intersection(gridcell_gdf.geometry.item())
-    contours_gdf.reset_index().to_crs("EPSG:4326").to_file(
-        f"{contour_path}.geojson", driver="GeoJSON"
-    )
 
-    # Export rates of change and annual shorelines as ESRI shapefiles
-    contours_gdf.reset_index().to_file(f"{contour_path}.shp")
+    # Clip annual shoreline contours to study area extent
+    contours_gdf["geometry"] = contours_gdf.intersection(gridcell_gdf.geometry.item())
+
+    # Export to GeoJSON
+    contours_gdf.to_crs("EPSG:4326").to_file(f"{contour_path}.geojson", driver="GeoJSON")
+
+    # Export stats and contours as ESRI shapefiles
+    contours_gdf.to_file(
+        f"{contour_path}.shp",
+        schema={
+            "properties": vector_schema(contours_gdf),
+            "geometry": ["MultiLineString", "LineString"],
+        },
+    )
+    
     log.info(f"Study area {study_area}: Output vector files written to {output_dir}")
 
 
@@ -1640,19 +1704,19 @@ def generate_vectors(
 @click.option(
     "--start_year",
     type=int,
-    default=2000,
+    default=1988,
     help="The first annual shoreline to extract from the input raster data.",
 )
 @click.option(
     "--end_year",
     type=int,
-    default=2020,
+    default=2021,
     help="The final annual shoreline to extract from the input raster data.",
 )
 @click.option(
     "--baseline_year",
     type=int,
-    default=2020,
+    default=2021,
     help="The annual shoreline used as a baseline from "
     "which to generate the rates of change point statistics. "
     "This is typically the most recent annual shoreline in "

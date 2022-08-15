@@ -15,6 +15,7 @@ REQUIRED = [
     "datacube",
     "dea_tools",
     "fiona",
+    "geohash",
     "geopandas",
     "matplotlib",
     "numpy",

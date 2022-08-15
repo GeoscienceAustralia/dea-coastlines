@@ -16,11 +16,39 @@ import sys
 import fiona
 import click
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 from pathlib import Path
 
 from coastlines.vector import points_on_line, change_regress
 from coastlines.utils import configure_logging, STYLES_FILE
+
+
+def wms_fields(gdf):
+    """
+    Calculates several addition fields required
+    for the WMS/TerriaJS Coastlines visualisation.
+
+    Parameters:
+    -----------
+    gdf : geopandas.GeoDataFrame
+        The input rate of change points vector dataset.
+
+    Returns:
+    --------
+    A `pandas.DataFrame` containing additional fields
+    with a "wms_*" prefix.
+    """
+
+    return pd.DataFrame(
+        dict(
+            wms_abs=gdf.rate_time.abs(),
+            wms_conf=gdf.se_time * 1.96,
+            wms_grew=gdf.rate_time < 0,
+            wms_retr=gdf.rate_time > 0,
+            wms_sig=gdf.sig_time <= 0,
+        )
+    )
 
 
 @click.command()
@@ -85,7 +113,7 @@ from coastlines.utils import configure_logging, STYLES_FILE
 @click.option(
     "--baseline_year",
     type=int,
-    default=2020,
+    default=2021,
     help="The annual shoreline used to generate the hotspot "
     "summary points. This is typically the most recent "
     "annual shoreline in the dataset.",
