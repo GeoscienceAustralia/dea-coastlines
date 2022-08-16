@@ -1,5 +1,7 @@
 > **Note: This branch contains the Australia-specific implementation of DEA Coastlines.** For a more flexible implementation adapted to globally available USGS Collection 2 Level 2 Landsat data, we recommend using the [Digital Earth Africa Coastlines](https://github.com/digitalearthafrica/deafrica-coastlines/) implementation instead.
 
+> To access the latest unstable version of this code based on the `FES2014` global tide model, **[visit the develop branch of this repository](https://github.com/GeoscienceAustralia/dea-coastlines/tree/develop).**
+
 ![Digital Earth Australia Coastlines](visualisation/images/DEACoastlines_header.gif)
 
 # Digital Earth Australia Coastlines
