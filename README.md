@@ -39,6 +39,13 @@ The ability to map shoreline positions for each year provides valuable insights 
         * [Jupyter notebooks](#jupyter-notebooks)
     * [Running a DEA Coastlines analysis using the command-line interface (CLI)](#running-a-dea-coastlines-analysis-using-the-command-line-interface-cli)
         * [Analysis outputs](#analysis-outputs)
+* [Data access](#data-access)
+    * [Data download](#data-download)
+    * [Interactive map](#interactive-map)
+    * [Web Feature Service (WFS)](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
+        * [Python](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-python)
+        * [R](#loading-dea-coastlines-data-from-the-web-feature-service-wfs-using-r)
+    * [Introductory Jupyter notebook](#jupyter-notebook)
 * [References](#references)
 
 ---
