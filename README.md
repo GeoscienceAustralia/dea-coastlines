@@ -49,9 +49,10 @@ The code currently runs on the [Digital Earth Australia Sandbox](https://app.san
 
 #### Getting started
 
-Clone the `dea-coastlines` repository:
+Clone the `dea-coastlines` repository and checkout the `develop` branch:
 ```
 git clone https://github.com/GeoscienceAustralia/dea-coastlines.git
+git checkout --track origin/develop
 ```
 
 ##### FES2014 tidal model
