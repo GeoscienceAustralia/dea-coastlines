@@ -1,4 +1,3 @@
----
 ![Digital Earth Africa Coastlines](visualisation/images/DEACoastlines_header.gif)
 
 # Digital Earth Australia Coastlines
