@@ -110,14 +110,15 @@ data/interim/raster/{unique_analysis_name}/{unique_analysis_name}_{study_area_na
 data/interim/vector/{unique_analysis_name}/{unique_analysis_name}_{study_area_name}
 ```
 
-Once all study area grid cells have been processed, these are combined into a continental-scale output GeoPackage vector file using [`coastlines.continental`](coastlines/continental.py). This final output is exported to:
+Once all study area grid cells have been processed, these are combined into a continental-scale output GeoPackage vector file and zipped ESRI Shapefiles using [`coastlines.continental`](coastlines/continental.py). These final outputs are exported to:
 ```
 data/processed/{unique_analysis_name}/coastlines_{continental_version}.gpkg
+data/processed/{unique_analysis_name}/coastlines_{continental_version}.shp.zip
 ```
 
 ---
 ## Credits
-Tidal modelling is provided by the [FES2014 global tidal model](https://www.aviso.altimetry.fr/es/data/products/auxiliary-products/global-tide-fes/description-fes2014.html). FES2014 was produced by NOVELTIS, LEGOS, CLS Space Oceanography Division and CNES. It is distributed by AVISO, with support from CNES (http://www.aviso.altimetry.fr/).
+Tidal modelling is provided by the [FES2014 global tidal model](https://www.aviso.altimetry.fr/es/data/products/auxiliary-products/global-tide-fes/description-fes2014.html), implemented using the [pyTMD Python package](). FES2014 was produced by NOVELTIS, LEGOS, CLS Space Oceanography Division and CNES. It is distributed by AVISO, with support from CNES (http://www.aviso.altimetry.fr/).
 
 
 ## References
