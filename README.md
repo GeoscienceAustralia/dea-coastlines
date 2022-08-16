@@ -118,6 +118,89 @@ data/processed/{unique_analysis_name}/coastlines_{continental_version}.shp.zip
 ```
 
 ---
+### Data access
+
+#### Data download
+
+To download DEA Coastlines data for the entire Australian coastline, visit the "Access" tab of the [Geoscience Australia DEA Coastlines product description](https://cmi.ga.gov.au/data-products/dea/581/dea-coastlines#access) and follow the instructions under "Access notes". Data is available in two formats:
+
+* GeoPackage (recommended): suitable for QGIS; includes built-in symbology for easier interpretation
+* ESRI Shapefiles: suitable for ArcMap and QGIS
+
+#### Interactive map
+
+To explore DEA Coastlines on an interactive map, visit the [Digital Earth Australia Maps platform](https://maps.dea.ga.gov.au/story/DEACoastlines).
+
+![Zooming to annual rates of change and plotting chart in DEA Maps](https://data.dea.ga.gov.au/projects/coastlines/DEACoastLines_DEAMaps_1.gif)
+
+
+#### Loading DEA Coastlines data from the Web Feature Service (WFS) using Python
+
+DEA Coastlines data can be loaded directly in a Python script or Jupyter Notebook using the DEA Coastlines Web Feature Service (WFS) and `geopandas`:
+
+```
+import geopandas as gpd
+
+# Specify bounding box
+ymax, xmin = -33.65, 115.28
+ymin, xmax = -33.66, 115.30
+
+# Set up WFS requests for annual coastlines & rates of change statistics
+deacl_coastlines_wfs = f'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       f'service=WFS&version=1.1.0&request=GetFeature' \
+                       f'&typeName=dea:coastlines&maxFeatures=1000' \
+                       f'&bbox={ymin},{xmin},{ymax},{xmax},' \
+                       f'urn:ogc:def:crs:EPSG:4326'
+deacl_statistics_wfs = f'https://geoserver.dea.ga.gov.au/geoserver/wfs?' \
+                       f'service=WFS&version=1.1.0&request=GetFeature' \
+                       f'&typeName=dea:coastlines_statistics&maxFeatures=1000' \
+                       f'&bbox={ymin},{xmin},{ymax},{xmax},' \
+                       f'urn:ogc:def:crs:EPSG:4326'
+
+# Load DEA Coastlines data from WFS using geopandas
+deacl_coastlines_gdf = gpd.read_file(deacl_coastlines_wfs)
+deacl_statistics_gdf = gpd.read_file(deacl_statistics_wfs)
+
+# Ensure CRSs are set correctly
+deacl_coastlines_gdf.crs = 'EPSG:3577'
+deacl_statistics_gdf.crs = 'EPSG:3577'
+```
+
+### Loading DEA Coastlines data from the Web Feature Service (WFS) using R
+DEA Coastlines data can be loaded directly into `R` using the DEA Coastlines Web Feature Service (WFS) and `sf`:
+
+```
+library(magrittr)
+library(glue)
+library(sf)
+
+# Specify bounding box
+xmin = 115.28
+xmax = 115.30
+ymin = -33.66
+ymax = -33.65
+
+# Read in DEA Coastlines annual coastline data, using `glue` to insert our bounding
+# box into the string, and `sf` to  load the spatial data from the Web Feature
+# Service and set the Coordinate Reference System to Australian Albers (EPSG:3577)
+deacl_coastlines = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=dea:coastlines&maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax},urn:ogc:def:crs:EPSG:4326" %>% 
+  glue::glue() %>%
+  sf::read_sf() %>% 
+  sf::st_set_crs(3577)
+
+# Read in DEA Coastlines rates of change statistics data
+deacl_statistics = "https://geoserver.dea.ga.gov.au/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=dea:coastlines_statistics&maxFeatures=1000&bbox={ymin},{xmin},{ymax},{xmax},urn:ogc:def:crs:EPSG:4326" %>% 
+  glue::glue() %>%
+  sf::read_sf() %>% 
+  sf::st_set_crs(3577)
+```
+
+#### Jupyter Notebook
+An [Introduction to DEA Coastlines](https://docs.dea.ga.gov.au/notebooks/DEA_datasets/DEA_Coastlines.html) Jupyter notebook providing additional useful tools for loading and analysing DEA Coastlines data can be found on the [DEA Notebooks repository](https://github.com/GeoscienceAustralia/dea-notebooks). This notebook is available on the interactive [DEA Sandbox learning and analysis environment](https://docs.dea.ga.gov.au/setup/Sandbox/sandbox.html) for easy access via a web browser.
+
+
+
+---
 ## Credits
 Tidal modelling is provided by the [FES2014 global tidal model](https://www.aviso.altimetry.fr/es/data/products/auxiliary-products/global-tide-fes/description-fes2014.html), implemented using the [pyTMD Python package](). FES2014 was produced by NOVELTIS, LEGOS, CLS Space Oceanography Division and CNES. It is distributed by AVISO, with support from CNES (http://www.aviso.altimetry.fr/).
 
