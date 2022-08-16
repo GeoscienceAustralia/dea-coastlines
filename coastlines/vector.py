@@ -1321,7 +1321,8 @@ def vector_schema(gdf, default="float:8.2"):
     # Update default to custom values
     schema_dict.update(
         {
-            "uid": "str:10",
+            # Rates of change
+            "uid": "str:11",
             "sig_time": "float:8.3",
             "outl_time": "str:80",
             "angle_mean": "int:3",
@@ -1332,8 +1333,16 @@ def vector_schema(gdf, default="float:8.2"):
             "min_year": "int:4",
             "certainty": "str:25",
             "id_primary": "str:10",
+            
+            # Annual shorelines only
             "year": "int:4",
             "tide_datum": "str:20",
+            
+            # Hotspots only
+            "n": "int:6",
+            "radius_m": "int:6",
+            
+            # WMS only
             "wms_conf": "float:8.1",
             "wms_grew": "int:1",
             "wms_retr": "int:1",
