@@ -21,7 +21,6 @@
 import os
 import sys
 import warnings
-import multiprocess
 from functools import partial
 from collections import Counter
 
@@ -237,7 +236,7 @@ def terrain_shadow_masking(dc, query, ds, dem_product="dem_cop_30"):
     dem_ds = dem_ds.where(dem_ds.elevation >= 0)
 
     # Identify terrain shadow across all timesteps
-    terrain_shadow_ds = multiprocess_apply(
+    terrain_shadow_ds = parallel_apply(
         sun_angles_ds,
         dim="time",
         func=partial(terrain_shadow, dem=dem_ds.elevation.values),
