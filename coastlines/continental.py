@@ -8,6 +8,7 @@
 #       vectors into single continental datasets
 #     * Aggregates this data to produce moving window hotspot datasets
 #       that summarise coastal change at regional and continental scale.
+#     * Writes outputs to GeoPackage and zipped shapefiles
 
 
 import os
@@ -16,11 +17,40 @@ import sys
 import fiona
 import click
 import numpy as np
+import pandas as pd
+import geohash as gh
 import geopandas as gpd
 from pathlib import Path
 
-from coastlines.vector import points_on_line, change_regress
 from coastlines.utils import configure_logging, STYLES_FILE
+from coastlines.vector import points_on_line, change_regress, vector_schema
+
+
+def wms_fields(gdf):
+    """
+    Calculates several addition fields required
+    for the WMS/TerriaJS Coastlines visualisation.
+
+    Parameters:
+    -----------
+    gdf : geopandas.GeoDataFrame
+        The input rate of change points vector dataset.
+
+    Returns:
+    --------
+    A `pandas.DataFrame` containing additional fields
+    with a "wms_*" prefix.
+    """
+
+    return pd.DataFrame(
+        dict(
+            wms_abs=gdf.rate_time.abs(),
+            wms_conf=gdf.se_time * 1.96,
+            wms_grew=gdf.rate_time < 0,
+            wms_retr=gdf.rate_time > 0,
+            wms_sig=gdf.sig_time <= 0,
+        )
+    )
 
 
 @click.command()
@@ -71,14 +101,14 @@ from coastlines.utils import configure_logging, STYLES_FILE
 )
 @click.option(
     "--hotspots_radius",
-    default=[20000, 10000, 2000],
+    default=[15000, 5000, 1000],
     multiple=True,
     help="The distance (in metres) used to generate coastal "
     "change hotspots summary layers. This controls the spacing "
     "of each summary point, and the radius used to aggregate "
     "rates of change statistics around each point. "
     "The default generates three hotspot layers with radii "
-    "20000 m, 10000 m and 2000 m. To specify multiple custom "
+    "15000 m, 5000 m and 1000 m. To specify multiple custom "
     "radii, repeat this argument, e.g. "
     "`--hotspots_radius 1000 --hotspots_radius 5000`.",
 )
@@ -129,14 +159,20 @@ def continental_cli(
         f"data/interim/vector/{vector_version}/*/" f"ratesofchange*.shp"
     )
 
-    OUTPUT_FILE = output_dir / f"coastlines_{continental_version}.gpkg"
+    # Output path for geopackage and zipped shapefiles
+    OUTPUT_GPKG = output_dir / f"deafricacoastlines_{continental_version}.gpkg"
+    OUTPUT_SHPS = output_dir / f"deafricacoastlines_{continental_version}.shp.zip"
+    
+    # If shapefile zip exists, delete it first
+    if OUTPUT_SHPS.exists():
+        OUTPUT_SHPS.unlink()    
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
 
         os.system(
             f"ogrmerge.py -o "
-            f"{OUTPUT_FILE} {shoreline_paths} "
+            f"{OUTPUT_GPKG} {shoreline_paths} "
             f"-single -overwrite_ds -t_srs epsg:6933 "
             f"-nln shorelines_annual"
         )
@@ -150,7 +186,7 @@ def continental_cli(
 
         os.system(
             f"ogrmerge.py "
-            f"-o {OUTPUT_FILE} {ratesofchange_paths} "
+            f"-o {OUTPUT_GPKG} {ratesofchange_paths} "
             f"-single -update -t_srs epsg:6933 "
             f"-nln rates_of_change"
         )
@@ -176,8 +212,16 @@ def continental_cli(
         # Load continental shoreline and rates of change data
         try:
 
-            ratesofchange_gdf = gpd.read_file(OUTPUT_FILE, layer="rates_of_change")
-            shorelines_gdf = gpd.read_file(OUTPUT_FILE, layer="shorelines_annual")
+            # Load continental rates of change data
+            ratesofchange_gdf = gpd.read_file(
+                OUTPUT_GPKG, layer="rates_of_change"
+            ).set_index("uid")
+
+            # Load continental shorelines data
+            shorelines_gdf = gpd.read_file(
+                OUTPUT_GPKG, layer="shorelines_annual"
+            ).set_index("year")
+            shorelines_gdf = shorelines_gdf.loc[shorelines_gdf.geometry.is_valid]
 
         except (fiona.errors.DriverError, ValueError):
 
@@ -188,16 +232,6 @@ def continental_cli(
                 "settings: `--shorelines True --ratesofchange True`."
             )
 
-        # Set year index on coastlines
-        shorelines_gdf = shorelines_gdf.loc[shorelines_gdf.geometry.is_valid].set_index(
-            "year"
-        )
-
-        # Drop uncertain points from calculation
-        ratesofchange_gdf = ratesofchange_gdf.loc[
-            ratesofchange_gdf.certainty == "good"
-        ].reset_index(drop=True)
-
         ######################
         # Calculate hotspots #
         ######################
@@ -207,17 +241,20 @@ def continental_cli(
             # Extract hotspot points
             log.info(f"Calculating {radius} m hotspots")
             hotspots_gdf = points_on_line(
-                shorelines_gdf, index=str(baseline_year), distance=int(radius / 2)
+                shorelines_gdf,
+                index=baseline_year,
+                distance=int(radius / 2),
             )
 
             # Create polygon windows by buffering points
             buffered_gdf = hotspots_gdf[["geometry"]].copy()
             buffered_gdf["geometry"] = buffered_gdf.buffer(radius)
-
+            
             # Spatial join rate of change points to each polygon
             hotspot_grouped = (
                 ratesofchange_gdf.loc[
-                    :, ratesofchange_gdf.columns.str.contains("dist_|geometry")
+                    ratesofchange_gdf.certainty == "good",
+                    ratesofchange_gdf.columns.str.contains("dist_|geometry"),
                 ]
                 .sjoin(buffered_gdf, predicate="within")
                 .groupby("index_right")
@@ -251,37 +288,51 @@ def continental_cli(
             # Add hotspots radius attribute column
             hotspots_gdf["radius_m"] = radius
 
-            # Drop any points with insufficient observations.
-            # We can obtain a sensible threshold by dividing the hotspots
-            # radius by the 30 m along-shore rates of change point distance)
+            # Initialise certainty column with good values
+            hotspots_gdf["certainty"] = "good"
+
+            # Identify any points with insufficient observations and flag these as
+            # uncertain. We can obtain a sensible threshold by dividing the
+            # hotspots radius by 30 m along-shore rates of change point distance)
             hotspots_gdf["n"] = hotspot_grouped.size()
-            hotspots_gdf = hotspots_gdf.loc[hotspots_gdf.n > (radius / 30)]
+            hotspots_gdf["n"] = hotspots_gdf["n"].fillna(0)
+            hotspots_gdf.loc[
+                hotspots_gdf.n < (radius / 30), "certainty"
+            ] = "insufficient points"
+
+            # Generate a geohash UID for each point and set as index
+            uids = (
+                hotspots_gdf.geometry.to_crs("EPSG:4326")
+                .apply(lambda x: gh.encode(x.y, x.x, precision=11))
+                .rename("uid")
+            )
+            hotspots_gdf = hotspots_gdf.set_index(uids)
 
             # Export hotspots to file, incrementing name for each layer
             try:
 
-                # Set up schema to optimise file size
-                schema_dict = {
-                    key: "float:8.2"
-                    for key in hotspots_gdf.columns
-                    if key != "geometry"
-                }
-                schema_dict.update(
-                    {
-                        "sig_time": "float:8.3",
-                        "outl_time": "str:80",
-                        "radius_m": "int:5",
-                        "n": "int:4",
-                    }
-                )
-                col_schema = schema_dict.items()
-
-                # Export file
+                # Export to geopackage
                 layer_name = f"hotspots_zoom_{range(0, 10)[i + 1]}"
                 hotspots_gdf.to_file(
-                    OUTPUT_FILE,
+                    OUTPUT_GPKG,
                     layer=layer_name,
-                    schema={"properties": col_schema, "geometry": "Point"},
+                    schema={
+                        "properties": vector_schema(hotspots_gdf),
+                        "geometry": "Point",
+                    },
+                )
+
+                # Add additional WMS fields and add to shapefile
+                hotspots_gdf = pd.concat(
+                    [hotspots_gdf, wms_fields(gdf=hotspots_gdf)], axis=1
+                )
+                hotspots_gdf.to_file(
+                    OUTPUT_SHPS,
+                    layer=f"coastlines_{continental_version}_{layer_name}",
+                    schema={
+                        "properties": vector_schema(hotspots_gdf),
+                        "geometry": "Point",
+                    },
                 )
 
             except ValueError as e:
@@ -295,19 +346,53 @@ def continental_cli(
 
         log.info("Not writing hotspots...")
 
+    ############################
+    # Export zipped shapefiles #
+    ############################
+
+    if ratesofchange:
+        
+        # Add rates of change points to shapefile zip
+        # Add additional WMS fields and add to shapefile
+        ratesofchange_gdf = pd.concat(
+            [ratesofchange_gdf, wms_fields(gdf=ratesofchange_gdf)], axis=1
+        )
+
+        ratesofchange_gdf.to_file(
+            OUTPUT_SHPS,
+            layer=f"coastlines_{continental_version}_rates_of_change",
+            schema={"properties": vector_schema(ratesofchange_gdf), "geometry": "Point"},
+        )
+        
+        log.info("Writing rates of change points to zipped shapefiles complete")
+
+    if shorelines:
+        
+        # Add annual shorelines to shapefile zip
+        shorelines_gdf.to_file(
+            OUTPUT_SHPS,
+            layer=f"coastlines_{continental_version}_shorelines_annual",
+            schema={
+                "properties": vector_schema(shorelines_gdf),
+                "geometry": ["MultiLineString", "LineString"],
+            },
+        )
+        
+        log.info("Writing annual shorelines to zipped shapefiles complete")
+    
     #########################
     # Add GeoPackage styles #
     #########################
 
     if include_styles:
 
-        log.info("Writing styles in the GeoPackage file")
         styles = gpd.read_file(STYLES_FILE)
-        styles.to_file(OUTPUT_FILE, layer="layer_styles")
+        styles.to_file(OUTPUT_GPKG, layer="layer_styles")
+        log.info("Writing styles to GeoPackage file complete")
 
     else:
 
-        log.info("Not writing styles")
+        log.info("Not writing styles to GeoPackage")
 
 
 if __name__ == "__main__":
