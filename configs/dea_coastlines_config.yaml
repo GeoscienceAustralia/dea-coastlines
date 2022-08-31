@@ -2,7 +2,7 @@ Virtual product:
     virtual_product_path: configs/dea_virtual_product_landsat.yaml
     virtual_product_name: ls_nbart_ndwi
 Input files:
-    grid_path: data/raw/50km_albers_grid_clipped.geojson
+    grid_path: data/raw/ga_summary_grid_c3_32km_coastal.geojson
     points_path: data/raw/tide_points_coastal.geojson
     modifications_path: data/raw/estuary_mask_modifications.geojson
     geomorphology_path: data/raw/Smartline.gpkg
