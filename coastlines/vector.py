@@ -1337,6 +1337,7 @@ def vector_schema(gdf, default="float:8.2"):
             "wms_grew": "int:1",
             "wms_retr": "int:1",
             "wms_sig": "int:1",
+            "wms_good": "int:1",
         }
     )
 
@@ -1496,8 +1497,16 @@ def generate_vectors(
         )
         log.info(f"Study area {study_area}: Calculated all of time statistics")
 
+        # Add region attributes
+        points_gdf = region_atttributes(
+            points_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
+        )
+
         # Add certainty column to flag points with:
-        # - Likely rocky shorelines: Rates of change can be unreliable in areas
+        # - Offshore islands: Points located in offshore island nations where
+        #   Coastlines data is affected by high levels of noise, potentially
+        #   related to aerosol issues in the input Landsat Collection 2 ARD data.
+        # - Likely rocky coastline: Rates of change can be unreliable in areas
         #   with steep rocky/bedrock shorelines due to terrain shadow.
         # - Extreme rate of change value (> 200 m per year change): these are more
         #   likely to reflect modelling issues than real-world coastal change
@@ -1506,9 +1515,20 @@ def generate_vectors(
         # - Insufficient observations: less than 15 valid annual shorelines, which
         #   make the resulting rates of change more likely to be inaccurate
         points_gdf["certainty"] = "good"
+        offshore_island_nations = [
+            "Seychelles",
+            "Sao Tome and Principe",
+            "Cape Verde",
+            "Republic of Mauritius",
+            "Comores",
+        ]
+        points_gdf.loc[
+            points_gdf.country.isin(offshore_island_nations),
+            "certainty",
+        ] = "offshore islands"
         points_gdf.loc[
             rocky_shoreline_flag(points_gdf, geomorphology_gdf), "certainty"
-        ] = "likely rocky shoreline"
+        ] = "likely rocky coastline"
         points_gdf.loc[
             points_gdf.rate_time.abs() > 200, "certainty"
         ] = "extreme value (> 200 m)"
@@ -1518,11 +1538,6 @@ def generate_vectors(
         points_gdf.loc[
             points_gdf.valid_obs < 15, "certainty"
         ] = "insufficient observations"
-
-        # Add region attributes
-        points_gdf = region_atttributes(
-            points_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
-        )
 
         # Generate a geohash UID for each point and set as index
         uids = (
@@ -1581,6 +1596,14 @@ def generate_vectors(
     contours_gdf = region_atttributes(
         contours_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
     )
+
+    # Set specific offshore islands to low certainty (only modify "good" 
+    # features as other non-good options are useful to keep)
+    contours_gdf.loc[
+        contours_gdf.country.isin(offshore_island_nations)
+        & (contours_gdf.certainty == "good"),
+        "certainty",
+    ] = "offshore islands"
 
     # Set output path
     contour_path = (
