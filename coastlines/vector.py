@@ -1597,7 +1597,7 @@ def generate_vectors(
         contours_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
     )
 
-    # Set specific offshore islands to low certainty (only modify "good" 
+    # Set specific offshore islands to low certainty (only modify "good"
     # features as other non-good options are useful to keep)
     contours_gdf.loc[
         contours_gdf.country.isin(offshore_island_nations)

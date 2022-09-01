@@ -2,7 +2,7 @@ Virtual product:
     virtual_product_path: configs/deafrica_virtual_product_landsat.yaml
     virtual_product_name: ls_sr_st
 Input files:
-    grid_path: data/raw/32km_coastal_grid_deafrica.geojson  # https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/32km_coastal_grid_deafrica.geojson
+    grid_path: https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/32km_coastal_grid_deafrica.geojson
     points_path: https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/5km_coastal_points_deafrica.geojson
     modifications_path: https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/modifications_deafrica.geojson
     geomorphology_path: https://deafrica-input-datasets.s3.af-south-1.amazonaws.com/deafrica-coastlines/coastal_geomorphology_maoetal2022.geojson
