@@ -49,6 +49,7 @@ def wms_fields(gdf):
             wms_grew=gdf.rate_time < 0,
             wms_retr=gdf.rate_time > 0,
             wms_sig=gdf.sig_time <= 0,
+            wms_good=gdf.confidence == "good",
         )
     )
 
@@ -162,10 +163,10 @@ def continental_cli(
     # Output path for geopackage and zipped shapefiles
     OUTPUT_GPKG = output_dir / f"deafricacoastlines_{continental_version}.gpkg"
     OUTPUT_SHPS = output_dir / f"deafricacoastlines_{continental_version}.shp.zip"
-    
+
     # If shapefile zip exists, delete it first
     if OUTPUT_SHPS.exists():
-        OUTPUT_SHPS.unlink()    
+        OUTPUT_SHPS.unlink()
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
@@ -249,7 +250,7 @@ def continental_cli(
             # Create polygon windows by buffering points
             buffered_gdf = hotspots_gdf[["geometry"]].copy()
             buffered_gdf["geometry"] = buffered_gdf.buffer(radius)
-            
+
             # Spatial join rate of change points to each polygon
             hotspot_grouped = (
                 ratesofchange_gdf.loc[
@@ -351,7 +352,7 @@ def continental_cli(
     ############################
 
     if ratesofchange:
-        
+
         # Add rates of change points to shapefile zip
         # Add additional WMS fields and add to shapefile
         ratesofchange_gdf = pd.concat(
@@ -361,13 +362,16 @@ def continental_cli(
         ratesofchange_gdf.to_file(
             OUTPUT_SHPS,
             layer=f"coastlines_{continental_version}_rates_of_change",
-            schema={"properties": vector_schema(ratesofchange_gdf), "geometry": "Point"},
+            schema={
+                "properties": vector_schema(ratesofchange_gdf),
+                "geometry": "Point",
+            },
         )
-        
+
         log.info("Writing rates of change points to zipped shapefiles complete")
 
     if shorelines:
-        
+
         # Add annual shorelines to shapefile zip
         shorelines_gdf.to_file(
             OUTPUT_SHPS,
@@ -377,9 +381,9 @@ def continental_cli(
                 "geometry": ["MultiLineString", "LineString"],
             },
         )
-        
+
         log.info("Writing annual shorelines to zipped shapefiles complete")
-    
+
     #########################
     # Add GeoPackage styles #
     #########################

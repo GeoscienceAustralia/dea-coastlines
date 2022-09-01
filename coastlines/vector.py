@@ -1284,7 +1284,7 @@ def region_atttributes(gdf, region_gdf, attribute_col="TERRITORY1", rename_col=F
 def vector_schema(gdf, default="float:8.2"):
     """
     Creates a schema passed to `gdf.to_file(schema=...)` that
-    sets the dtype and precision of each DE Africa Coastlines 
+    sets the dtype and precision of each DE Africa Coastlines
     column in `gdf`.
 
     This helps to greatly reduce the size of the output
@@ -1326,15 +1326,12 @@ def vector_schema(gdf, default="float:8.2"):
             "min_year": "int:4",
             "certainty": "str:25",
             "id_primary": "str:10",
-            
             # Annual shorelines only
             "year": "int:4",
             "tide_datum": "str:20",
-            
             # Hotspots only
             "n": "int:6",
             "radius_m": "int:6",
-            
             # WMS only
             "wms_conf": "float:8.1",
             "wms_grew": "int:1",
@@ -1521,12 +1518,12 @@ def generate_vectors(
         points_gdf.loc[
             points_gdf.valid_obs < 15, "certainty"
         ] = "insufficient observations"
-      
+
         # Add region attributes
         points_gdf = region_atttributes(
             points_gdf, region_gdf, attribute_col="TERRITORY1", rename_col="country"
         )
-        
+
         # Generate a geohash UID for each point and set as index
         uids = (
             points_gdf.geometry.to_crs("EPSG:4326")
@@ -1534,9 +1531,9 @@ def generate_vectors(
             .rename("uid")
         )
         points_gdf = points_gdf.set_index(uids)
-        
+
         log.info(f"Study area {study_area}: Added region attributes and geohash UIDs")
-        
+
         ################
         # Export stats #
         ################
@@ -1595,7 +1592,9 @@ def generate_vectors(
     contours_gdf["geometry"] = contours_gdf.intersection(gridcell_gdf.geometry.item())
 
     # Export to GeoJSON
-    contours_gdf.to_crs("EPSG:4326").to_file(f"{contour_path}.geojson", driver="GeoJSON")
+    contours_gdf.to_crs("EPSG:4326").to_file(
+        f"{contour_path}.geojson", driver="GeoJSON"
+    )
 
     # Export stats and contours as ESRI shapefiles
     contours_gdf.to_file(
@@ -1605,7 +1604,7 @@ def generate_vectors(
             "geometry": ["MultiLineString", "LineString"],
         },
     )
-    
+
     log.info(f"Study area {study_area}: Output vector files written to {output_dir}")
 
 
@@ -1673,13 +1672,13 @@ def generate_vectors(
 @click.option(
     "--end_year",
     type=int,
-    default=2020,
+    default=2021,
     help="The final annual shoreline to extract from the input raster data.",
 )
 @click.option(
     "--baseline_year",
     type=int,
-    default=2020,
+    default=2021,
     help="The annual shoreline used as a baseline from "
     "which to generate the rates of change point statistics. "
     "This is typically the most recent annual shoreline in "
