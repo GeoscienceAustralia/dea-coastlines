@@ -1414,7 +1414,7 @@ def generate_vectors(
     tide_points_gdf = gpd.read_file(
         config["Input files"]["points_path"], bbox=bbox
     ).to_crs(yearly_ds.crs)
-    log.info(f"Study area {study_area}: Loaded tide modelling points")
+    log.info(f"Study area {study_area}: Loaded ocean points")
 
     # Study area polygon
     gridcell_gdf = (

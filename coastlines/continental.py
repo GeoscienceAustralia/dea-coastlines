@@ -163,6 +163,10 @@ def continental_cli(
     OUTPUT_GPKG = output_dir / f"coastlines_{continental_version}.gpkg"
     OUTPUT_SHPS = output_dir / f"coastlines_{continental_version}.shp.zip"
 
+    # If shapefile zip exists, delete it first
+    if OUTPUT_SHPS.exists():
+        OUTPUT_SHPS.unlink()
+
     # Combine annual shorelines into a single continental layer
     if shorelines:
 
@@ -347,7 +351,7 @@ def continental_cli(
     ############################
 
     if ratesofchange:
-        
+
         # Add rates of change points to shapefile zip
         # Add additional WMS fields and add to shapefile
         ratesofchange_gdf = pd.concat(
@@ -357,13 +361,16 @@ def continental_cli(
         ratesofchange_gdf.to_file(
             OUTPUT_SHPS,
             layer=f"coastlines_{continental_version}_rates_of_change",
-            schema={"properties": vector_schema(ratesofchange_gdf), "geometry": "Point"},
+            schema={
+                "properties": vector_schema(ratesofchange_gdf),
+                "geometry": "Point",
+            },
         )
-        
+
         log.info("Writing rates of change points to zipped shapefiles complete")
 
     if shorelines:
-        
+
         # Add annual shorelines to shapefile zip
         shorelines_gdf.to_file(
             OUTPUT_SHPS,
@@ -373,7 +380,7 @@ def continental_cli(
                 "geometry": ["MultiLineString", "LineString"],
             },
         )
-        
+
         log.info("Writing annual shorelines to zipped shapefiles complete")
 
     #########################

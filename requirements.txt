@@ -112,7 +112,7 @@ datacube[performance,s3]==1.8.6
     #   dea-tools
     #   odc-algo
     #   odc-ui
-dea-tools==0.2.8.dev1
+dea-tools==0.2.8.dev11
     # via -r requirements.in
 debugpy==1.5.1
     # via ipykernel
@@ -133,6 +133,7 @@ executing==0.8.3
 fiona==1.8.21
     # via
     #   -r requirements.in
+    #   dea-tools
     #   geopandas
     #   rasterstats
 folium==0.12.1.post1

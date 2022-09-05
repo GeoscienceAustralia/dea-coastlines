@@ -4,7 +4,7 @@ affine>=2.3.0
 botocore
 click>=8.0.1
 datacube[s3,performance]>=1.8.6
-dea-tools==0.2.8.dev1
+dea_tools>=0.2.8.dev11
 Fiona>=1.8.20
 geopandas>=0.10.2
 matplotlib>=3.4.3
@@ -14,8 +14,8 @@ odc_ui>=0.2.0a2
 pandas>=1.3.4
 pygeos>=0.10.2
 pyproj>=3.2.1
-python_geohash>=0.8.5
 pyTMD>=1.0.9
+python_geohash>=0.8.5
 pytz>=2021.1
 PyYAML<=5.5
 rasterio>=1.2.9
