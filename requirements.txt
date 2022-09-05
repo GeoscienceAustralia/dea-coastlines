@@ -11,6 +11,7 @@ affine==2.3.0
     #   -r requirements.in
     #   datacube
     #   odc-algo
+    #   odc-geo
     #   rasterio
     #   rasterstats
 aiohttp==3.8.1
@@ -50,7 +51,9 @@ branca==0.4.2
     #   dea-tools
     #   folium
 cachetools==5.0.0
-    # via datacube
+    # via
+    #   datacube
+    #   odc-geo
 certifi==2021.10.8
     # via
     #   fiona
@@ -109,7 +112,7 @@ datacube[performance,s3]==1.8.6
     #   dea-tools
     #   odc-algo
     #   odc-ui
-dea-tools==0.2.3
+dea-tools==0.2.8.dev11
     # via -r requirements.in
 debugpy==1.5.1
     # via ipykernel
@@ -130,6 +133,7 @@ executing==0.8.3
 fiona==1.8.21
     # via
     #   -r requirements.in
+    #   dea-tools
     #   geopandas
     #   rasterstats
 folium==0.12.1.post1
@@ -151,7 +155,7 @@ geopandas==0.10.2
     #   -r requirements.in
     #   dea-tools
 geopy==2.2.0
-    # via -r requirements.in
+    # via dea-tools
 greenlet==1.1.2
     # via sqlalchemy
 heapdict==1.0.1
@@ -297,6 +301,7 @@ numpy==1.22.3
     #   netcdf4
     #   numexpr
     #   odc-algo
+    #   odc-geo
     #   odc-ui
     #   pandas
     #   pims
@@ -313,6 +318,8 @@ numpy==1.22.3
     #   xarray
 odc-algo==0.2.2
     # via odc-ui
+odc-geo==0.2.2
+    # via -r requirements.in
 odc-ui==0.2.1.dev3247
     # via
     #   -r requirements.in
@@ -388,6 +395,7 @@ pyproj==3.3.0
     #   datacube
     #   dea-tools
     #   geopandas
+    #   odc-geo
     #   owslib
     #   pytmd
 pyrsistent==0.18.1
@@ -436,14 +444,12 @@ rasterio==1.2.10
     #   odc-ui
     #   rasterstats
 rasterstats==0.16.0
-    # via -r requirements.in
+    # via dea-tools
 requests==2.27.1
     # via
     #   dea-tools
     #   folium
     #   owslib
-rtree==0.9.7
-    # via -r requirements.in
 s3transfer==0.5.2
     # via boto3
 scikit-image==0.19.2
@@ -473,6 +479,7 @@ shapely==1.8.4
     #   datacube
     #   dea-tools
     #   geopandas
+    #   odc-geo
     #   rasterstats
 simplejson==3.17.6
     # via rasterstats
