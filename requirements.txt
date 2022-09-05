@@ -21,14 +21,10 @@ argon2-cffi==21.3.0
     # via notebook
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
-asciitree==0.3.3
-    # via zarr
 asttokens==2.0.5
     # via stack-data
 async-timeout==4.0.2
     # via aiohttp
-atm1b-qfit==1.0.1
-    # via pytmd
 attrs==21.4.0
     # via
     #   aiohttp
@@ -37,14 +33,10 @@ attrs==21.4.0
     #   rasterio
 backcall==0.2.0
     # via ipython
-bcrypt==4.0.0
-    # via paramiko
 bleach==4.1.0
     # via nbconvert
 boto3==1.21.16
-    # via
-    #   datacube
-    #   icesat2-toolkit
+    # via datacube
 botocore==1.24.16
     # via
     #   -r requirements.in
@@ -59,8 +51,6 @@ branca==0.4.2
     #   folium
 cachetools==5.0.0
     # via datacube
-cartopy==0.20.3
-    # via icesat2-toolkit
 certifi==2021.10.8
     # via
     #   fiona
@@ -68,10 +58,7 @@ certifi==2021.10.8
     #   rasterio
     #   requests
 cffi==1.15.0
-    # via
-    #   argon2-cffi-bindings
-    #   cryptography
-    #   pynacl
+    # via argon2-cffi-bindings
 cftime==1.6.0
     # via netcdf4
 charset-normalizer==2.0.12
@@ -105,12 +92,8 @@ cloudpickle==2.0.0
     #   dask
     #   datacube
     #   distributed
-cryptography==37.0.4
-    # via paramiko
 cycler==0.11.0
     # via matplotlib
-cython==0.29.32
-    # via pyyapc
 dask[array]==2022.2.1
     # via
     #   dask-image
@@ -142,16 +125,12 @@ entrypoints==0.4
     # via
     #   jupyter-client
     #   nbconvert
-    #   numcodecs
 executing==0.8.3
     # via stack-data
-fasteners==0.17.3
-    # via zarr
 fiona==1.8.21
     # via
     #   -r requirements.in
     #   geopandas
-    #   icesat2-toolkit
     #   rasterstats
 folium==0.12.1.post1
     # via dea-tools
@@ -163,11 +142,6 @@ frozenlist==1.3.0
     #   aiosignal
 fsspec==2022.2.0
     # via dask
-future==0.18.2
-    # via
-    #   atm1b-qfit
-    #   icesat2-toolkit
-    #   pyyapc
 gdal==3.4.1
     # via dea-tools
 geographiclib==1.52
@@ -180,14 +154,8 @@ geopy==2.2.0
     # via -r requirements.in
 greenlet==1.1.2
     # via sqlalchemy
-h5py==3.7.0
-    # via
-    #   icesat2-toolkit
-    #   pyyapc
 heapdict==1.0.1
     # via zict
-icesat2-toolkit==1.0.0.22
-    # via pytmd
 idna==3.3
     # via
     #   requests
@@ -261,18 +229,14 @@ locket==0.2.1
     # via partd
 lxml==4.8.0
     # via
-    #   atm1b-qfit
     #   dea-tools
-    #   icesat2-toolkit
     #   pytmd
 markupsafe==2.1.0
     # via jinja2
 matplotlib==3.5.1
     # via
     #   -r requirements.in
-    #   cartopy
     #   dea-tools
-    #   icesat2-toolkit
     #   odc-ui
 matplotlib-inline==0.1.3
     # via
@@ -282,8 +246,6 @@ mistune==0.8.4
     # via nbconvert
 mock==4.0.3
     # via -r requirements.in
-mpi4py==3.1.3
-    # via icesat2-toolkit
 msgpack==1.0.3
     # via distributed
 multidict==6.0.2
@@ -311,14 +273,11 @@ nest-asyncio==1.5.4
 netcdf4==1.5.8
     # via
     #   datacube
-    #   icesat2-toolkit
     #   pytmd
 networkx==2.7.1
     # via scikit-image
 notebook==6.4.8
     # via widgetsnbextension
-numcodecs==0.10.2
-    # via zarr
 numexpr==2.8.1
     # via
     #   dea-tools
@@ -326,21 +285,16 @@ numexpr==2.8.1
 numpy==1.22.3
     # via
     #   -r requirements.in
-    #   atm1b-qfit
     #   bottleneck
-    #   cartopy
     #   cftime
     #   dask
     #   dask-image
     #   datacube
     #   dea-tools
     #   folium
-    #   h5py
-    #   icesat2-toolkit
     #   imageio
     #   matplotlib
     #   netcdf4
-    #   numcodecs
     #   numexpr
     #   odc-algo
     #   odc-ui
@@ -349,7 +303,6 @@ numpy==1.22.3
     #   pygeos
     #   pytmd
     #   pywavelets
-    #   pyyapc
     #   rasterio
     #   rasterstats
     #   scikit-image
@@ -358,7 +311,6 @@ numpy==1.22.3
     #   snuggs
     #   tifffile
     #   xarray
-    #   zarr
 odc-algo==0.2.2
     # via odc-ui
 odc-ui==0.2.1.dev3247
@@ -383,15 +335,10 @@ pandas==1.4.1
     #   datacube
     #   dea-tools
     #   geopandas
-    #   icesat2-toolkit
     #   odc-ui
     #   xarray
 pandocfilters==1.5.0
     # via nbconvert
-paramiko==2.11.0
-    # via
-    #   icesat2-toolkit
-    #   scp
 parso==0.8.3
     # via jedi
 partd==1.2.0
@@ -430,8 +377,6 @@ pygments==2.11.2
     #   ipython
     #   jupyterlab-pygments
     #   nbconvert
-pynacl==1.5.0
-    # via paramiko
 pyparsing==3.0.7
     # via
     #   matplotlib
@@ -440,23 +385,18 @@ pyparsing==3.0.7
 pyproj==3.3.0
     # via
     #   -r requirements.in
-    #   cartopy
     #   datacube
     #   dea-tools
     #   geopandas
-    #   icesat2-toolkit
     #   owslib
     #   pytmd
 pyrsistent==0.18.1
     # via jsonschema
-pyshp==2.3.1
-    # via cartopy
 python-dateutil==2.8.2
     # via
     #   botocore
     #   datacube
     #   dea-tools
-    #   icesat2-toolkit
     #   jupyter-client
     #   matplotlib
     #   owslib
@@ -482,8 +422,6 @@ pyyaml==6.0
     #   distributed
     #   owslib
     #   pytmd
-pyyapc==0.0.0.8
-    # via icesat2-toolkit
 pyzmq==22.3.0
     # via
     #   jupyter-client
@@ -517,19 +455,14 @@ scikit-learn==1.0.2
     # via
     #   -r requirements.in
     #   dea-tools
-    #   icesat2-toolkit
-    #   pyyapc
 scipy==1.8.0
     # via
     #   -r requirements.in
     #   dask-image
     #   dea-tools
-    #   icesat2-toolkit
     #   pytmd
     #   scikit-image
     #   scikit-learn
-scp==0.14.4
-    # via icesat2-toolkit
 send2trash==1.8.0
     # via notebook
 setuptools-scm==7.0.5
@@ -537,11 +470,9 @@ setuptools-scm==7.0.5
 shapely==1.8.4
     # via
     #   -r requirements.in
-    #   cartopy
     #   datacube
     #   dea-tools
     #   geopandas
-    #   icesat2-toolkit
     #   rasterstats
 simplejson==3.17.6
     # via rasterstats
@@ -551,7 +482,6 @@ six==1.16.0
     #   bleach
     #   fiona
     #   munch
-    #   paramiko
     #   pims
     #   python-dateutil
     #   slicerator
@@ -612,9 +542,7 @@ traitlets==5.1.1
 traittypes==0.2.1
     # via ipyleaflet
 typing-extensions==4.3.0
-    # via
-    #   numcodecs
-    #   setuptools-scm
+    # via setuptools-scm
 urllib3==1.26.8
     # via
     #   botocore
@@ -636,8 +564,6 @@ xyzservices==2022.3.0
     # via ipyleaflet
 yarl==1.7.2
     # via aiohttp
-zarr==2.12.0
-    # via icesat2-toolkit
 zict==2.1.0
     # via distributed
 zipp==3.7.0
