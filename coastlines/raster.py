@@ -813,6 +813,7 @@ def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
 
     return tide_cutoff_min, tide_cutoff_max
 
+
 # def multiprocess_apply(ds, dim, func):
 #     """
 #     Applies a custom function along the dimension of an xarray.Dataset,
@@ -1106,7 +1107,7 @@ def generate_rasters(
     log.info(
         f"Study area {study_area}: Calculating low and high tide cutoffs for each pixel"
     )
-    
+
     ##############################
     # Generate yearly composites #
     ##############################
