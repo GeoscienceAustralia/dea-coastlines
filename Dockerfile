@@ -10,11 +10,6 @@ RUN apt-get update \
     python3-pip \
     # For Psycopg2
     libpq-dev python3-dev \
-    # For mpi4py
-#     libopenmpi-dev \
-    # For cartopy
-#     libproj-dev \
-#     libgeos-dev \
     # For SSL
     ca-certificates \
     # Tidy up
