@@ -7860,257 +7860,38 @@ def my_form_open(dialog, layer, feature):
 </StyledLayerDescriptor>
 ",1,Thu Sep 1 13:41:41 2022,,,2022-06-02T07:16:18+00:00
 ,,rates_of_change,geom,rates_of_change,"<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis simplifyDrawingTol=""1"" simplifyDrawingHints=""0"" version=""3.26.0-Buenos Aires"" styleCategories=""AllStyleCategories"" minScale=""500000"" hasScaleBasedVisibilityFlag=""1"" maxScale=""30000"" simplifyLocal=""1"" symbologyReferenceScale=""-1"" simplifyAlgorithm=""0"" simplifyMaxScale=""1"" labelsEnabled=""1"" readOnly=""0"">
+<qgis labelsEnabled=""1"" minScale=""500000"" styleCategories=""AllStyleCategories"" simplifyAlgorithm=""0"" simplifyDrawingTol=""1"" readOnly=""0"" maxScale=""30000"" simplifyDrawingHints=""0"" simplifyLocal=""1"" version=""3.16.14-Hannover"" hasScaleBasedVisibilityFlag=""1"" simplifyMaxScale=""1"">
  <flags>
   <Identifiable>1</Identifiable>
   <Removable>1</Removable>
   <Searchable>1</Searchable>
-  <Private>0</Private>
  </flags>
- <temporal durationUnit=""min"" startField="""" endField="""" fixedDuration=""0"" durationField="""" limitMode=""0"" startExpression="""" endExpression="""" enabled=""0"" mode=""0"" accumulate=""0"">
+ <temporal durationField="""" startField="""" endField="""" startExpression="""" mode=""0"" accumulate=""0"" fixedDuration=""0"" endExpression="""" enabled=""0"" durationUnit=""min"">
   <fixedRange>
    <start></start>
    <end></end>
   </fixedRange>
  </temporal>
- <elevation respectLayerSymbol=""1"" zoffset=""0"" symbology=""Line"" zscale=""1"" showMarkerSymbolInSurfacePlots=""0"" clamping=""Terrain"" extrusionEnabled=""0"" extrusion=""0"" binding=""Centroid"" type=""IndividualFeatures"">
-  <data-defined-properties>
-   <Option type=""Map"">
-    <Option value="""" name=""name"" type=""QString""/>
-    <Option name=""properties""/>
-    <Option value=""collection"" name=""type"" type=""QString""/>
-   </Option>
-  </data-defined-properties>
-  <profileLineSymbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name="""" type=""line"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleLine"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""align_dash_pattern"" type=""QString""/>
-      <Option value=""square"" name=""capstyle"" type=""QString""/>
-      <Option value=""5;2"" name=""customdash"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""customdash_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""customdash_unit"" type=""QString""/>
-      <Option value=""0"" name=""dash_pattern_offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""dash_pattern_offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""dash_pattern_offset_unit"" type=""QString""/>
-      <Option value=""0"" name=""draw_inside_polygon"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""133,182,111,255"" name=""line_color"" type=""QString""/>
-      <Option value=""solid"" name=""line_style"" type=""QString""/>
-      <Option value=""0.6"" name=""line_width"" type=""QString""/>
-      <Option value=""MM"" name=""line_width_unit"" type=""QString""/>
-      <Option value=""0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""0"" name=""ring_filter"" type=""QString""/>
-      <Option value=""0"" name=""trim_distance_end"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""trim_distance_end_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""trim_distance_end_unit"" type=""QString""/>
-      <Option value=""0"" name=""trim_distance_start"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""trim_distance_start_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""trim_distance_start_unit"" type=""QString""/>
-      <Option value=""0"" name=""tweak_dash_pattern_on_corners"" type=""QString""/>
-      <Option value=""0"" name=""use_custom_dash"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""width_map_unit_scale"" type=""QString""/>
-     </Option>
-     <prop k=""align_dash_pattern"" v=""0""/>
-     <prop k=""capstyle"" v=""square""/>
-     <prop k=""customdash"" v=""5;2""/>
-     <prop k=""customdash_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""customdash_unit"" v=""MM""/>
-     <prop k=""dash_pattern_offset"" v=""0""/>
-     <prop k=""dash_pattern_offset_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""dash_pattern_offset_unit"" v=""MM""/>
-     <prop k=""draw_inside_polygon"" v=""0""/>
-     <prop k=""joinstyle"" v=""bevel""/>
-     <prop k=""line_color"" v=""133,182,111,255""/>
-     <prop k=""line_style"" v=""solid""/>
-     <prop k=""line_width"" v=""0.6""/>
-     <prop k=""line_width_unit"" v=""MM""/>
-     <prop k=""offset"" v=""0""/>
-     <prop k=""offset_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""offset_unit"" v=""MM""/>
-     <prop k=""ring_filter"" v=""0""/>
-     <prop k=""trim_distance_end"" v=""0""/>
-     <prop k=""trim_distance_end_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""trim_distance_end_unit"" v=""MM""/>
-     <prop k=""trim_distance_start"" v=""0""/>
-     <prop k=""trim_distance_start_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""trim_distance_start_unit"" v=""MM""/>
-     <prop k=""tweak_dash_pattern_on_corners"" v=""0""/>
-     <prop k=""use_custom_dash"" v=""0""/>
-     <prop k=""width_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <data_defined_properties>
-      <Option type=""Map"">
-       <Option value="""" name=""name"" type=""QString""/>
-       <Option name=""properties""/>
-       <Option value=""collection"" name=""type"" type=""QString""/>
-      </Option>
-     </data_defined_properties>
-    </layer>
-   </symbol>
-  </profileLineSymbol>
-  <profileFillSymbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name="""" type=""fill"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleFill"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""3x:0,0,0,0,0,0"" name=""border_width_map_unit_scale"" type=""QString""/>
-      <Option value=""133,182,111,255"" name=""color"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""95,130,79,255"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0.2"" name=""outline_width"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""solid"" name=""style"" type=""QString""/>
-     </Option>
-     <prop k=""border_width_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""color"" v=""133,182,111,255""/>
-     <prop k=""joinstyle"" v=""bevel""/>
-     <prop k=""offset"" v=""0,0""/>
-     <prop k=""offset_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""offset_unit"" v=""MM""/>
-     <prop k=""outline_color"" v=""95,130,79,255""/>
-     <prop k=""outline_style"" v=""solid""/>
-     <prop k=""outline_width"" v=""0.2""/>
-     <prop k=""outline_width_unit"" v=""MM""/>
-     <prop k=""style"" v=""solid""/>
-     <data_defined_properties>
-      <Option type=""Map"">
-       <Option value="""" name=""name"" type=""QString""/>
-       <Option name=""properties""/>
-       <Option value=""collection"" name=""type"" type=""QString""/>
-      </Option>
-     </data_defined_properties>
-    </layer>
-   </symbol>
-  </profileFillSymbol>
-  <profileMarkerSymbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name="""" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""133,182,111,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""diamond"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""95,130,79,255"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0.2"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""3"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
-     <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
-     <prop k=""color"" v=""133,182,111,255""/>
-     <prop k=""horizontal_anchor_point"" v=""1""/>
-     <prop k=""joinstyle"" v=""bevel""/>
-     <prop k=""name"" v=""diamond""/>
-     <prop k=""offset"" v=""0,0""/>
-     <prop k=""offset_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""offset_unit"" v=""MM""/>
-     <prop k=""outline_color"" v=""95,130,79,255""/>
-     <prop k=""outline_style"" v=""solid""/>
-     <prop k=""outline_width"" v=""0.2""/>
-     <prop k=""outline_width_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""outline_width_unit"" v=""MM""/>
-     <prop k=""scale_method"" v=""diameter""/>
-     <prop k=""size"" v=""3""/>
-     <prop k=""size_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-     <prop k=""size_unit"" v=""MM""/>
-     <prop k=""vertical_anchor_point"" v=""1""/>
-     <data_defined_properties>
-      <Option type=""Map"">
-       <Option value="""" name=""name"" type=""QString""/>
-       <Option name=""properties""/>
-       <Option value=""collection"" name=""type"" type=""QString""/>
-      </Option>
-     </data_defined_properties>
-    </layer>
-   </symbol>
-  </profileMarkerSymbol>
- </elevation>
- <renderer-v2 graduatedMethod=""GraduatedColor"" symbollevels=""0"" forceraster=""0"" referencescale=""-1"" enableorderby=""1"" attr=""if(  (&quot;sig_time&quot; &lt;=0.01) AND (&quot;certainty&quot; = 'good'), rate_time, 0)"" type=""graduatedSymbol"">
+ <renderer-v2 attr=""if(  (&quot;sig_time&quot; &lt;=0.01) AND (&quot;certainty&quot; = 'good'), rate_time, 0)"" graduatedMethod=""GraduatedColor"" enableorderby=""1"" forceraster=""0"" symbollevels=""0"" type=""graduatedSymbol"">
   <ranges>
-   <range label=""&lt; -5.0 m / year coastline retreat"" lower=""-200.000000000000000"" upper=""-5.000000000000000"" render=""true"" symbol=""0""/>
-   <range label=""   -5.0 to -3.0 m / year"" lower=""-5.000000000000000"" upper=""-3.000000000000000"" render=""true"" symbol=""1""/>
-   <range label=""   -3.0 to -1.0 m / year"" lower=""-3.000000000000000"" upper=""-1.000000000000000"" render=""true"" symbol=""2""/>
-   <range label=""   -1.0 to -0.5 m / year"" lower=""-1.000000000000000"" upper=""-0.500000000000000"" render=""true"" symbol=""3""/>
-   <range label=""   -0.5 to -0.3 m / year"" lower=""-0.500000000000000"" upper=""-0.300000000000000"" render=""true"" symbol=""4""/>
-   <range label=""   -0.3 to 0.0 m / year"" lower=""-0.300000000000000"" upper=""-0.010000000000000"" render=""true"" symbol=""5""/>
-   <range label=""No significant change or low certainty"" lower=""-0.010000000000000"" upper=""0.010000000000000"" render=""true"" symbol=""6""/>
-   <range label=""    0.0 to 0.3 m / year"" lower=""0.010000000000000"" upper=""0.300000000000000"" render=""true"" symbol=""7""/>
-   <range label=""    0.3 to 0.5 m / year"" lower=""0.300000000000000"" upper=""0.500000000000000"" render=""true"" symbol=""8""/>
-   <range label=""    0.5 to 1.0 m / year"" lower=""0.500000000000000"" upper=""1.000000000000000"" render=""true"" symbol=""9""/>
-   <range label=""    1.0 to 3.0 m / year"" lower=""1.000000000000000"" upper=""3.000000000000000"" render=""true"" symbol=""10""/>
-   <range label=""    3.0 to 5.0 m / year"" lower=""3.000000000000000"" upper=""5.000000000000000"" render=""true"" symbol=""11""/>
-   <range label="" > 5.0 m / year coastline growth"" lower=""5.000000000000000"" upper=""200.000000000000000"" render=""true"" symbol=""12""/>
+   <range upper=""-5.000000000000000"" label=""&lt; -5.0 m / year coastline retreat"" render=""true"" symbol=""0"" lower=""-200.000000000000000""/>
+   <range upper=""-3.000000000000000"" label=""   -5.0 to -3.0 m / year"" render=""true"" symbol=""1"" lower=""-5.000000000000000""/>
+   <range upper=""-1.000000000000000"" label=""   -3.0 to -1.0 m / year"" render=""true"" symbol=""2"" lower=""-3.000000000000000""/>
+   <range upper=""-0.500000000000000"" label=""   -1.0 to -0.5 m / year"" render=""true"" symbol=""3"" lower=""-1.000000000000000""/>
+   <range upper=""-0.300000000000000"" label=""   -0.5 to -0.3 m / year"" render=""true"" symbol=""4"" lower=""-0.500000000000000""/>
+   <range upper=""-0.010000000000000"" label=""   -0.3 to 0.0 m / year"" render=""true"" symbol=""5"" lower=""-0.300000000000000""/>
+   <range upper=""0.010000000000000"" label=""No significant change or low certainty"" render=""true"" symbol=""6"" lower=""-0.010000000000000""/>
+   <range upper=""0.300000000000000"" label=""    0.0 to 0.3 m / year"" render=""true"" symbol=""7"" lower=""0.010000000000000""/>
+   <range upper=""0.500000000000000"" label=""    0.3 to 0.5 m / year"" render=""true"" symbol=""8"" lower=""0.300000000000000""/>
+   <range upper=""1.000000000000000"" label=""    0.5 to 1.0 m / year"" render=""true"" symbol=""9"" lower=""0.500000000000000""/>
+   <range upper=""3.000000000000000"" label=""    1.0 to 3.0 m / year"" render=""true"" symbol=""10"" lower=""1.000000000000000""/>
+   <range upper=""5.000000000000000"" label=""    3.0 to 5.0 m / year"" render=""true"" symbol=""11"" lower=""3.000000000000000""/>
+   <range upper=""200.000000000000000"" label="" > 5.0 m / year coastline growth"" render=""true"" symbol=""12"" lower=""5.000000000000000""/>
   </ranges>
   <symbols>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""0"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""202,0,32,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""2.8"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""0"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""202,0,32,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8137,38 +7918,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""1"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""218,60,67,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""2.4"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""1"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""218,60,67,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8195,38 +7947,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""10"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""107,174,210,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""2"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""10"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""107,174,210,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8253,38 +7976,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""11"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""56,144,193,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""2.4"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""11"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""56,144,193,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8311,38 +8005,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""12"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""5,113,176,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""2.8"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""12"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""5,113,176,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8369,38 +8034,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""2"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""233,120,103,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""2"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""2"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""233,120,103,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8427,38 +8063,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""3"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""245,173,141,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""1.6"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""3"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""245,173,141,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8485,38 +8092,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""4"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""246,203,183,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""1.3"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""4"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""246,203,183,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8543,38 +8121,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""5"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""247,232,226,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""1"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""5"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""247,232,226,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8601,38 +8150,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""6"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""255,255,255,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,88"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""0.5"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""6"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""255,255,255,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8659,38 +8179,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""7"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""229,238,243,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""1"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""7"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""229,238,243,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8717,38 +8208,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""8"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""192,220,234,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""1.3"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""8"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""192,220,234,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8775,38 +8237,9 @@ def my_form_open(dialog, layer, feature):
      </data_defined_properties>
     </layer>
    </symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""9"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""155,202,225,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,0"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""1.6"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""9"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""155,202,225,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8835,38 +8268,9 @@ def my_form_open(dialog, layer, feature):
    </symbol>
   </symbols>
   <source-symbol>
-   <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""0"" type=""marker"" alpha=""1"">
-    <data_defined_properties>
-     <Option type=""Map"">
-      <Option value="""" name=""name"" type=""QString""/>
-      <Option name=""properties""/>
-      <Option value=""collection"" name=""type"" type=""QString""/>
-     </Option>
-    </data_defined_properties>
-    <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-     <Option type=""Map"">
-      <Option value=""0"" name=""angle"" type=""QString""/>
-      <Option value=""square"" name=""cap_style"" type=""QString""/>
-      <Option value=""255,158,23,255"" name=""color"" type=""QString""/>
-      <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-      <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""circle"" name=""name"" type=""QString""/>
-      <Option value=""0,0"" name=""offset"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-      <Option value=""255,255,255,88"" name=""outline_color"" type=""QString""/>
-      <Option value=""solid"" name=""outline_style"" type=""QString""/>
-      <Option value=""0"" name=""outline_width"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-      <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-      <Option value=""2"" name=""size"" type=""QString""/>
-      <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-      <Option value=""MM"" name=""size_unit"" type=""QString""/>
-      <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-     </Option>
+   <symbol clip_to_extent=""1"" force_rhr=""0"" name=""0"" alpha=""1"" type=""marker"">
+    <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
      <prop k=""angle"" v=""0""/>
-     <prop k=""cap_style"" v=""square""/>
      <prop k=""color"" v=""255,158,23,255""/>
      <prop k=""horizontal_anchor_point"" v=""1""/>
      <prop k=""joinstyle"" v=""bevel""/>
@@ -8895,26 +8299,15 @@ def my_form_open(dialog, layer, feature):
    </symbol>
   </source-symbol>
   <colorramp name=""[source]"" type=""gradient"">
-   <Option type=""Map"">
-    <Option value=""202,0,32,255"" name=""color1"" type=""QString""/>
-    <Option value=""5,113,176,255"" name=""color2"" type=""QString""/>
-    <Option value=""ccw"" name=""direction"" type=""QString""/>
-    <Option value=""0"" name=""discrete"" type=""QString""/>
-    <Option value=""gradient"" name=""rampType"" type=""QString""/>
-    <Option value=""rgb"" name=""spec"" type=""QString""/>
-    <Option value=""0.25;244,165,130,255;rgb;ccw:0.5;247,247,247,255;rgb;ccw:0.75;146,197,222,255;rgb;ccw"" name=""stops"" type=""QString""/>
-   </Option>
    <prop k=""color1"" v=""202,0,32,255""/>
    <prop k=""color2"" v=""5,113,176,255""/>
-   <prop k=""direction"" v=""ccw""/>
    <prop k=""discrete"" v=""0""/>
    <prop k=""rampType"" v=""gradient""/>
-   <prop k=""spec"" v=""rgb""/>
-   <prop k=""stops"" v=""0.25;244,165,130,255;rgb;ccw:0.5;247,247,247,255;rgb;ccw:0.75;146,197,222,255;rgb;ccw""/>
+   <prop k=""stops"" v=""0.25;244,165,130,0:0.5;247,247,247,0:0.75;146,197,222,0""/>
   </colorramp>
   <classificationMethod id=""Custom"">
-   <symmetricMode astride=""0"" symmetrypoint=""0"" enabled=""0""/>
-   <labelFormat trimtrailingzeroes=""1"" format=""%1 - %2"" labelprecision=""4""/>
+   <symmetricMode symmetrypoint=""0"" astride=""0"" enabled=""0""/>
+   <labelFormat labelprecision=""4"" trimtrailingzeroes=""1"" format=""%1 - %2""/>
    <parameters>
     <Option/>
    </parameters>
@@ -8929,43 +8322,13 @@ def my_form_open(dialog, layer, feature):
  </renderer-v2>
  <labeling type=""simple"">
   <settings calloutType=""simple"">
-   <text-style fontFamily=""MS Shell Dlg 2"" useSubstitutions=""0"" textOrientation=""horizontal"" isExpression=""1"" forcedBold=""0"" fontSizeMapUnitScale=""3x:0,0,0,0,0,0"" fontUnderline=""0"" multilineHeight=""5"" fontKerning=""1"" capitalization=""0"" fontSizeUnit=""Point"" fontItalic=""0"" fontLetterSpacing=""0"" previewBkgrdColor=""0,0,0,255"" allowHtml=""0"" fontWeight=""50"" forcedItalic=""0"" legendString=""Aa"" fieldName=""if(abs(rate_time) >= 0.3, concat(format_number(rate_time, 1), ' m (±', format_number(se_time * 1.96, 1), ')'), NULL)"" blendMode=""0"" fontSize=""7.5"" textColor=""255,255,255,255"" textOpacity=""1"" fontStrikeout=""0"" fontWordSpacing=""0"" namedStyle=""Regular"">
-    <families/>
-    <text-buffer bufferOpacity=""0.5"" bufferDraw=""1"" bufferNoFill=""1"" bufferSizeUnits=""MM"" bufferSizeMapUnitScale=""3x:0,0,0,0,0,0"" bufferJoinStyle=""128"" bufferColor=""0,0,0,255"" bufferSize=""0.77780000000000005"" bufferBlendMode=""0""/>
-    <text-mask maskEnabled=""0"" maskType=""0"" maskSizeMapUnitScale=""3x:0,0,0,0,0,0"" maskedSymbolLayers="""" maskSize=""0"" maskJoinStyle=""128"" maskSizeUnits=""MM"" maskOpacity=""1""/>
-    <background shapeOffsetX=""0"" shapeBorderWidth=""0"" shapeBorderWidthUnit=""MM"" shapeDraw=""0"" shapeRadiiMapUnitScale=""3x:0,0,0,0,0,0"" shapeOffsetMapUnitScale=""3x:0,0,0,0,0,0"" shapeRotation=""0"" shapeType=""0"" shapeOpacity=""1"" shapeSizeY=""5"" shapeBorderColor=""128,128,128,0"" shapeRadiiUnit=""MM"" shapeJoinStyle=""64"" shapeSizeType=""0"" shapeRotationType=""0"" shapeSizeX=""5"" shapeOffsetY=""0"" shapeRadiiY=""5"" shapeSVGFile="""" shapeBorderWidthMapUnitScale=""3x:0,0,0,0,0,0"" shapeRadiiX=""5"" shapeOffsetUnit=""MM"" shapeSizeUnit=""MM"" shapeSizeMapUnitScale=""3x:0,0,0,0,0,0"" shapeFillColor=""255,255,255,0"" shapeBlendMode=""0"">
-     <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""markerSymbol"" type=""marker"" alpha=""1"">
-      <data_defined_properties>
-       <Option type=""Map"">
-        <Option value="""" name=""name"" type=""QString""/>
-        <Option name=""properties""/>
-        <Option value=""collection"" name=""type"" type=""QString""/>
-       </Option>
-      </data_defined_properties>
-      <layer locked=""0"" pass=""0"" class=""SimpleMarker"" enabled=""1"">
-       <Option type=""Map"">
-        <Option value=""0"" name=""angle"" type=""QString""/>
-        <Option value=""square"" name=""cap_style"" type=""QString""/>
-        <Option value=""190,207,80,255"" name=""color"" type=""QString""/>
-        <Option value=""1"" name=""horizontal_anchor_point"" type=""QString""/>
-        <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-        <Option value=""circle"" name=""name"" type=""QString""/>
-        <Option value=""0,0"" name=""offset"" type=""QString""/>
-        <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-        <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-        <Option value=""35,35,35,255"" name=""outline_color"" type=""QString""/>
-        <Option value=""solid"" name=""outline_style"" type=""QString""/>
-        <Option value=""0"" name=""outline_width"" type=""QString""/>
-        <Option value=""3x:0,0,0,0,0,0"" name=""outline_width_map_unit_scale"" type=""QString""/>
-        <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-        <Option value=""diameter"" name=""scale_method"" type=""QString""/>
-        <Option value=""2"" name=""size"" type=""QString""/>
-        <Option value=""3x:0,0,0,0,0,0"" name=""size_map_unit_scale"" type=""QString""/>
-        <Option value=""MM"" name=""size_unit"" type=""QString""/>
-        <Option value=""1"" name=""vertical_anchor_point"" type=""QString""/>
-       </Option>
+   <text-style fontLetterSpacing=""0"" fontFamily=""MS Shell Dlg 2"" fontKerning=""1"" fontWeight=""50"" capitalization=""0"" fontStrikeout=""0"" fieldName=""if((&quot;sig_time&quot; &lt;=0.01) AND (&quot;certainty&quot; = 'good') AND abs(rate_time) >= 0.3, concat(format_number(rate_time, 1), ' m (±', format_number(se_time * 1.96, 1), ')'), NULL)"" fontWordSpacing=""0"" textOrientation=""horizontal"" fontItalic=""0"" fontUnderline=""0"" allowHtml=""0"" previewBkgrdColor=""0,0,0,255"" fontSizeUnit=""Point"" multilineHeight=""5"" textOpacity=""1"" useSubstitutions=""0"" namedStyle=""Regular"" blendMode=""0"" textColor=""255,255,255,255"" fontSize=""7.5"" fontSizeMapUnitScale=""3x:0,0,0,0,0,0"" isExpression=""1"">
+    <text-buffer bufferSize=""0.77780000000000005"" bufferColor=""0,0,0,255"" bufferBlendMode=""0"" bufferDraw=""1"" bufferSizeUnits=""MM"" bufferNoFill=""1"" bufferJoinStyle=""128"" bufferOpacity=""0.5"" bufferSizeMapUnitScale=""3x:0,0,0,0,0,0""/>
+    <text-mask maskSizeUnits=""MM"" maskEnabled=""0"" maskSizeMapUnitScale=""3x:0,0,0,0,0,0"" maskType=""0"" maskSize=""0"" maskJoinStyle=""128"" maskedSymbolLayers="""" maskOpacity=""1""/>
+    <background shapeOffsetY=""0"" shapeRadiiX=""5"" shapeType=""0"" shapeDraw=""0"" shapeOffsetX=""0"" shapeBorderColor=""128,128,128,0"" shapeSizeMapUnitScale=""3x:0,0,0,0,0,0"" shapeRadiiMapUnitScale=""3x:0,0,0,0,0,0"" shapeBorderWidthMapUnitScale=""3x:0,0,0,0,0,0"" shapeOffsetMapUnitScale=""3x:0,0,0,0,0,0"" shapeRadiiUnit=""MM"" shapeSizeY=""5"" shapeOpacity=""1"" shapeFillColor=""255,255,255,0"" shapeBlendMode=""0"" shapeRadiiY=""5"" shapeRotation=""0"" shapeRotationType=""0"" shapeSizeUnit=""MM"" shapeSVGFile="""" shapeSizeType=""0"" shapeSizeX=""5"" shapeJoinStyle=""64"" shapeBorderWidthUnit=""MM"" shapeOffsetUnit=""MM"" shapeBorderWidth=""0"">
+     <symbol clip_to_extent=""1"" force_rhr=""0"" name=""markerSymbol"" alpha=""1"" type=""marker"">
+      <layer class=""SimpleMarker"" locked=""0"" enabled=""1"" pass=""0"">
        <prop k=""angle"" v=""0""/>
-       <prop k=""cap_style"" v=""square""/>
        <prop k=""color"" v=""190,207,80,255""/>
        <prop k=""horizontal_anchor_point"" v=""1""/>
        <prop k=""joinstyle"" v=""bevel""/>
@@ -8992,50 +8355,8 @@ def my_form_open(dialog, layer, feature):
        </data_defined_properties>
       </layer>
      </symbol>
-     <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name=""fillSymbol"" type=""fill"" alpha=""1"">
-      <data_defined_properties>
-       <Option type=""Map"">
-        <Option value="""" name=""name"" type=""QString""/>
-        <Option name=""properties""/>
-        <Option value=""collection"" name=""type"" type=""QString""/>
-       </Option>
-      </data_defined_properties>
-      <layer locked=""0"" pass=""0"" class=""SimpleFill"" enabled=""1"">
-       <Option type=""Map"">
-        <Option value=""3x:0,0,0,0,0,0"" name=""border_width_map_unit_scale"" type=""QString""/>
-        <Option value=""255,255,255,0"" name=""color"" type=""QString""/>
-        <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-        <Option value=""0,0"" name=""offset"" type=""QString""/>
-        <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-        <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-        <Option value=""128,128,128,0"" name=""outline_color"" type=""QString""/>
-        <Option value=""no"" name=""outline_style"" type=""QString""/>
-        <Option value=""0"" name=""outline_width"" type=""QString""/>
-        <Option value=""MM"" name=""outline_width_unit"" type=""QString""/>
-        <Option value=""solid"" name=""style"" type=""QString""/>
-       </Option>
-       <prop k=""border_width_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-       <prop k=""color"" v=""255,255,255,0""/>
-       <prop k=""joinstyle"" v=""bevel""/>
-       <prop k=""offset"" v=""0,0""/>
-       <prop k=""offset_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-       <prop k=""offset_unit"" v=""MM""/>
-       <prop k=""outline_color"" v=""128,128,128,0""/>
-       <prop k=""outline_style"" v=""no""/>
-       <prop k=""outline_width"" v=""0""/>
-       <prop k=""outline_width_unit"" v=""MM""/>
-       <prop k=""style"" v=""solid""/>
-       <data_defined_properties>
-        <Option type=""Map"">
-         <Option value="""" name=""name"" type=""QString""/>
-         <Option name=""properties""/>
-         <Option value=""collection"" name=""type"" type=""QString""/>
-        </Option>
-       </data_defined_properties>
-      </layer>
-     </symbol>
     </background>
-    <shadow shadowUnder=""0"" shadowOffsetDist=""1"" shadowRadiusAlphaOnly=""0"" shadowRadiusUnit=""MM"" shadowOpacity=""1"" shadowScale=""100"" shadowRadiusMapUnitScale=""3x:0,0,0,0,0,0"" shadowColor=""255,255,255,255"" shadowOffsetGlobal=""1"" shadowRadius=""1.5"" shadowDraw=""1"" shadowBlendMode=""8"" shadowOffsetAngle=""135"" shadowOffsetMapUnitScale=""3x:0,0,0,0,0,0"" shadowOffsetUnit=""MM""/>
+    <shadow shadowRadius=""1.5"" shadowUnder=""0"" shadowOpacity=""1"" shadowOffsetGlobal=""1"" shadowRadiusUnit=""MM"" shadowRadiusMapUnitScale=""3x:0,0,0,0,0,0"" shadowOffsetDist=""1"" shadowColor=""255,255,255,255"" shadowRadiusAlphaOnly=""0"" shadowScale=""100"" shadowOffsetAngle=""135"" shadowOffsetUnit=""MM"" shadowBlendMode=""8"" shadowDraw=""1"" shadowOffsetMapUnitScale=""3x:0,0,0,0,0,0""/>
     <dd_properties>
      <Option type=""Map"">
       <Option value="""" name=""name"" type=""QString""/>
@@ -9045,9 +8366,9 @@ def my_form_open(dialog, layer, feature):
     </dd_properties>
     <substitutions/>
    </text-style>
-   <text-format multilineAlign=""3"" useMaxLineLengthForAutoWrap=""1"" plussign=""0"" decimals=""1"" wrapChar="""" addDirectionSymbol=""0"" rightDirectionSymbol="">"" placeDirectionSymbol=""0"" formatNumbers=""0"" leftDirectionSymbol=""&lt;"" reverseDirectionSymbol=""0"" autoWrapLength=""0""/>
-   <placement overrunDistanceUnit=""MM"" xOffset=""-5"" polygonPlacementFlags=""2"" repeatDistanceMapUnitScale=""3x:0,0,0,0,0,0"" placement=""1"" centroidInside=""0"" offsetType=""0"" rotationUnit=""AngleDegrees"" distMapUnitScale=""3x:0,0,0,0,0,0"" yOffset=""0"" labelOffsetMapUnitScale=""3x:0,0,0,0,0,0"" overrunDistance=""0"" repeatDistance=""0"" preserveRotation=""1"" lineAnchorPercent=""0.5"" lineAnchorType=""0"" overrunDistanceMapUnitScale=""3x:0,0,0,0,0,0"" centroidWhole=""0"" allowDegraded=""0"" dist=""0"" distUnits=""MM"" fitInPolygonOnly=""0"" rotationAngle=""0"" predefinedPositionOrder=""TR,TL,BR,BL,R,L,TSR,BSR"" lineAnchorClipping=""0"" lineAnchorTextPoint=""CenterOfText"" repeatDistanceUnits=""MM"" placementFlags=""10"" geometryGeneratorEnabled=""0"" geometryGeneratorType=""PointGeometry"" maxCurvedCharAngleOut=""-25"" geometryGenerator="""" maxCurvedCharAngleIn=""25"" offsetUnits=""MM"" priority=""1"" quadOffset=""3"" layerType=""PointGeometry"" overlapHandling=""PreventOverlap""/>
-   <rendering scaleMax=""1000000"" zIndex=""0"" drawLabels=""1"" obstacle=""1"" mergeLines=""0"" fontLimitPixelSize=""0"" labelPerPart=""0"" upsidedownLabels=""0"" fontMaxPixelSize=""10000"" fontMinPixelSize=""3"" obstacleType=""0"" limitNumLabels=""0"" scaleVisibility=""0"" minFeatureSize=""0"" unplacedVisibility=""0"" maxNumLabels=""50"" obstacleFactor=""1"" scaleMin=""0""/>
+   <text-format autoWrapLength=""0"" decimals=""1"" plussign=""0"" multilineAlign=""3"" reverseDirectionSymbol=""0"" placeDirectionSymbol=""0"" useMaxLineLengthForAutoWrap=""1"" wrapChar="""" addDirectionSymbol=""0"" rightDirectionSymbol="">"" leftDirectionSymbol=""&lt;"" formatNumbers=""0""/>
+   <placement xOffset=""-5"" repeatDistanceMapUnitScale=""3x:0,0,0,0,0,0"" offsetType=""0"" overrunDistanceMapUnitScale=""3x:0,0,0,0,0,0"" priority=""1"" rotationAngle=""0"" labelOffsetMapUnitScale=""3x:0,0,0,0,0,0"" lineAnchorPercent=""0.5"" geometryGeneratorType=""PointGeometry"" lineAnchorType=""0"" overrunDistanceUnit=""MM"" repeatDistance=""0"" quadOffset=""3"" maxCurvedCharAngleIn=""25"" yOffset=""0"" repeatDistanceUnits=""MM"" centroidWhole=""0"" distUnits=""MM"" polygonPlacementFlags=""2"" dist=""0"" fitInPolygonOnly=""0"" offsetUnits=""MM"" maxCurvedCharAngleOut=""-25"" predefinedPositionOrder=""TR,TL,BR,BL,R,L,TSR,BSR"" centroidInside=""0"" layerType=""PointGeometry"" placement=""1"" geometryGenerator="""" geometryGeneratorEnabled=""0"" placementFlags=""10"" overrunDistance=""0"" distMapUnitScale=""3x:0,0,0,0,0,0"" preserveRotation=""1""/>
+   <rendering scaleVisibility=""0"" upsidedownLabels=""0"" maxNumLabels=""50"" drawLabels=""1"" limitNumLabels=""0"" zIndex=""0"" scaleMax=""1000000"" scaleMin=""0"" mergeLines=""0"" fontMaxPixelSize=""10000"" obstacleFactor=""1"" obstacle=""1"" fontMinPixelSize=""3"" displayAll=""0"" minFeatureSize=""0"" obstacleType=""0"" labelPerPart=""0"" fontLimitPixelSize=""0""/>
    <dd_properties>
     <Option type=""Map"">
      <Option value="""" name=""name"" type=""QString""/>
@@ -9064,7 +8385,6 @@ def my_form_open(dialog, layer, feature):
    <callout type=""simple"">
     <Option type=""Map"">
      <Option value=""pole_of_inaccessibility"" name=""anchorPoint"" type=""QString""/>
-     <Option value=""0"" name=""blendMode"" type=""int""/>
      <Option name=""ddProperties"" type=""Map"">
       <Option value="""" name=""name"" type=""QString""/>
       <Option name=""properties""/>
@@ -9073,7 +8393,7 @@ def my_form_open(dialog, layer, feature):
      <Option value=""false"" name=""drawToAllParts"" type=""bool""/>
      <Option value=""0"" name=""enabled"" type=""QString""/>
      <Option value=""point_on_exterior"" name=""labelAnchorPoint"" type=""QString""/>
-     <Option value=""&lt;symbol force_rhr=&quot;0&quot; clip_to_extent=&quot;1&quot; is_animated=&quot;0&quot; frame_rate=&quot;10&quot; name=&quot;symbol&quot; type=&quot;line&quot; alpha=&quot;1&quot;>&lt;data_defined_properties>&lt;Option type=&quot;Map&quot;>&lt;Option value=&quot;&quot; name=&quot;name&quot; type=&quot;QString&quot;/>&lt;Option name=&quot;properties&quot;/>&lt;Option value=&quot;collection&quot; name=&quot;type&quot; type=&quot;QString&quot;/>&lt;/Option>&lt;/data_defined_properties>&lt;layer locked=&quot;0&quot; pass=&quot;0&quot; class=&quot;SimpleLine&quot; enabled=&quot;1&quot;>&lt;Option type=&quot;Map&quot;>&lt;Option value=&quot;0&quot; name=&quot;align_dash_pattern&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;square&quot; name=&quot;capstyle&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;5;2&quot; name=&quot;customdash&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;3x:0,0,0,0,0,0&quot; name=&quot;customdash_map_unit_scale&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;MM&quot; name=&quot;customdash_unit&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;dash_pattern_offset&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;3x:0,0,0,0,0,0&quot; name=&quot;dash_pattern_offset_map_unit_scale&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;MM&quot; name=&quot;dash_pattern_offset_unit&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;draw_inside_polygon&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;bevel&quot; name=&quot;joinstyle&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;60,60,60,255&quot; name=&quot;line_color&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;solid&quot; name=&quot;line_style&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0.3&quot; name=&quot;line_width&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;MM&quot; name=&quot;line_width_unit&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;offset&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;3x:0,0,0,0,0,0&quot; name=&quot;offset_map_unit_scale&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;MM&quot; name=&quot;offset_unit&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;ring_filter&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;trim_distance_end&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;3x:0,0,0,0,0,0&quot; name=&quot;trim_distance_end_map_unit_scale&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;MM&quot; name=&quot;trim_distance_end_unit&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;trim_distance_start&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;3x:0,0,0,0,0,0&quot; name=&quot;trim_distance_start_map_unit_scale&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;MM&quot; name=&quot;trim_distance_start_unit&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;tweak_dash_pattern_on_corners&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;0&quot; name=&quot;use_custom_dash&quot; type=&quot;QString&quot;/>&lt;Option value=&quot;3x:0,0,0,0,0,0&quot; name=&quot;width_map_unit_scale&quot; type=&quot;QString&quot;/>&lt;/Option>&lt;prop k=&quot;align_dash_pattern&quot; v=&quot;0&quot;/>&lt;prop k=&quot;capstyle&quot; v=&quot;square&quot;/>&lt;prop k=&quot;customdash&quot; v=&quot;5;2&quot;/>&lt;prop k=&quot;customdash_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;customdash_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;dash_pattern_offset&quot; v=&quot;0&quot;/>&lt;prop k=&quot;dash_pattern_offset_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;dash_pattern_offset_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;draw_inside_polygon&quot; v=&quot;0&quot;/>&lt;prop k=&quot;joinstyle&quot; v=&quot;bevel&quot;/>&lt;prop k=&quot;line_color&quot; v=&quot;60,60,60,255&quot;/>&lt;prop k=&quot;line_style&quot; v=&quot;solid&quot;/>&lt;prop k=&quot;line_width&quot; v=&quot;0.3&quot;/>&lt;prop k=&quot;line_width_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;offset&quot; v=&quot;0&quot;/>&lt;prop k=&quot;offset_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;offset_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;ring_filter&quot; v=&quot;0&quot;/>&lt;prop k=&quot;trim_distance_end&quot; v=&quot;0&quot;/>&lt;prop k=&quot;trim_distance_end_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;trim_distance_end_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;trim_distance_start&quot; v=&quot;0&quot;/>&lt;prop k=&quot;trim_distance_start_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;trim_distance_start_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;tweak_dash_pattern_on_corners&quot; v=&quot;0&quot;/>&lt;prop k=&quot;use_custom_dash&quot; v=&quot;0&quot;/>&lt;prop k=&quot;width_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;data_defined_properties>&lt;Option type=&quot;Map&quot;>&lt;Option value=&quot;&quot; name=&quot;name&quot; type=&quot;QString&quot;/>&lt;Option name=&quot;properties&quot;/>&lt;Option value=&quot;collection&quot; name=&quot;type&quot; type=&quot;QString&quot;/>&lt;/Option>&lt;/data_defined_properties>&lt;/layer>&lt;/symbol>"" name=""lineSymbol"" type=""QString""/>
+     <Option value=""&lt;symbol clip_to_extent=&quot;1&quot; force_rhr=&quot;0&quot; name=&quot;symbol&quot; alpha=&quot;1&quot; type=&quot;line&quot;>&lt;layer class=&quot;SimpleLine&quot; locked=&quot;0&quot; enabled=&quot;1&quot; pass=&quot;0&quot;>&lt;prop k=&quot;align_dash_pattern&quot; v=&quot;0&quot;/>&lt;prop k=&quot;capstyle&quot; v=&quot;square&quot;/>&lt;prop k=&quot;customdash&quot; v=&quot;5;2&quot;/>&lt;prop k=&quot;customdash_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;customdash_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;dash_pattern_offset&quot; v=&quot;0&quot;/>&lt;prop k=&quot;dash_pattern_offset_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;dash_pattern_offset_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;draw_inside_polygon&quot; v=&quot;0&quot;/>&lt;prop k=&quot;joinstyle&quot; v=&quot;bevel&quot;/>&lt;prop k=&quot;line_color&quot; v=&quot;60,60,60,255&quot;/>&lt;prop k=&quot;line_style&quot; v=&quot;solid&quot;/>&lt;prop k=&quot;line_width&quot; v=&quot;0.3&quot;/>&lt;prop k=&quot;line_width_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;offset&quot; v=&quot;0&quot;/>&lt;prop k=&quot;offset_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;prop k=&quot;offset_unit&quot; v=&quot;MM&quot;/>&lt;prop k=&quot;ring_filter&quot; v=&quot;0&quot;/>&lt;prop k=&quot;tweak_dash_pattern_on_corners&quot; v=&quot;0&quot;/>&lt;prop k=&quot;use_custom_dash&quot; v=&quot;0&quot;/>&lt;prop k=&quot;width_map_unit_scale&quot; v=&quot;3x:0,0,0,0,0,0&quot;/>&lt;data_defined_properties>&lt;Option type=&quot;Map&quot;>&lt;Option value=&quot;&quot; name=&quot;name&quot; type=&quot;QString&quot;/>&lt;Option name=&quot;properties&quot;/>&lt;Option value=&quot;collection&quot; name=&quot;type&quot; type=&quot;QString&quot;/>&lt;/Option>&lt;/data_defined_properties>&lt;/layer>&lt;/symbol>"" name=""lineSymbol"" type=""QString""/>
      <Option value=""0"" name=""minLength"" type=""double""/>
      <Option value=""3x:0,0,0,0,0,0"" name=""minLengthMapUnitScale"" type=""QString""/>
      <Option value=""MM"" name=""minLengthUnit"" type=""QString""/>
@@ -9088,58 +8408,20 @@ def my_form_open(dialog, layer, feature):
   </settings>
  </labeling>
  <customproperties>
-  <Option type=""Map"">
-   <Option value=""0"" name=""embeddedWidgets/count"" type=""QString""/>
-   <Option name=""variableNames""/>
-   <Option name=""variableValues""/>
-  </Option>
+  <property value=""0"" key=""embeddedWidgets/count""/>
+  <property key=""variableNames""/>
+  <property key=""variableValues""/>
  </customproperties>
  <blendMode>0</blendMode>
  <featureBlendMode>0</featureBlendMode>
  <layerOpacity>1</layerOpacity>
- <SingleCategoryDiagramRenderer attributeLegend=""1"" diagramType=""Histogram"">
-  <DiagramCategory sizeType=""MM"" spacingUnitScale=""3x:0,0,0,0,0,0"" labelPlacementMethod=""XHeight"" scaleDependency=""Area"" showAxis=""0"" penAlpha=""255"" opacity=""1"" sizeScale=""3x:0,0,0,0,0,0"" width=""15"" penColor=""#000000"" direction=""1"" maxScaleDenominator=""1e+08"" minimumSize=""0"" enabled=""0"" scaleBasedVisibility=""0"" lineSizeScale=""3x:0,0,0,0,0,0"" barWidth=""5"" diagramOrientation=""Up"" height=""15"" spacingUnit=""MM"" minScaleDenominator=""15000"" backgroundColor=""#ffffff"" spacing=""0"" rotationOffset=""270"" penWidth=""0"" lineSizeType=""MM"" backgroundAlpha=""255"">
-   <fontProperties description=""Cantarell,11,-1,5,50,0,0,0,0,0"" style="""" italic=""0"" underline=""0"" strikethrough=""0"" bold=""0""/>
-   <attribute label="""" color=""#000000"" field=""""/>
+ <SingleCategoryDiagramRenderer diagramType=""Histogram"" attributeLegend=""1"">
+  <DiagramCategory penAlpha=""255"" showAxis=""0"" direction=""1"" penWidth=""0"" width=""15"" height=""15"" spacing=""0"" penColor=""#000000"" lineSizeScale=""3x:0,0,0,0,0,0"" opacity=""1"" lineSizeType=""MM"" backgroundAlpha=""255"" backgroundColor=""#ffffff"" labelPlacementMethod=""XHeight"" rotationOffset=""270"" maxScaleDenominator=""1e+08"" minimumSize=""0"" spacingUnitScale=""3x:0,0,0,0,0,0"" scaleBasedVisibility=""0"" minScaleDenominator=""15000"" scaleDependency=""Area"" sizeScale=""3x:0,0,0,0,0,0"" diagramOrientation=""Up"" barWidth=""5"" enabled=""0"" spacingUnit=""MM"" sizeType=""MM"">
+   <fontProperties style="""" description=""Cantarell,11,-1,5,50,0,0,0,0,0""/>
+   <attribute field="""" color=""#000000"" label=""""/>
    <axisSymbol>
-    <symbol force_rhr=""0"" clip_to_extent=""1"" is_animated=""0"" frame_rate=""10"" name="""" type=""line"" alpha=""1"">
-     <data_defined_properties>
-      <Option type=""Map"">
-       <Option value="""" name=""name"" type=""QString""/>
-       <Option name=""properties""/>
-       <Option value=""collection"" name=""type"" type=""QString""/>
-      </Option>
-     </data_defined_properties>
-     <layer locked=""0"" pass=""0"" class=""SimpleLine"" enabled=""1"">
-      <Option type=""Map"">
-       <Option value=""0"" name=""align_dash_pattern"" type=""QString""/>
-       <Option value=""square"" name=""capstyle"" type=""QString""/>
-       <Option value=""5;2"" name=""customdash"" type=""QString""/>
-       <Option value=""3x:0,0,0,0,0,0"" name=""customdash_map_unit_scale"" type=""QString""/>
-       <Option value=""MM"" name=""customdash_unit"" type=""QString""/>
-       <Option value=""0"" name=""dash_pattern_offset"" type=""QString""/>
-       <Option value=""3x:0,0,0,0,0,0"" name=""dash_pattern_offset_map_unit_scale"" type=""QString""/>
-       <Option value=""MM"" name=""dash_pattern_offset_unit"" type=""QString""/>
-       <Option value=""0"" name=""draw_inside_polygon"" type=""QString""/>
-       <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-       <Option value=""35,35,35,255"" name=""line_color"" type=""QString""/>
-       <Option value=""solid"" name=""line_style"" type=""QString""/>
-       <Option value=""0.26"" name=""line_width"" type=""QString""/>
-       <Option value=""MM"" name=""line_width_unit"" type=""QString""/>
-       <Option value=""0"" name=""offset"" type=""QString""/>
-       <Option value=""3x:0,0,0,0,0,0"" name=""offset_map_unit_scale"" type=""QString""/>
-       <Option value=""MM"" name=""offset_unit"" type=""QString""/>
-       <Option value=""0"" name=""ring_filter"" type=""QString""/>
-       <Option value=""0"" name=""trim_distance_end"" type=""QString""/>
-       <Option value=""3x:0,0,0,0,0,0"" name=""trim_distance_end_map_unit_scale"" type=""QString""/>
-       <Option value=""MM"" name=""trim_distance_end_unit"" type=""QString""/>
-       <Option value=""0"" name=""trim_distance_start"" type=""QString""/>
-       <Option value=""3x:0,0,0,0,0,0"" name=""trim_distance_start_map_unit_scale"" type=""QString""/>
-       <Option value=""MM"" name=""trim_distance_start_unit"" type=""QString""/>
-       <Option value=""0"" name=""tweak_dash_pattern_on_corners"" type=""QString""/>
-       <Option value=""0"" name=""use_custom_dash"" type=""QString""/>
-       <Option value=""3x:0,0,0,0,0,0"" name=""width_map_unit_scale"" type=""QString""/>
-      </Option>
+    <symbol clip_to_extent=""1"" force_rhr=""0"" name="""" alpha=""1"" type=""line"">
+     <layer class=""SimpleLine"" locked=""0"" enabled=""1"" pass=""0"">
       <prop k=""align_dash_pattern"" v=""0""/>
       <prop k=""capstyle"" v=""square""/>
       <prop k=""customdash"" v=""5;2""/>
@@ -9158,12 +8440,6 @@ def my_form_open(dialog, layer, feature):
       <prop k=""offset_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
       <prop k=""offset_unit"" v=""MM""/>
       <prop k=""ring_filter"" v=""0""/>
-      <prop k=""trim_distance_end"" v=""0""/>
-      <prop k=""trim_distance_end_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-      <prop k=""trim_distance_end_unit"" v=""MM""/>
-      <prop k=""trim_distance_start"" v=""0""/>
-      <prop k=""trim_distance_start_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
-      <prop k=""trim_distance_start_unit"" v=""MM""/>
       <prop k=""tweak_dash_pattern_on_corners"" v=""0""/>
       <prop k=""use_custom_dash"" v=""0""/>
       <prop k=""width_map_unit_scale"" v=""3x:0,0,0,0,0,0""/>
@@ -9179,7 +8455,7 @@ def my_form_open(dialog, layer, feature):
    </axisSymbol>
   </DiagramCategory>
  </SingleCategoryDiagramRenderer>
- <DiagramLayerSettings placement=""0"" linePlacementFlags=""18"" zIndex=""0"" priority=""0"" dist=""0"" showAll=""1"" obstacle=""0"">
+ <DiagramLayerSettings showAll=""1"" obstacle=""0"" priority=""0"" dist=""0"" placement=""0"" linePlacementFlags=""18"" zIndex=""0"">
   <properties>
    <Option type=""Map"">
     <Option value="""" name=""name"" type=""QString""/>
@@ -9188,273 +8464,273 @@ def my_form_open(dialog, layer, feature):
    </Option>
   </properties>
  </DiagramLayerSettings>
- <geometryOptions geometryPrecision=""0"" removeDuplicateNodes=""0"">
+ <geometryOptions removeDuplicateNodes=""0"" geometryPrecision=""0"">
   <activeChecks/>
   <checkConfiguration/>
  </geometryOptions>
- <legend showLabelLegend=""0"" type=""default-vector""/>
+ <legend type=""default-vector""/>
  <referencedLayers/>
  <fieldConfiguration>
-  <field configurationFlags=""None"" name=""fid"">
+  <field name=""fid"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""uid"">
+  <field name=""uid"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""rate_time"">
+  <field name=""rate_time"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""sig_time"">
+  <field name=""sig_time"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""se_time"">
+  <field name=""se_time"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""outl_time"">
+  <field name=""outl_time"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2000"">
+  <field name=""dist_2000"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2001"">
+  <field name=""dist_2001"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2002"">
+  <field name=""dist_2002"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2003"">
+  <field name=""dist_2003"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2004"">
+  <field name=""dist_2004"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2005"">
+  <field name=""dist_2005"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2006"">
+  <field name=""dist_2006"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2007"">
+  <field name=""dist_2007"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2008"">
+  <field name=""dist_2008"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2009"">
+  <field name=""dist_2009"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2010"">
+  <field name=""dist_2010"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2011"">
+  <field name=""dist_2011"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2012"">
+  <field name=""dist_2012"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2013"">
+  <field name=""dist_2013"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2014"">
+  <field name=""dist_2014"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2015"">
+  <field name=""dist_2015"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2016"">
+  <field name=""dist_2016"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2017"">
+  <field name=""dist_2017"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2018"">
+  <field name=""dist_2018"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2019"">
+  <field name=""dist_2019"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2020"">
+  <field name=""dist_2020"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""dist_2021"">
+  <field name=""dist_2021"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""angle_mean"">
+  <field name=""angle_mean"" configurationFlags=""None"">
    <editWidget type=""Range"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""angle_std"">
+  <field name=""angle_std"" configurationFlags=""None"">
    <editWidget type=""Range"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""valid_obs"">
+  <field name=""valid_obs"" configurationFlags=""None"">
    <editWidget type=""Range"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""valid_span"">
+  <field name=""valid_span"" configurationFlags=""None"">
    <editWidget type=""Range"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""sce"">
+  <field name=""sce"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""nsm"">
+  <field name=""nsm"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""max_year"">
+  <field name=""max_year"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""min_year"">
+  <field name=""min_year"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""country"">
+  <field name=""country"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
     </config>
    </editWidget>
   </field>
-  <field configurationFlags=""None"" name=""certainty"">
+  <field name=""certainty"" configurationFlags=""None"">
    <editWidget type=""TextEdit"">
     <config>
      <Option/>
@@ -9463,210 +8739,210 @@ def my_form_open(dialog, layer, feature):
   </field>
  </fieldConfiguration>
  <aliases>
-  <alias field=""fid"" index=""0"" name=""""/>
-  <alias field=""uid"" index=""1"" name=""""/>
-  <alias field=""rate_time"" index=""2"" name=""""/>
-  <alias field=""sig_time"" index=""3"" name=""""/>
-  <alias field=""se_time"" index=""4"" name=""""/>
-  <alias field=""outl_time"" index=""5"" name=""""/>
-  <alias field=""dist_2000"" index=""6"" name=""""/>
-  <alias field=""dist_2001"" index=""7"" name=""""/>
-  <alias field=""dist_2002"" index=""8"" name=""""/>
-  <alias field=""dist_2003"" index=""9"" name=""""/>
-  <alias field=""dist_2004"" index=""10"" name=""""/>
-  <alias field=""dist_2005"" index=""11"" name=""""/>
-  <alias field=""dist_2006"" index=""12"" name=""""/>
-  <alias field=""dist_2007"" index=""13"" name=""""/>
-  <alias field=""dist_2008"" index=""14"" name=""""/>
-  <alias field=""dist_2009"" index=""15"" name=""""/>
-  <alias field=""dist_2010"" index=""16"" name=""""/>
-  <alias field=""dist_2011"" index=""17"" name=""""/>
-  <alias field=""dist_2012"" index=""18"" name=""""/>
-  <alias field=""dist_2013"" index=""19"" name=""""/>
-  <alias field=""dist_2014"" index=""20"" name=""""/>
-  <alias field=""dist_2015"" index=""21"" name=""""/>
-  <alias field=""dist_2016"" index=""22"" name=""""/>
-  <alias field=""dist_2017"" index=""23"" name=""""/>
-  <alias field=""dist_2018"" index=""24"" name=""""/>
-  <alias field=""dist_2019"" index=""25"" name=""""/>
-  <alias field=""dist_2020"" index=""26"" name=""""/>
-  <alias field=""dist_2021"" index=""27"" name=""""/>
-  <alias field=""angle_mean"" index=""28"" name=""""/>
-  <alias field=""angle_std"" index=""29"" name=""""/>
-  <alias field=""valid_obs"" index=""30"" name=""""/>
-  <alias field=""valid_span"" index=""31"" name=""""/>
-  <alias field=""sce"" index=""32"" name=""""/>
-  <alias field=""nsm"" index=""33"" name=""""/>
-  <alias field=""max_year"" index=""34"" name=""""/>
-  <alias field=""min_year"" index=""35"" name=""""/>
-  <alias field=""country"" index=""36"" name=""""/>
-  <alias field=""certainty"" index=""37"" name=""""/>
+  <alias index=""0"" name="""" field=""fid""/>
+  <alias index=""1"" name="""" field=""uid""/>
+  <alias index=""2"" name="""" field=""rate_time""/>
+  <alias index=""3"" name="""" field=""sig_time""/>
+  <alias index=""4"" name="""" field=""se_time""/>
+  <alias index=""5"" name="""" field=""outl_time""/>
+  <alias index=""6"" name="""" field=""dist_2000""/>
+  <alias index=""7"" name="""" field=""dist_2001""/>
+  <alias index=""8"" name="""" field=""dist_2002""/>
+  <alias index=""9"" name="""" field=""dist_2003""/>
+  <alias index=""10"" name="""" field=""dist_2004""/>
+  <alias index=""11"" name="""" field=""dist_2005""/>
+  <alias index=""12"" name="""" field=""dist_2006""/>
+  <alias index=""13"" name="""" field=""dist_2007""/>
+  <alias index=""14"" name="""" field=""dist_2008""/>
+  <alias index=""15"" name="""" field=""dist_2009""/>
+  <alias index=""16"" name="""" field=""dist_2010""/>
+  <alias index=""17"" name="""" field=""dist_2011""/>
+  <alias index=""18"" name="""" field=""dist_2012""/>
+  <alias index=""19"" name="""" field=""dist_2013""/>
+  <alias index=""20"" name="""" field=""dist_2014""/>
+  <alias index=""21"" name="""" field=""dist_2015""/>
+  <alias index=""22"" name="""" field=""dist_2016""/>
+  <alias index=""23"" name="""" field=""dist_2017""/>
+  <alias index=""24"" name="""" field=""dist_2018""/>
+  <alias index=""25"" name="""" field=""dist_2019""/>
+  <alias index=""26"" name="""" field=""dist_2020""/>
+  <alias index=""27"" name="""" field=""dist_2021""/>
+  <alias index=""28"" name="""" field=""angle_mean""/>
+  <alias index=""29"" name="""" field=""angle_std""/>
+  <alias index=""30"" name="""" field=""valid_obs""/>
+  <alias index=""31"" name="""" field=""valid_span""/>
+  <alias index=""32"" name="""" field=""sce""/>
+  <alias index=""33"" name="""" field=""nsm""/>
+  <alias index=""34"" name="""" field=""max_year""/>
+  <alias index=""35"" name="""" field=""min_year""/>
+  <alias index=""36"" name="""" field=""country""/>
+  <alias index=""37"" name="""" field=""certainty""/>
  </aliases>
  <defaults>
-  <default applyOnUpdate=""0"" field=""fid"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""uid"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""rate_time"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""sig_time"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""se_time"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""outl_time"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2000"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2001"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2002"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2003"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2004"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2005"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2006"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2007"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2008"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2009"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2010"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2011"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2012"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2013"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2014"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2015"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2016"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2017"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2018"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2019"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2020"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""dist_2021"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""angle_mean"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""angle_std"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""valid_obs"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""valid_span"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""sce"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""nsm"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""max_year"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""min_year"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""country"" expression=""""/>
-  <default applyOnUpdate=""0"" field=""certainty"" expression=""""/>
+  <default field=""fid"" expression="""" applyOnUpdate=""0""/>
+  <default field=""uid"" expression="""" applyOnUpdate=""0""/>
+  <default field=""rate_time"" expression="""" applyOnUpdate=""0""/>
+  <default field=""sig_time"" expression="""" applyOnUpdate=""0""/>
+  <default field=""se_time"" expression="""" applyOnUpdate=""0""/>
+  <default field=""outl_time"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2000"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2001"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2002"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2003"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2004"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2005"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2006"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2007"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2008"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2009"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2010"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2011"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2012"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2013"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2014"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2015"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2016"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2017"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2018"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2019"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2020"" expression="""" applyOnUpdate=""0""/>
+  <default field=""dist_2021"" expression="""" applyOnUpdate=""0""/>
+  <default field=""angle_mean"" expression="""" applyOnUpdate=""0""/>
+  <default field=""angle_std"" expression="""" applyOnUpdate=""0""/>
+  <default field=""valid_obs"" expression="""" applyOnUpdate=""0""/>
+  <default field=""valid_span"" expression="""" applyOnUpdate=""0""/>
+  <default field=""sce"" expression="""" applyOnUpdate=""0""/>
+  <default field=""nsm"" expression="""" applyOnUpdate=""0""/>
+  <default field=""max_year"" expression="""" applyOnUpdate=""0""/>
+  <default field=""min_year"" expression="""" applyOnUpdate=""0""/>
+  <default field=""country"" expression="""" applyOnUpdate=""0""/>
+  <default field=""certainty"" expression="""" applyOnUpdate=""0""/>
  </defaults>
  <constraints>
-  <constraint constraints=""7"" unique_strength=""1"" exp_strength=""1"" notnull_strength=""1"" field=""fid""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""uid""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""rate_time""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""sig_time""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""se_time""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""outl_time""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2000""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2001""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2002""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2003""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2004""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2005""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2006""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2007""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2008""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2009""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2010""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2011""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2012""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2013""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2014""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2015""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2016""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2017""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2018""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2019""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2020""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""dist_2021""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""angle_mean""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""angle_std""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""valid_obs""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""valid_span""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""sce""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""nsm""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""max_year""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""min_year""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""country""/>
-  <constraint constraints=""0"" unique_strength=""0"" exp_strength=""0"" notnull_strength=""0"" field=""certainty""/>
+  <constraint unique_strength=""1"" field=""fid"" exp_strength=""1"" notnull_strength=""1"" constraints=""7""/>
+  <constraint unique_strength=""0"" field=""uid"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""rate_time"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""sig_time"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""se_time"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""outl_time"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2000"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2001"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2002"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2003"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2004"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2005"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2006"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2007"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2008"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2009"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2010"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2011"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2012"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2013"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2014"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2015"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2016"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2017"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2018"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2019"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2020"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""dist_2021"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""angle_mean"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""angle_std"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""valid_obs"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""valid_span"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""sce"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""nsm"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""max_year"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""min_year"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""country"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
+  <constraint unique_strength=""0"" field=""certainty"" exp_strength=""0"" notnull_strength=""0"" constraints=""0""/>
  </constraints>
  <constraintExpressions>
-  <constraint exp="""" field=""fid"" desc=""""/>
-  <constraint exp="""" field=""uid"" desc=""""/>
-  <constraint exp="""" field=""rate_time"" desc=""""/>
-  <constraint exp="""" field=""sig_time"" desc=""""/>
-  <constraint exp="""" field=""se_time"" desc=""""/>
-  <constraint exp="""" field=""outl_time"" desc=""""/>
-  <constraint exp="""" field=""dist_2000"" desc=""""/>
-  <constraint exp="""" field=""dist_2001"" desc=""""/>
-  <constraint exp="""" field=""dist_2002"" desc=""""/>
-  <constraint exp="""" field=""dist_2003"" desc=""""/>
-  <constraint exp="""" field=""dist_2004"" desc=""""/>
-  <constraint exp="""" field=""dist_2005"" desc=""""/>
-  <constraint exp="""" field=""dist_2006"" desc=""""/>
-  <constraint exp="""" field=""dist_2007"" desc=""""/>
-  <constraint exp="""" field=""dist_2008"" desc=""""/>
-  <constraint exp="""" field=""dist_2009"" desc=""""/>
-  <constraint exp="""" field=""dist_2010"" desc=""""/>
-  <constraint exp="""" field=""dist_2011"" desc=""""/>
-  <constraint exp="""" field=""dist_2012"" desc=""""/>
-  <constraint exp="""" field=""dist_2013"" desc=""""/>
-  <constraint exp="""" field=""dist_2014"" desc=""""/>
-  <constraint exp="""" field=""dist_2015"" desc=""""/>
-  <constraint exp="""" field=""dist_2016"" desc=""""/>
-  <constraint exp="""" field=""dist_2017"" desc=""""/>
-  <constraint exp="""" field=""dist_2018"" desc=""""/>
-  <constraint exp="""" field=""dist_2019"" desc=""""/>
-  <constraint exp="""" field=""dist_2020"" desc=""""/>
-  <constraint exp="""" field=""dist_2021"" desc=""""/>
-  <constraint exp="""" field=""angle_mean"" desc=""""/>
-  <constraint exp="""" field=""angle_std"" desc=""""/>
-  <constraint exp="""" field=""valid_obs"" desc=""""/>
-  <constraint exp="""" field=""valid_span"" desc=""""/>
-  <constraint exp="""" field=""sce"" desc=""""/>
-  <constraint exp="""" field=""nsm"" desc=""""/>
-  <constraint exp="""" field=""max_year"" desc=""""/>
-  <constraint exp="""" field=""min_year"" desc=""""/>
-  <constraint exp="""" field=""country"" desc=""""/>
-  <constraint exp="""" field=""certainty"" desc=""""/>
+  <constraint desc="""" field=""fid"" exp=""""/>
+  <constraint desc="""" field=""uid"" exp=""""/>
+  <constraint desc="""" field=""rate_time"" exp=""""/>
+  <constraint desc="""" field=""sig_time"" exp=""""/>
+  <constraint desc="""" field=""se_time"" exp=""""/>
+  <constraint desc="""" field=""outl_time"" exp=""""/>
+  <constraint desc="""" field=""dist_2000"" exp=""""/>
+  <constraint desc="""" field=""dist_2001"" exp=""""/>
+  <constraint desc="""" field=""dist_2002"" exp=""""/>
+  <constraint desc="""" field=""dist_2003"" exp=""""/>
+  <constraint desc="""" field=""dist_2004"" exp=""""/>
+  <constraint desc="""" field=""dist_2005"" exp=""""/>
+  <constraint desc="""" field=""dist_2006"" exp=""""/>
+  <constraint desc="""" field=""dist_2007"" exp=""""/>
+  <constraint desc="""" field=""dist_2008"" exp=""""/>
+  <constraint desc="""" field=""dist_2009"" exp=""""/>
+  <constraint desc="""" field=""dist_2010"" exp=""""/>
+  <constraint desc="""" field=""dist_2011"" exp=""""/>
+  <constraint desc="""" field=""dist_2012"" exp=""""/>
+  <constraint desc="""" field=""dist_2013"" exp=""""/>
+  <constraint desc="""" field=""dist_2014"" exp=""""/>
+  <constraint desc="""" field=""dist_2015"" exp=""""/>
+  <constraint desc="""" field=""dist_2016"" exp=""""/>
+  <constraint desc="""" field=""dist_2017"" exp=""""/>
+  <constraint desc="""" field=""dist_2018"" exp=""""/>
+  <constraint desc="""" field=""dist_2019"" exp=""""/>
+  <constraint desc="""" field=""dist_2020"" exp=""""/>
+  <constraint desc="""" field=""dist_2021"" exp=""""/>
+  <constraint desc="""" field=""angle_mean"" exp=""""/>
+  <constraint desc="""" field=""angle_std"" exp=""""/>
+  <constraint desc="""" field=""valid_obs"" exp=""""/>
+  <constraint desc="""" field=""valid_span"" exp=""""/>
+  <constraint desc="""" field=""sce"" exp=""""/>
+  <constraint desc="""" field=""nsm"" exp=""""/>
+  <constraint desc="""" field=""max_year"" exp=""""/>
+  <constraint desc="""" field=""min_year"" exp=""""/>
+  <constraint desc="""" field=""country"" exp=""""/>
+  <constraint desc="""" field=""certainty"" exp=""""/>
  </constraintExpressions>
  <expressionfields/>
  <attributeactions>
-  <defaultAction key=""Canvas"" value=""{00000000-0000-0000-0000-000000000000}""/>
+  <defaultAction value=""{00000000-0000-0000-0000-000000000000}"" key=""Canvas""/>
  </attributeactions>
- <attributetableconfig sortOrder=""1"" actionWidgetStyle=""dropDown"" sortExpression=""&quot;move_abs&quot;"">
+ <attributetableconfig actionWidgetStyle=""dropDown"" sortOrder=""1"" sortExpression=""&quot;move_abs&quot;"">
   <columns>
-   <column hidden=""1"" width=""-1"" type=""actions""/>
-   <column hidden=""0"" width=""-1"" name=""rate_time"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""sig_time"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""outl_time"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""se_time"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2000"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2001"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2002"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2003"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2004"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2005"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2006"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2007"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2008"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2009"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2010"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2011"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2012"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2013"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2014"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2015"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2016"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2017"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2018"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2019"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""sce"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""nsm"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""max_year"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""min_year"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2020"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""valid_obs"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""fid"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""angle_mean"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""angle_std"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""certainty"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""valid_span"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""uid"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""dist_2021"" type=""field""/>
-   <column hidden=""0"" width=""-1"" name=""country"" type=""field""/>
+   <column width=""-1"" hidden=""1"" type=""actions""/>
+   <column name=""rate_time"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""sig_time"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""outl_time"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""se_time"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2000"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2001"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2002"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2003"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2004"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2005"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2006"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2007"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2008"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2009"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2010"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2011"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2012"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2013"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2014"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2015"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2016"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2017"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2018"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2019"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""sce"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""nsm"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""max_year"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""min_year"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2020"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""valid_obs"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""fid"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""angle_mean"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""angle_std"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""certainty"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""valid_span"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""uid"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""dist_2021"" width=""-1"" hidden=""0"" type=""field""/>
+   <column name=""country"" width=""-1"" hidden=""0"" type=""field""/>
   </columns>
  </attributetableconfig>
  <conditionalstyles>
@@ -9698,405 +8974,365 @@ def my_form_open(dialog, layer, feature):
  <featformsuppress>0</featformsuppress>
  <editorlayout>generatedlayout</editorlayout>
  <editable>
-  <field editable=""1"" name=""1987-01-01""/>
-  <field editable=""1"" name=""1988""/>
-  <field editable=""1"" name=""1988-01-01""/>
-  <field editable=""1"" name=""1989""/>
-  <field editable=""1"" name=""1989-01-01""/>
-  <field editable=""1"" name=""1990""/>
-  <field editable=""1"" name=""1990-01-01""/>
-  <field editable=""1"" name=""1991""/>
-  <field editable=""1"" name=""1991-01-01""/>
-  <field editable=""1"" name=""1992""/>
-  <field editable=""1"" name=""1992-01-01""/>
-  <field editable=""1"" name=""1993""/>
-  <field editable=""1"" name=""1993-01-01""/>
-  <field editable=""1"" name=""1994""/>
-  <field editable=""1"" name=""1994-01-01""/>
-  <field editable=""1"" name=""1995""/>
-  <field editable=""1"" name=""1995-01-01""/>
-  <field editable=""1"" name=""1996""/>
-  <field editable=""1"" name=""1996-01-01""/>
-  <field editable=""1"" name=""1997""/>
-  <field editable=""1"" name=""1997-01-01""/>
-  <field editable=""1"" name=""1998""/>
-  <field editable=""1"" name=""1998-01-01""/>
-  <field editable=""1"" name=""1999""/>
-  <field editable=""1"" name=""1999-01-01""/>
-  <field editable=""1"" name=""2000""/>
-  <field editable=""1"" name=""2000-01-01""/>
-  <field editable=""1"" name=""2001""/>
-  <field editable=""1"" name=""2001-01-01""/>
-  <field editable=""1"" name=""2002""/>
-  <field editable=""1"" name=""2002-01-01""/>
-  <field editable=""1"" name=""2003""/>
-  <field editable=""1"" name=""2003-01-01""/>
-  <field editable=""1"" name=""2004""/>
-  <field editable=""1"" name=""2004-01-01""/>
-  <field editable=""1"" name=""2005""/>
-  <field editable=""1"" name=""2005-01-01""/>
-  <field editable=""1"" name=""2006""/>
-  <field editable=""1"" name=""2006-01-01""/>
-  <field editable=""1"" name=""2007""/>
-  <field editable=""1"" name=""2007-01-01""/>
-  <field editable=""1"" name=""2008""/>
-  <field editable=""1"" name=""2008-01-01""/>
-  <field editable=""1"" name=""2009""/>
-  <field editable=""1"" name=""2009-01-01""/>
-  <field editable=""1"" name=""2010""/>
-  <field editable=""1"" name=""2010-01-01""/>
-  <field editable=""1"" name=""2011""/>
-  <field editable=""1"" name=""2011-01-01""/>
-  <field editable=""1"" name=""2012""/>
-  <field editable=""1"" name=""2012-01-01""/>
-  <field editable=""1"" name=""2013""/>
-  <field editable=""1"" name=""2013-01-01""/>
-  <field editable=""1"" name=""2014""/>
-  <field editable=""1"" name=""2014-01-01""/>
-  <field editable=""1"" name=""2015""/>
-  <field editable=""1"" name=""2015-01-01""/>
-  <field editable=""1"" name=""2016""/>
-  <field editable=""1"" name=""2016-01-01""/>
-  <field editable=""1"" name=""2017""/>
-  <field editable=""1"" name=""2017-01-01""/>
-  <field editable=""1"" name=""2018""/>
-  <field editable=""1"" name=""2018-01-01""/>
-  <field editable=""1"" name=""angle_mean""/>
-  <field editable=""1"" name=""angle_std""/>
-  <field editable=""1"" name=""breakpoints""/>
-  <field editable=""1"" name=""breaks""/>
-  <field editable=""1"" name=""certainty""/>
-  <field editable=""1"" name=""country""/>
-  <field editable=""1"" name=""dist_1988""/>
-  <field editable=""1"" name=""dist_1989""/>
-  <field editable=""1"" name=""dist_1990""/>
-  <field editable=""1"" name=""dist_1991""/>
-  <field editable=""1"" name=""dist_1992""/>
-  <field editable=""1"" name=""dist_1993""/>
-  <field editable=""1"" name=""dist_1994""/>
-  <field editable=""1"" name=""dist_1995""/>
-  <field editable=""1"" name=""dist_1996""/>
-  <field editable=""1"" name=""dist_1997""/>
-  <field editable=""1"" name=""dist_1998""/>
-  <field editable=""1"" name=""dist_1999""/>
-  <field editable=""1"" name=""dist_2000""/>
-  <field editable=""1"" name=""dist_2001""/>
-  <field editable=""1"" name=""dist_2002""/>
-  <field editable=""1"" name=""dist_2003""/>
-  <field editable=""1"" name=""dist_2004""/>
-  <field editable=""1"" name=""dist_2005""/>
-  <field editable=""1"" name=""dist_2006""/>
-  <field editable=""1"" name=""dist_2007""/>
-  <field editable=""1"" name=""dist_2008""/>
-  <field editable=""1"" name=""dist_2009""/>
-  <field editable=""1"" name=""dist_2010""/>
-  <field editable=""1"" name=""dist_2011""/>
-  <field editable=""1"" name=""dist_2012""/>
-  <field editable=""1"" name=""dist_2013""/>
-  <field editable=""1"" name=""dist_2014""/>
-  <field editable=""1"" name=""dist_2015""/>
-  <field editable=""1"" name=""dist_2016""/>
-  <field editable=""1"" name=""dist_2017""/>
-  <field editable=""1"" name=""dist_2018""/>
-  <field editable=""1"" name=""dist_2019""/>
-  <field editable=""1"" name=""dist_2020""/>
-  <field editable=""1"" name=""dist_2021""/>
-  <field editable=""1"" name=""eln_outl""/>
-  <field editable=""1"" name=""eln_rate""/>
-  <field editable=""1"" name=""eln_sig""/>
-  <field editable=""1"" name=""fid""/>
-  <field editable=""1"" name=""growth""/>
-  <field editable=""1"" name=""incpt_IOD""/>
-  <field editable=""1"" name=""incpt_IPO""/>
-  <field editable=""1"" name=""incpt_PDO""/>
-  <field editable=""1"" name=""incpt_SAM""/>
-  <field editable=""1"" name=""incpt_SOI""/>
-  <field editable=""1"" name=""incpt_tide""/>
-  <field editable=""1"" name=""incpt_time""/>
-  <field editable=""1"" name=""lan_outl""/>
-  <field editable=""1"" name=""lan_rate""/>
-  <field editable=""1"" name=""lan_sig""/>
-  <field editable=""1"" name=""layer""/>
-  <field editable=""1"" name=""max_year""/>
-  <field editable=""1"" name=""min_year""/>
-  <field editable=""1"" name=""mov_outl""/>
-  <field editable=""1"" name=""mov_rate""/>
-  <field editable=""1"" name=""mov_sig""/>
-  <field editable=""1"" name=""move_abs""/>
-  <field editable=""1"" name=""neg_outl""/>
-  <field editable=""1"" name=""neg_rate""/>
-  <field editable=""1"" name=""neg_sig""/>
-  <field editable=""1"" name=""nsm""/>
-  <field editable=""1"" name=""orig_ogc_fid""/>
-  <field editable=""1"" name=""outl_IOD""/>
-  <field editable=""1"" name=""outl_IPO""/>
-  <field editable=""1"" name=""outl_PDO""/>
-  <field editable=""1"" name=""outl_SAM""/>
-  <field editable=""1"" name=""outl_SOI""/>
-  <field editable=""1"" name=""outl_soi""/>
-  <field editable=""1"" name=""outl_tide""/>
-  <field editable=""1"" name=""outl_time""/>
-  <field editable=""1"" name=""path""/>
-  <field editable=""1"" name=""pos_outl""/>
-  <field editable=""1"" name=""pos_rate""/>
-  <field editable=""1"" name=""pos_sig""/>
-  <field editable=""1"" name=""rate_IOD""/>
-  <field editable=""1"" name=""rate_IPO""/>
-  <field editable=""1"" name=""rate_PDO""/>
-  <field editable=""1"" name=""rate_SAM""/>
-  <field editable=""1"" name=""rate_SOI""/>
-  <field editable=""1"" name=""rate_soi""/>
-  <field editable=""1"" name=""rate_tide""/>
-  <field editable=""1"" name=""rate_time""/>
-  <field editable=""1"" name=""retreat""/>
-  <field editable=""1"" name=""sce""/>
-  <field editable=""1"" name=""se_soi""/>
-  <field editable=""1"" name=""se_time""/>
-  <field editable=""1"" name=""sig_IOD""/>
-  <field editable=""1"" name=""sig_IPO""/>
-  <field editable=""1"" name=""sig_PDO""/>
-  <field editable=""1"" name=""sig_SAM""/>
-  <field editable=""1"" name=""sig_SOI""/>
-  <field editable=""1"" name=""sig_soi""/>
-  <field editable=""1"" name=""sig_tide""/>
-  <field editable=""1"" name=""sig_time""/>
-  <field editable=""1"" name=""soi_outl""/>
-  <field editable=""1"" name=""soi_rate""/>
-  <field editable=""1"" name=""soi_sig""/>
-  <field editable=""1"" name=""uid""/>
-  <field editable=""1"" name=""valid_obs""/>
-  <field editable=""1"" name=""valid_span""/>
-  <field editable=""1"" name=""wms_s_abs""/>
-  <field editable=""1"" name=""wms_s_conf""/>
-  <field editable=""1"" name=""wms_s_sig""/>
-  <field editable=""1"" name=""wms_t_abs""/>
-  <field editable=""1"" name=""wms_t_conf""/>
-  <field editable=""1"" name=""wms_t_grew""/>
-  <field editable=""1"" name=""wms_t_less""/>
-  <field editable=""1"" name=""wms_t_retr""/>
-  <field editable=""1"" name=""wms_t_sig""/>
-  <field editable=""1"" name=""wms_valobs""/>
+  <field name=""1987-01-01"" editable=""1""/>
+  <field name=""1988"" editable=""1""/>
+  <field name=""1988-01-01"" editable=""1""/>
+  <field name=""1989"" editable=""1""/>
+  <field name=""1989-01-01"" editable=""1""/>
+  <field name=""1990"" editable=""1""/>
+  <field name=""1990-01-01"" editable=""1""/>
+  <field name=""1991"" editable=""1""/>
+  <field name=""1991-01-01"" editable=""1""/>
+  <field name=""1992"" editable=""1""/>
+  <field name=""1992-01-01"" editable=""1""/>
+  <field name=""1993"" editable=""1""/>
+  <field name=""1993-01-01"" editable=""1""/>
+  <field name=""1994"" editable=""1""/>
+  <field name=""1994-01-01"" editable=""1""/>
+  <field name=""1995"" editable=""1""/>
+  <field name=""1995-01-01"" editable=""1""/>
+  <field name=""1996"" editable=""1""/>
+  <field name=""1996-01-01"" editable=""1""/>
+  <field name=""1997"" editable=""1""/>
+  <field name=""1997-01-01"" editable=""1""/>
+  <field name=""1998"" editable=""1""/>
+  <field name=""1998-01-01"" editable=""1""/>
+  <field name=""1999"" editable=""1""/>
+  <field name=""1999-01-01"" editable=""1""/>
+  <field name=""2000"" editable=""1""/>
+  <field name=""2000-01-01"" editable=""1""/>
+  <field name=""2001"" editable=""1""/>
+  <field name=""2001-01-01"" editable=""1""/>
+  <field name=""2002"" editable=""1""/>
+  <field name=""2002-01-01"" editable=""1""/>
+  <field name=""2003"" editable=""1""/>
+  <field name=""2003-01-01"" editable=""1""/>
+  <field name=""2004"" editable=""1""/>
+  <field name=""2004-01-01"" editable=""1""/>
+  <field name=""2005"" editable=""1""/>
+  <field name=""2005-01-01"" editable=""1""/>
+  <field name=""2006"" editable=""1""/>
+  <field name=""2006-01-01"" editable=""1""/>
+  <field name=""2007"" editable=""1""/>
+  <field name=""2007-01-01"" editable=""1""/>
+  <field name=""2008"" editable=""1""/>
+  <field name=""2008-01-01"" editable=""1""/>
+  <field name=""2009"" editable=""1""/>
+  <field name=""2009-01-01"" editable=""1""/>
+  <field name=""2010"" editable=""1""/>
+  <field name=""2010-01-01"" editable=""1""/>
+  <field name=""2011"" editable=""1""/>
+  <field name=""2011-01-01"" editable=""1""/>
+  <field name=""2012"" editable=""1""/>
+  <field name=""2012-01-01"" editable=""1""/>
+  <field name=""2013"" editable=""1""/>
+  <field name=""2013-01-01"" editable=""1""/>
+  <field name=""2014"" editable=""1""/>
+  <field name=""2014-01-01"" editable=""1""/>
+  <field name=""2015"" editable=""1""/>
+  <field name=""2015-01-01"" editable=""1""/>
+  <field name=""2016"" editable=""1""/>
+  <field name=""2016-01-01"" editable=""1""/>
+  <field name=""2017"" editable=""1""/>
+  <field name=""2017-01-01"" editable=""1""/>
+  <field name=""2018"" editable=""1""/>
+  <field name=""2018-01-01"" editable=""1""/>
+  <field name=""angle_mean"" editable=""1""/>
+  <field name=""angle_std"" editable=""1""/>
+  <field name=""breakpoints"" editable=""1""/>
+  <field name=""breaks"" editable=""1""/>
+  <field name=""certainty"" editable=""1""/>
+  <field name=""country"" editable=""1""/>
+  <field name=""dist_1988"" editable=""1""/>
+  <field name=""dist_1989"" editable=""1""/>
+  <field name=""dist_1990"" editable=""1""/>
+  <field name=""dist_1991"" editable=""1""/>
+  <field name=""dist_1992"" editable=""1""/>
+  <field name=""dist_1993"" editable=""1""/>
+  <field name=""dist_1994"" editable=""1""/>
+  <field name=""dist_1995"" editable=""1""/>
+  <field name=""dist_1996"" editable=""1""/>
+  <field name=""dist_1997"" editable=""1""/>
+  <field name=""dist_1998"" editable=""1""/>
+  <field name=""dist_1999"" editable=""1""/>
+  <field name=""dist_2000"" editable=""1""/>
+  <field name=""dist_2001"" editable=""1""/>
+  <field name=""dist_2002"" editable=""1""/>
+  <field name=""dist_2003"" editable=""1""/>
+  <field name=""dist_2004"" editable=""1""/>
+  <field name=""dist_2005"" editable=""1""/>
+  <field name=""dist_2006"" editable=""1""/>
+  <field name=""dist_2007"" editable=""1""/>
+  <field name=""dist_2008"" editable=""1""/>
+  <field name=""dist_2009"" editable=""1""/>
+  <field name=""dist_2010"" editable=""1""/>
+  <field name=""dist_2011"" editable=""1""/>
+  <field name=""dist_2012"" editable=""1""/>
+  <field name=""dist_2013"" editable=""1""/>
+  <field name=""dist_2014"" editable=""1""/>
+  <field name=""dist_2015"" editable=""1""/>
+  <field name=""dist_2016"" editable=""1""/>
+  <field name=""dist_2017"" editable=""1""/>
+  <field name=""dist_2018"" editable=""1""/>
+  <field name=""dist_2019"" editable=""1""/>
+  <field name=""dist_2020"" editable=""1""/>
+  <field name=""dist_2021"" editable=""1""/>
+  <field name=""eln_outl"" editable=""1""/>
+  <field name=""eln_rate"" editable=""1""/>
+  <field name=""eln_sig"" editable=""1""/>
+  <field name=""fid"" editable=""1""/>
+  <field name=""growth"" editable=""1""/>
+  <field name=""incpt_IOD"" editable=""1""/>
+  <field name=""incpt_IPO"" editable=""1""/>
+  <field name=""incpt_PDO"" editable=""1""/>
+  <field name=""incpt_SAM"" editable=""1""/>
+  <field name=""incpt_SOI"" editable=""1""/>
+  <field name=""incpt_tide"" editable=""1""/>
+  <field name=""incpt_time"" editable=""1""/>
+  <field name=""lan_outl"" editable=""1""/>
+  <field name=""lan_rate"" editable=""1""/>
+  <field name=""lan_sig"" editable=""1""/>
+  <field name=""layer"" editable=""1""/>
+  <field name=""max_year"" editable=""1""/>
+  <field name=""min_year"" editable=""1""/>
+  <field name=""mov_outl"" editable=""1""/>
+  <field name=""mov_rate"" editable=""1""/>
+  <field name=""mov_sig"" editable=""1""/>
+  <field name=""move_abs"" editable=""1""/>
+  <field name=""neg_outl"" editable=""1""/>
+  <field name=""neg_rate"" editable=""1""/>
+  <field name=""neg_sig"" editable=""1""/>
+  <field name=""nsm"" editable=""1""/>
+  <field name=""orig_ogc_fid"" editable=""1""/>
+  <field name=""outl_IOD"" editable=""1""/>
+  <field name=""outl_IPO"" editable=""1""/>
+  <field name=""outl_PDO"" editable=""1""/>
+  <field name=""outl_SAM"" editable=""1""/>
+  <field name=""outl_SOI"" editable=""1""/>
+  <field name=""outl_soi"" editable=""1""/>
+  <field name=""outl_tide"" editable=""1""/>
+  <field name=""outl_time"" editable=""1""/>
+  <field name=""path"" editable=""1""/>
+  <field name=""pos_outl"" editable=""1""/>
+  <field name=""pos_rate"" editable=""1""/>
+  <field name=""pos_sig"" editable=""1""/>
+  <field name=""rate_IOD"" editable=""1""/>
+  <field name=""rate_IPO"" editable=""1""/>
+  <field name=""rate_PDO"" editable=""1""/>
+  <field name=""rate_SAM"" editable=""1""/>
+  <field name=""rate_SOI"" editable=""1""/>
+  <field name=""rate_soi"" editable=""1""/>
+  <field name=""rate_tide"" editable=""1""/>
+  <field name=""rate_time"" editable=""1""/>
+  <field name=""retreat"" editable=""1""/>
+  <field name=""sce"" editable=""1""/>
+  <field name=""se_soi"" editable=""1""/>
+  <field name=""se_time"" editable=""1""/>
+  <field name=""sig_IOD"" editable=""1""/>
+  <field name=""sig_IPO"" editable=""1""/>
+  <field name=""sig_PDO"" editable=""1""/>
+  <field name=""sig_SAM"" editable=""1""/>
+  <field name=""sig_SOI"" editable=""1""/>
+  <field name=""sig_soi"" editable=""1""/>
+  <field name=""sig_tide"" editable=""1""/>
+  <field name=""sig_time"" editable=""1""/>
+  <field name=""soi_outl"" editable=""1""/>
+  <field name=""soi_rate"" editable=""1""/>
+  <field name=""soi_sig"" editable=""1""/>
+  <field name=""uid"" editable=""1""/>
+  <field name=""valid_obs"" editable=""1""/>
+  <field name=""valid_span"" editable=""1""/>
+  <field name=""wms_s_abs"" editable=""1""/>
+  <field name=""wms_s_conf"" editable=""1""/>
+  <field name=""wms_s_sig"" editable=""1""/>
+  <field name=""wms_t_abs"" editable=""1""/>
+  <field name=""wms_t_conf"" editable=""1""/>
+  <field name=""wms_t_grew"" editable=""1""/>
+  <field name=""wms_t_less"" editable=""1""/>
+  <field name=""wms_t_retr"" editable=""1""/>
+  <field name=""wms_t_sig"" editable=""1""/>
+  <field name=""wms_valobs"" editable=""1""/>
  </editable>
  <labelOnTop>
-  <field labelOnTop=""0"" name=""1987-01-01""/>
-  <field labelOnTop=""0"" name=""1988""/>
-  <field labelOnTop=""0"" name=""1988-01-01""/>
-  <field labelOnTop=""0"" name=""1989""/>
-  <field labelOnTop=""0"" name=""1989-01-01""/>
-  <field labelOnTop=""0"" name=""1990""/>
-  <field labelOnTop=""0"" name=""1990-01-01""/>
-  <field labelOnTop=""0"" name=""1991""/>
-  <field labelOnTop=""0"" name=""1991-01-01""/>
-  <field labelOnTop=""0"" name=""1992""/>
-  <field labelOnTop=""0"" name=""1992-01-01""/>
-  <field labelOnTop=""0"" name=""1993""/>
-  <field labelOnTop=""0"" name=""1993-01-01""/>
-  <field labelOnTop=""0"" name=""1994""/>
-  <field labelOnTop=""0"" name=""1994-01-01""/>
-  <field labelOnTop=""0"" name=""1995""/>
-  <field labelOnTop=""0"" name=""1995-01-01""/>
-  <field labelOnTop=""0"" name=""1996""/>
-  <field labelOnTop=""0"" name=""1996-01-01""/>
-  <field labelOnTop=""0"" name=""1997""/>
-  <field labelOnTop=""0"" name=""1997-01-01""/>
-  <field labelOnTop=""0"" name=""1998""/>
-  <field labelOnTop=""0"" name=""1998-01-01""/>
-  <field labelOnTop=""0"" name=""1999""/>
-  <field labelOnTop=""0"" name=""1999-01-01""/>
-  <field labelOnTop=""0"" name=""2000""/>
-  <field labelOnTop=""0"" name=""2000-01-01""/>
-  <field labelOnTop=""0"" name=""2001""/>
-  <field labelOnTop=""0"" name=""2001-01-01""/>
-  <field labelOnTop=""0"" name=""2002""/>
-  <field labelOnTop=""0"" name=""2002-01-01""/>
-  <field labelOnTop=""0"" name=""2003""/>
-  <field labelOnTop=""0"" name=""2003-01-01""/>
-  <field labelOnTop=""0"" name=""2004""/>
-  <field labelOnTop=""0"" name=""2004-01-01""/>
-  <field labelOnTop=""0"" name=""2005""/>
-  <field labelOnTop=""0"" name=""2005-01-01""/>
-  <field labelOnTop=""0"" name=""2006""/>
-  <field labelOnTop=""0"" name=""2006-01-01""/>
-  <field labelOnTop=""0"" name=""2007""/>
-  <field labelOnTop=""0"" name=""2007-01-01""/>
-  <field labelOnTop=""0"" name=""2008""/>
-  <field labelOnTop=""0"" name=""2008-01-01""/>
-  <field labelOnTop=""0"" name=""2009""/>
-  <field labelOnTop=""0"" name=""2009-01-01""/>
-  <field labelOnTop=""0"" name=""2010""/>
-  <field labelOnTop=""0"" name=""2010-01-01""/>
-  <field labelOnTop=""0"" name=""2011""/>
-  <field labelOnTop=""0"" name=""2011-01-01""/>
-  <field labelOnTop=""0"" name=""2012""/>
-  <field labelOnTop=""0"" name=""2012-01-01""/>
-  <field labelOnTop=""0"" name=""2013""/>
-  <field labelOnTop=""0"" name=""2013-01-01""/>
-  <field labelOnTop=""0"" name=""2014""/>
-  <field labelOnTop=""0"" name=""2014-01-01""/>
-  <field labelOnTop=""0"" name=""2015""/>
-  <field labelOnTop=""0"" name=""2015-01-01""/>
-  <field labelOnTop=""0"" name=""2016""/>
-  <field labelOnTop=""0"" name=""2016-01-01""/>
-  <field labelOnTop=""0"" name=""2017""/>
-  <field labelOnTop=""0"" name=""2017-01-01""/>
-  <field labelOnTop=""0"" name=""2018""/>
-  <field labelOnTop=""0"" name=""2018-01-01""/>
-  <field labelOnTop=""0"" name=""angle_mean""/>
-  <field labelOnTop=""0"" name=""angle_std""/>
-  <field labelOnTop=""0"" name=""breakpoints""/>
-  <field labelOnTop=""0"" name=""breaks""/>
-  <field labelOnTop=""0"" name=""certainty""/>
-  <field labelOnTop=""0"" name=""country""/>
-  <field labelOnTop=""0"" name=""dist_1988""/>
-  <field labelOnTop=""0"" name=""dist_1989""/>
-  <field labelOnTop=""0"" name=""dist_1990""/>
-  <field labelOnTop=""0"" name=""dist_1991""/>
-  <field labelOnTop=""0"" name=""dist_1992""/>
-  <field labelOnTop=""0"" name=""dist_1993""/>
-  <field labelOnTop=""0"" name=""dist_1994""/>
-  <field labelOnTop=""0"" name=""dist_1995""/>
-  <field labelOnTop=""0"" name=""dist_1996""/>
-  <field labelOnTop=""0"" name=""dist_1997""/>
-  <field labelOnTop=""0"" name=""dist_1998""/>
-  <field labelOnTop=""0"" name=""dist_1999""/>
-  <field labelOnTop=""0"" name=""dist_2000""/>
-  <field labelOnTop=""0"" name=""dist_2001""/>
-  <field labelOnTop=""0"" name=""dist_2002""/>
-  <field labelOnTop=""0"" name=""dist_2003""/>
-  <field labelOnTop=""0"" name=""dist_2004""/>
-  <field labelOnTop=""0"" name=""dist_2005""/>
-  <field labelOnTop=""0"" name=""dist_2006""/>
-  <field labelOnTop=""0"" name=""dist_2007""/>
-  <field labelOnTop=""0"" name=""dist_2008""/>
-  <field labelOnTop=""0"" name=""dist_2009""/>
-  <field labelOnTop=""0"" name=""dist_2010""/>
-  <field labelOnTop=""0"" name=""dist_2011""/>
-  <field labelOnTop=""0"" name=""dist_2012""/>
-  <field labelOnTop=""0"" name=""dist_2013""/>
-  <field labelOnTop=""0"" name=""dist_2014""/>
-  <field labelOnTop=""0"" name=""dist_2015""/>
-  <field labelOnTop=""0"" name=""dist_2016""/>
-  <field labelOnTop=""0"" name=""dist_2017""/>
-  <field labelOnTop=""0"" name=""dist_2018""/>
-  <field labelOnTop=""0"" name=""dist_2019""/>
-  <field labelOnTop=""0"" name=""dist_2020""/>
-  <field labelOnTop=""0"" name=""dist_2021""/>
-  <field labelOnTop=""0"" name=""eln_outl""/>
-  <field labelOnTop=""0"" name=""eln_rate""/>
-  <field labelOnTop=""0"" name=""eln_sig""/>
-  <field labelOnTop=""0"" name=""fid""/>
-  <field labelOnTop=""0"" name=""growth""/>
-  <field labelOnTop=""0"" name=""incpt_IOD""/>
-  <field labelOnTop=""0"" name=""incpt_IPO""/>
-  <field labelOnTop=""0"" name=""incpt_PDO""/>
-  <field labelOnTop=""0"" name=""incpt_SAM""/>
-  <field labelOnTop=""0"" name=""incpt_SOI""/>
-  <field labelOnTop=""0"" name=""incpt_tide""/>
-  <field labelOnTop=""0"" name=""incpt_time""/>
-  <field labelOnTop=""0"" name=""lan_outl""/>
-  <field labelOnTop=""0"" name=""lan_rate""/>
-  <field labelOnTop=""0"" name=""lan_sig""/>
-  <field labelOnTop=""0"" name=""layer""/>
-  <field labelOnTop=""0"" name=""max_year""/>
-  <field labelOnTop=""0"" name=""min_year""/>
-  <field labelOnTop=""0"" name=""mov_outl""/>
-  <field labelOnTop=""0"" name=""mov_rate""/>
-  <field labelOnTop=""0"" name=""mov_sig""/>
-  <field labelOnTop=""0"" name=""move_abs""/>
-  <field labelOnTop=""0"" name=""neg_outl""/>
-  <field labelOnTop=""0"" name=""neg_rate""/>
-  <field labelOnTop=""0"" name=""neg_sig""/>
-  <field labelOnTop=""0"" name=""nsm""/>
-  <field labelOnTop=""0"" name=""orig_ogc_fid""/>
-  <field labelOnTop=""0"" name=""outl_IOD""/>
-  <field labelOnTop=""0"" name=""outl_IPO""/>
-  <field labelOnTop=""0"" name=""outl_PDO""/>
-  <field labelOnTop=""0"" name=""outl_SAM""/>
-  <field labelOnTop=""0"" name=""outl_SOI""/>
-  <field labelOnTop=""0"" name=""outl_soi""/>
-  <field labelOnTop=""0"" name=""outl_tide""/>
-  <field labelOnTop=""0"" name=""outl_time""/>
-  <field labelOnTop=""0"" name=""path""/>
-  <field labelOnTop=""0"" name=""pos_outl""/>
-  <field labelOnTop=""0"" name=""pos_rate""/>
-  <field labelOnTop=""0"" name=""pos_sig""/>
-  <field labelOnTop=""0"" name=""rate_IOD""/>
-  <field labelOnTop=""0"" name=""rate_IPO""/>
-  <field labelOnTop=""0"" name=""rate_PDO""/>
-  <field labelOnTop=""0"" name=""rate_SAM""/>
-  <field labelOnTop=""0"" name=""rate_SOI""/>
-  <field labelOnTop=""0"" name=""rate_soi""/>
-  <field labelOnTop=""0"" name=""rate_tide""/>
-  <field labelOnTop=""0"" name=""rate_time""/>
-  <field labelOnTop=""0"" name=""retreat""/>
-  <field labelOnTop=""0"" name=""sce""/>
-  <field labelOnTop=""0"" name=""se_soi""/>
-  <field labelOnTop=""0"" name=""se_time""/>
-  <field labelOnTop=""0"" name=""sig_IOD""/>
-  <field labelOnTop=""0"" name=""sig_IPO""/>
-  <field labelOnTop=""0"" name=""sig_PDO""/>
-  <field labelOnTop=""0"" name=""sig_SAM""/>
-  <field labelOnTop=""0"" name=""sig_SOI""/>
-  <field labelOnTop=""0"" name=""sig_soi""/>
-  <field labelOnTop=""0"" name=""sig_tide""/>
-  <field labelOnTop=""0"" name=""sig_time""/>
-  <field labelOnTop=""0"" name=""soi_outl""/>
-  <field labelOnTop=""0"" name=""soi_rate""/>
-  <field labelOnTop=""0"" name=""soi_sig""/>
-  <field labelOnTop=""0"" name=""uid""/>
-  <field labelOnTop=""0"" name=""valid_obs""/>
-  <field labelOnTop=""0"" name=""valid_span""/>
-  <field labelOnTop=""0"" name=""wms_s_abs""/>
-  <field labelOnTop=""0"" name=""wms_s_conf""/>
-  <field labelOnTop=""0"" name=""wms_s_sig""/>
-  <field labelOnTop=""0"" name=""wms_t_abs""/>
-  <field labelOnTop=""0"" name=""wms_t_conf""/>
-  <field labelOnTop=""0"" name=""wms_t_grew""/>
-  <field labelOnTop=""0"" name=""wms_t_less""/>
-  <field labelOnTop=""0"" name=""wms_t_retr""/>
-  <field labelOnTop=""0"" name=""wms_t_sig""/>
-  <field labelOnTop=""0"" name=""wms_valobs""/>
+  <field name=""1987-01-01"" labelOnTop=""0""/>
+  <field name=""1988"" labelOnTop=""0""/>
+  <field name=""1988-01-01"" labelOnTop=""0""/>
+  <field name=""1989"" labelOnTop=""0""/>
+  <field name=""1989-01-01"" labelOnTop=""0""/>
+  <field name=""1990"" labelOnTop=""0""/>
+  <field name=""1990-01-01"" labelOnTop=""0""/>
+  <field name=""1991"" labelOnTop=""0""/>
+  <field name=""1991-01-01"" labelOnTop=""0""/>
+  <field name=""1992"" labelOnTop=""0""/>
+  <field name=""1992-01-01"" labelOnTop=""0""/>
+  <field name=""1993"" labelOnTop=""0""/>
+  <field name=""1993-01-01"" labelOnTop=""0""/>
+  <field name=""1994"" labelOnTop=""0""/>
+  <field name=""1994-01-01"" labelOnTop=""0""/>
+  <field name=""1995"" labelOnTop=""0""/>
+  <field name=""1995-01-01"" labelOnTop=""0""/>
+  <field name=""1996"" labelOnTop=""0""/>
+  <field name=""1996-01-01"" labelOnTop=""0""/>
+  <field name=""1997"" labelOnTop=""0""/>
+  <field name=""1997-01-01"" labelOnTop=""0""/>
+  <field name=""1998"" labelOnTop=""0""/>
+  <field name=""1998-01-01"" labelOnTop=""0""/>
+  <field name=""1999"" labelOnTop=""0""/>
+  <field name=""1999-01-01"" labelOnTop=""0""/>
+  <field name=""2000"" labelOnTop=""0""/>
+  <field name=""2000-01-01"" labelOnTop=""0""/>
+  <field name=""2001"" labelOnTop=""0""/>
+  <field name=""2001-01-01"" labelOnTop=""0""/>
+  <field name=""2002"" labelOnTop=""0""/>
+  <field name=""2002-01-01"" labelOnTop=""0""/>
+  <field name=""2003"" labelOnTop=""0""/>
+  <field name=""2003-01-01"" labelOnTop=""0""/>
+  <field name=""2004"" labelOnTop=""0""/>
+  <field name=""2004-01-01"" labelOnTop=""0""/>
+  <field name=""2005"" labelOnTop=""0""/>
+  <field name=""2005-01-01"" labelOnTop=""0""/>
+  <field name=""2006"" labelOnTop=""0""/>
+  <field name=""2006-01-01"" labelOnTop=""0""/>
+  <field name=""2007"" labelOnTop=""0""/>
+  <field name=""2007-01-01"" labelOnTop=""0""/>
+  <field name=""2008"" labelOnTop=""0""/>
+  <field name=""2008-01-01"" labelOnTop=""0""/>
+  <field name=""2009"" labelOnTop=""0""/>
+  <field name=""2009-01-01"" labelOnTop=""0""/>
+  <field name=""2010"" labelOnTop=""0""/>
+  <field name=""2010-01-01"" labelOnTop=""0""/>
+  <field name=""2011"" labelOnTop=""0""/>
+  <field name=""2011-01-01"" labelOnTop=""0""/>
+  <field name=""2012"" labelOnTop=""0""/>
+  <field name=""2012-01-01"" labelOnTop=""0""/>
+  <field name=""2013"" labelOnTop=""0""/>
+  <field name=""2013-01-01"" labelOnTop=""0""/>
+  <field name=""2014"" labelOnTop=""0""/>
+  <field name=""2014-01-01"" labelOnTop=""0""/>
+  <field name=""2015"" labelOnTop=""0""/>
+  <field name=""2015-01-01"" labelOnTop=""0""/>
+  <field name=""2016"" labelOnTop=""0""/>
+  <field name=""2016-01-01"" labelOnTop=""0""/>
+  <field name=""2017"" labelOnTop=""0""/>
+  <field name=""2017-01-01"" labelOnTop=""0""/>
+  <field name=""2018"" labelOnTop=""0""/>
+  <field name=""2018-01-01"" labelOnTop=""0""/>
+  <field name=""angle_mean"" labelOnTop=""0""/>
+  <field name=""angle_std"" labelOnTop=""0""/>
+  <field name=""breakpoints"" labelOnTop=""0""/>
+  <field name=""breaks"" labelOnTop=""0""/>
+  <field name=""certainty"" labelOnTop=""0""/>
+  <field name=""country"" labelOnTop=""0""/>
+  <field name=""dist_1988"" labelOnTop=""0""/>
+  <field name=""dist_1989"" labelOnTop=""0""/>
+  <field name=""dist_1990"" labelOnTop=""0""/>
+  <field name=""dist_1991"" labelOnTop=""0""/>
+  <field name=""dist_1992"" labelOnTop=""0""/>
+  <field name=""dist_1993"" labelOnTop=""0""/>
+  <field name=""dist_1994"" labelOnTop=""0""/>
+  <field name=""dist_1995"" labelOnTop=""0""/>
+  <field name=""dist_1996"" labelOnTop=""0""/>
+  <field name=""dist_1997"" labelOnTop=""0""/>
+  <field name=""dist_1998"" labelOnTop=""0""/>
+  <field name=""dist_1999"" labelOnTop=""0""/>
+  <field name=""dist_2000"" labelOnTop=""0""/>
+  <field name=""dist_2001"" labelOnTop=""0""/>
+  <field name=""dist_2002"" labelOnTop=""0""/>
+  <field name=""dist_2003"" labelOnTop=""0""/>
+  <field name=""dist_2004"" labelOnTop=""0""/>
+  <field name=""dist_2005"" labelOnTop=""0""/>
+  <field name=""dist_2006"" labelOnTop=""0""/>
+  <field name=""dist_2007"" labelOnTop=""0""/>
+  <field name=""dist_2008"" labelOnTop=""0""/>
+  <field name=""dist_2009"" labelOnTop=""0""/>
+  <field name=""dist_2010"" labelOnTop=""0""/>
+  <field name=""dist_2011"" labelOnTop=""0""/>
+  <field name=""dist_2012"" labelOnTop=""0""/>
+  <field name=""dist_2013"" labelOnTop=""0""/>
+  <field name=""dist_2014"" labelOnTop=""0""/>
+  <field name=""dist_2015"" labelOnTop=""0""/>
+  <field name=""dist_2016"" labelOnTop=""0""/>
+  <field name=""dist_2017"" labelOnTop=""0""/>
+  <field name=""dist_2018"" labelOnTop=""0""/>
+  <field name=""dist_2019"" labelOnTop=""0""/>
+  <field name=""dist_2020"" labelOnTop=""0""/>
+  <field name=""dist_2021"" labelOnTop=""0""/>
+  <field name=""eln_outl"" labelOnTop=""0""/>
+  <field name=""eln_rate"" labelOnTop=""0""/>
+  <field name=""eln_sig"" labelOnTop=""0""/>
+  <field name=""fid"" labelOnTop=""0""/>
+  <field name=""growth"" labelOnTop=""0""/>
+  <field name=""incpt_IOD"" labelOnTop=""0""/>
+  <field name=""incpt_IPO"" labelOnTop=""0""/>
+  <field name=""incpt_PDO"" labelOnTop=""0""/>
+  <field name=""incpt_SAM"" labelOnTop=""0""/>
+  <field name=""incpt_SOI"" labelOnTop=""0""/>
+  <field name=""incpt_tide"" labelOnTop=""0""/>
+  <field name=""incpt_time"" labelOnTop=""0""/>
+  <field name=""lan_outl"" labelOnTop=""0""/>
+  <field name=""lan_rate"" labelOnTop=""0""/>
+  <field name=""lan_sig"" labelOnTop=""0""/>
+  <field name=""layer"" labelOnTop=""0""/>
+  <field name=""max_year"" labelOnTop=""0""/>
+  <field name=""min_year"" labelOnTop=""0""/>
+  <field name=""mov_outl"" labelOnTop=""0""/>
+  <field name=""mov_rate"" labelOnTop=""0""/>
+  <field name=""mov_sig"" labelOnTop=""0""/>
+  <field name=""move_abs"" labelOnTop=""0""/>
+  <field name=""neg_outl"" labelOnTop=""0""/>
+  <field name=""neg_rate"" labelOnTop=""0""/>
+  <field name=""neg_sig"" labelOnTop=""0""/>
+  <field name=""nsm"" labelOnTop=""0""/>
+  <field name=""orig_ogc_fid"" labelOnTop=""0""/>
+  <field name=""outl_IOD"" labelOnTop=""0""/>
+  <field name=""outl_IPO"" labelOnTop=""0""/>
+  <field name=""outl_PDO"" labelOnTop=""0""/>
+  <field name=""outl_SAM"" labelOnTop=""0""/>
+  <field name=""outl_SOI"" labelOnTop=""0""/>
+  <field name=""outl_soi"" labelOnTop=""0""/>
+  <field name=""outl_tide"" labelOnTop=""0""/>
+  <field name=""outl_time"" labelOnTop=""0""/>
+  <field name=""path"" labelOnTop=""0""/>
+  <field name=""pos_outl"" labelOnTop=""0""/>
+  <field name=""pos_rate"" labelOnTop=""0""/>
+  <field name=""pos_sig"" labelOnTop=""0""/>
+  <field name=""rate_IOD"" labelOnTop=""0""/>
+  <field name=""rate_IPO"" labelOnTop=""0""/>
+  <field name=""rate_PDO"" labelOnTop=""0""/>
+  <field name=""rate_SAM"" labelOnTop=""0""/>
+  <field name=""rate_SOI"" labelOnTop=""0""/>
+  <field name=""rate_soi"" labelOnTop=""0""/>
+  <field name=""rate_tide"" labelOnTop=""0""/>
+  <field name=""rate_time"" labelOnTop=""0""/>
+  <field name=""retreat"" labelOnTop=""0""/>
+  <field name=""sce"" labelOnTop=""0""/>
+  <field name=""se_soi"" labelOnTop=""0""/>
+  <field name=""se_time"" labelOnTop=""0""/>
+  <field name=""sig_IOD"" labelOnTop=""0""/>
+  <field name=""sig_IPO"" labelOnTop=""0""/>
+  <field name=""sig_PDO"" labelOnTop=""0""/>
+  <field name=""sig_SAM"" labelOnTop=""0""/>
+  <field name=""sig_SOI"" labelOnTop=""0""/>
+  <field name=""sig_soi"" labelOnTop=""0""/>
+  <field name=""sig_tide"" labelOnTop=""0""/>
+  <field name=""sig_time"" labelOnTop=""0""/>
+  <field name=""soi_outl"" labelOnTop=""0""/>
+  <field name=""soi_rate"" labelOnTop=""0""/>
+  <field name=""soi_sig"" labelOnTop=""0""/>
+  <field name=""uid"" labelOnTop=""0""/>
+  <field name=""valid_obs"" labelOnTop=""0""/>
+  <field name=""valid_span"" labelOnTop=""0""/>
+  <field name=""wms_s_abs"" labelOnTop=""0""/>
+  <field name=""wms_s_conf"" labelOnTop=""0""/>
+  <field name=""wms_s_sig"" labelOnTop=""0""/>
+  <field name=""wms_t_abs"" labelOnTop=""0""/>
+  <field name=""wms_t_conf"" labelOnTop=""0""/>
+  <field name=""wms_t_grew"" labelOnTop=""0""/>
+  <field name=""wms_t_less"" labelOnTop=""0""/>
+  <field name=""wms_t_retr"" labelOnTop=""0""/>
+  <field name=""wms_t_sig"" labelOnTop=""0""/>
+  <field name=""wms_valobs"" labelOnTop=""0""/>
  </labelOnTop>
- <reuseLastValue>
-  <field reuseLastValue=""0"" name=""angle_mean""/>
-  <field reuseLastValue=""0"" name=""angle_std""/>
-  <field reuseLastValue=""0"" name=""certainty""/>
-  <field reuseLastValue=""0"" name=""country""/>
-  <field reuseLastValue=""0"" name=""dist_2000""/>
-  <field reuseLastValue=""0"" name=""dist_2001""/>
-  <field reuseLastValue=""0"" name=""dist_2002""/>
-  <field reuseLastValue=""0"" name=""dist_2003""/>
-  <field reuseLastValue=""0"" name=""dist_2004""/>
-  <field reuseLastValue=""0"" name=""dist_2005""/>
-  <field reuseLastValue=""0"" name=""dist_2006""/>
-  <field reuseLastValue=""0"" name=""dist_2007""/>
-  <field reuseLastValue=""0"" name=""dist_2008""/>
-  <field reuseLastValue=""0"" name=""dist_2009""/>
-  <field reuseLastValue=""0"" name=""dist_2010""/>
-  <field reuseLastValue=""0"" name=""dist_2011""/>
-  <field reuseLastValue=""0"" name=""dist_2012""/>
-  <field reuseLastValue=""0"" name=""dist_2013""/>
-  <field reuseLastValue=""0"" name=""dist_2014""/>
-  <field reuseLastValue=""0"" name=""dist_2015""/>
-  <field reuseLastValue=""0"" name=""dist_2016""/>
-  <field reuseLastValue=""0"" name=""dist_2017""/>
-  <field reuseLastValue=""0"" name=""dist_2018""/>
-  <field reuseLastValue=""0"" name=""dist_2019""/>
-  <field reuseLastValue=""0"" name=""dist_2020""/>
-  <field reuseLastValue=""0"" name=""dist_2021""/>
-  <field reuseLastValue=""0"" name=""fid""/>
-  <field reuseLastValue=""0"" name=""max_year""/>
-  <field reuseLastValue=""0"" name=""min_year""/>
-  <field reuseLastValue=""0"" name=""nsm""/>
-  <field reuseLastValue=""0"" name=""outl_time""/>
-  <field reuseLastValue=""0"" name=""rate_time""/>
-  <field reuseLastValue=""0"" name=""sce""/>
-  <field reuseLastValue=""0"" name=""se_time""/>
-  <field reuseLastValue=""0"" name=""sig_time""/>
-  <field reuseLastValue=""0"" name=""uid""/>
-  <field reuseLastValue=""0"" name=""valid_obs""/>
-  <field reuseLastValue=""0"" name=""valid_span""/>
- </reuseLastValue>
  <dataDefinedFieldProperties/>
  <widgets/>
  <previewExpression>1987-01-01</previewExpression>
@@ -10104,7 +9340,7 @@ def my_form_open(dialog, layer, feature):
  <layerGeometryType>0</layerGeometryType>
 </qgis>
 ","<?xml version=""1.0"" encoding=""UTF-8""?>
-<StyledLayerDescriptor xmlns=""http://www.opengis.net/sld"" xsi:schemaLocation=""http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/StyledLayerDescriptor.xsd"" version=""1.1.0"" xmlns:se=""http://www.opengis.net/se"" xmlns:ogc=""http://www.opengis.net/ogc"" xmlns:xlink=""http://www.w3.org/1999/xlink"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<StyledLayerDescriptor xmlns=""http://www.opengis.net/sld"" xmlns:xlink=""http://www.w3.org/1999/xlink"" xsi:schemaLocation=""http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/StyledLayerDescriptor.xsd"" version=""1.1.0"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:ogc=""http://www.opengis.net/ogc"" xmlns:se=""http://www.opengis.net/se"">
  <NamedLayer>
   <se:Name>rates_of_change</se:Name>
   <UserStyle>
@@ -10555,7 +9791,7 @@ def my_form_open(dialog, layer, feature):
     <se:Rule>
      <se:TextSymbolizer>
       <se:Label>
-       <!--SE Export for if(abs(""rate_time"") >= 0.3, concat(format_number(""rate_time"", 1, NULL), ' m (±', format_number(""se_time"" * 1.96, 1, NULL), ')'), NULL) not implemented yet-->Placeholder</se:Label>
+       <!--SE Export for if(sig_time <= 0.01 AND certainty = 'good' AND abs(rate_time) >= 0.3, concat(format_number(rate_time, 1, NULL), ' m (±', format_number(se_time * 1.96, 1, NULL), ')'), NULL) not implemented yet-->Placeholder</se:Label>
       <se:Font>
        <se:SvgParameter name=""font-family"">MS Shell Dlg 2</se:SvgParameter>
        <se:SvgParameter name=""font-size"">9</se:SvgParameter>
@@ -10585,7 +9821,7 @@ def my_form_open(dialog, layer, feature):
   </UserStyle>
  </NamedLayer>
 </StyledLayerDescriptor>
-",1,Thu Sep 1 13:41:51 2022,,,2022-06-02T07:16:19+00:00
+",1,Wed Sep 7 11:33:31 2022,,,2022-06-02T07:16:19+00:00
 ,,shorelines_annual,geom,shorelines_annual,"<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
 <qgis simplifyDrawingTol=""1"" simplifyDrawingHints=""1"" version=""3.26.0-Buenos Aires"" styleCategories=""AllStyleCategories"" minScale=""30000"" hasScaleBasedVisibilityFlag=""1"" maxScale=""0"" simplifyLocal=""1"" symbologyReferenceScale=""-1"" simplifyAlgorithm=""0"" simplifyMaxScale=""1"" labelsEnabled=""1"" readOnly=""0"">
  <flags>
