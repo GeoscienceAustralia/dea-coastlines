@@ -1,0 +1,28 @@
+version: '3.4'
+
+services:
+  postgres:
+    # db with some data from ls5, 7, 8 pre-indexed
+    build: docker/db/
+    environment:
+      - POSTGRES_DB=odc
+      - POSTGRES_PASSWORD=odcpass
+      - POSTGRES_USER=odcuser
+    network_mode: bridge
+    ports:
+      - "${DB_PORT}:5432"
+    restart: always
+  # Overwrite ows so it can talk to docker db
+  coastline:
+    build:
+      context: .
+    network_mode: bridge
+    links:
+      - postgres:postgres
+    environment:
+      DB_PORT: 5432
+      DB_HOSTNAME: postgres
+      DB_USERNAME: odcuser
+      DB_PASSWORD: odcpass
+      DB_DATABASE: odc
+    command: tail -f /dev/null
