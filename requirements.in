@@ -4,7 +4,7 @@ affine>=2.3.0
 botocore
 click>=8.0.1
 datacube[s3,performance]>=1.8.6
-dea_tools>=0.2.8.dev11
+dea_tools>=0.2.8.dev13
 Fiona>=1.8.20
 geopandas>=0.10.2
 matplotlib>=3.4.3
