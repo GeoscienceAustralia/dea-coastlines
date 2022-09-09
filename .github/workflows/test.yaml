@@ -1,0 +1,35 @@
+
+---
+name: Tests
+
+on:
+  pull_request:
+    branches:
+        - 'develop'
+
+  push:
+    branches:
+      - 'develop'
+
+jobs:
+  unit-integration-performance-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Dockerized Integration Pytest (stage 1 - integration test)
+        run: |
+          mkdir artifacts
+          chmod a+rw artifacts
+          docker-compose up -d
+          docker-compose exec -T coastline /bin/sh -c "pytest tests/"
+          docker-compose down
+
+      - name: Upload All coverage to Codecov (stage 1 - upload coverage result)
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./artifacts/*.xml
+          fail_ci_if_error: false

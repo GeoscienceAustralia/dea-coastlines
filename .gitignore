@@ -9,3 +9,4 @@
 !*.in
 !*.gitignore
 !*.sql
+!**.github
