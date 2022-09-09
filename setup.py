@@ -18,7 +18,7 @@ REQUIRED = [
     "geopandas",
     "matplotlib",
     "numpy",
-    "odc-geo"
+    "odc-geo",
     "odc_ui",
     "pandas",
     "pygeos",
