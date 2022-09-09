@@ -8,3 +8,4 @@
 !*.yaml
 !*.in
 !*.gitignore
+!*.sql
