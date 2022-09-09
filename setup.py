@@ -23,6 +23,7 @@ REQUIRED = [
     "pandas",
     "pygeos",
     "pyproj",
+    "pytest",
     "pyTMD",
     "python_geohash",
     "pytz",

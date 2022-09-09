@@ -8,20 +8,20 @@ services:
       - POSTGRES_DB=odc
       - POSTGRES_PASSWORD=odcpass
       - POSTGRES_USER=odcuser
-    network_mode: bridge
+    # network_mode: bridge
     ports:
-      - "${DB_PORT}:5432"
+      - "5431:5432"
     restart: always
   # Overwrite ows so it can talk to docker db
   coastline:
     build:
       context: .
-    network_mode: bridge
+    network_mode: host
     links:
       - postgres:postgres
     environment:
-      DB_PORT: 5432
-      DB_HOSTNAME: postgres
+      DB_PORT: 5431
+      DB_HOSTNAME: localhost
       DB_USERNAME: odcuser
       DB_PASSWORD: odcpass
       DB_DATABASE: odc
