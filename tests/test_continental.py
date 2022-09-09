@@ -8,13 +8,15 @@ def test_generate_rasters_cli():
         continental_cli,
         [
             "--vector_version",
-            "{{inputs.parameters.result-version}}",
+            "testing",
             "--shorelines",
             "True",
+            "--ratesofchange",
+            "True",        
             "--hotspots",
-            "True",
+            "[10000, 5000, 1000]",
             "--baseline_year",
-            " {{inputs.parameters.baseline-year}}"
+            "2020",
         ]
     )
     assert result.exit_code == 0

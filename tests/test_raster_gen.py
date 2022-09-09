@@ -8,16 +8,15 @@ def test_generate_rasters_cli():
         generate_rasters_cli,
         [
             "--config_path",
-            "{{inputs.parameters.config}}",
+            "configs/dea_coastlines_config.yaml",
             "--study_area",
-            "{{inputs.parameters.id}}",
+            "1098",
             "--raster_version",
-            "{{inputs.parameters.result-version}}",
+            "testing",
             "--start_year",
-            "{(inputs.parameters.start-year}}",
+            "2015",
             "--end_year",
-            "{{inputs.parameters.end-year}}",
-            "{{inputs.parameters.overwrite}}"
+            "2020",
         ]
     )
     assert result.exit_code == 0
