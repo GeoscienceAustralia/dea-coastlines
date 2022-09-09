@@ -12,7 +12,7 @@ on:
       - 'develop'
 
 jobs:
-  unit-integration-performance-tests:
+  integration-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +20,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Dockerized Integration Pytest (stage 1 - integration test)
+      - name: Dockerized Integration test
         run: |
           mkdir artifacts
           chmod a+rw artifacts
@@ -28,7 +28,7 @@ jobs:
           docker-compose exec -T coastline /bin/sh -c "pytest tests/"
           docker-compose down
 
-      - name: Upload All coverage to Codecov (stage 1 - upload coverage result)
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
           file: ./artifacts/*.xml
