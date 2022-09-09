@@ -16,7 +16,7 @@ services:
   coastline:
     build:
       context: .
-    network_mode: host
+    # network_mode: host
     links:
       - postgres:postgres
     environment:
