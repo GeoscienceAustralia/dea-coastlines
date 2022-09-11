@@ -24,6 +24,7 @@ REQUIRED = [
     "pygeos",
     "pyproj",
     "pytest",
+    "pytest-cov",
     "pyTMD",
     "python_geohash",
     "pytz",

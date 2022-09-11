@@ -27,4 +27,5 @@ services:
       - postgres
     volumes:
       - ./artifacts:/mnt/artifacts
+    restart: always
     command: tail -f /dev/null
