@@ -25,7 +25,8 @@ jobs:
           mkdir artifacts
           chmod a+rw artifacts
           docker-compose up -d
-          docker-compose exec -T coastline /bin/sh -c "pytest tests/"
+          docker-compose exec -T coastline /bin/sh -c "pytest  --cov=dea_coastlines --cov-report=xml tests/"
+          docker-compose exec -T coastline /bin/sh -c "cp /tmp/coverage.xml /mnt/artifacts"
           docker-compose down
 
       - name: Upload coverage to Codecov

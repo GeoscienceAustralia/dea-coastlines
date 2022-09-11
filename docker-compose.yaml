@@ -8,7 +8,6 @@ services:
       - POSTGRES_DB=odc
       - POSTGRES_PASSWORD=odcpass
       - POSTGRES_USER=odcuser
-    network_mode: bridge
     ports:
       - "5431:5432"
     restart: always
@@ -16,7 +15,6 @@ services:
   coastline:
     build:
       context: .
-    # network_mode: host
     links:
       - postgres:postgres
     environment:
@@ -25,4 +23,8 @@ services:
       DB_USERNAME: odcuser
       DB_PASSWORD: odcpass
       DB_DATABASE: odc
+    depends_on:
+      - postgres
+    volumes:
+      - ./artifacts:/mnt/artifacts
     command: tail -f /dev/null
