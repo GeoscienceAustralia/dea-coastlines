@@ -15,6 +15,8 @@ services:
   coastline:
     build:
       context: .
+      args:
+        ENVIRONMENT: test
     links:
       - postgres:postgres
     environment:

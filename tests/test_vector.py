@@ -2,7 +2,8 @@ import pytest
 from click.testing import CliRunner
 from coastlines.vector import generate_vectors_cli
 
-def test_generate_rasters_cli():
+@pytest.mark.depends(on=['test_generate_rasters_cli'])
+def test_generate_vector_cli():
     runner = CliRunner()
     result = runner.invoke(
         generate_vectors_cli,

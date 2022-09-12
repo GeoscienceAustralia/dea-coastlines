@@ -17,6 +17,14 @@ RUN apt-get update \
     apt-get autoremove && \
     rm -rf /var/lib/{apt,dpkg,cache,log}
 
+
+# Environment can be whatever is supported by setup.py
+# so, either deployment, test
+ARG ENVIRONMENT=deployment
+# ARG ENVIRONMENT=test
+
+RUN echo "Environment is: $ENVIRONMENT"
+
 COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
@@ -26,13 +34,25 @@ RUN pip install --no-cache-dir --upgrade pip \
     # Extras
     && pip install --no-cache-dir awscli requests
 
+# Set up a nice workdir and add the live code
+ENV APPDIR=/code
+RUN mkdir -p $APPDIR
+WORKDIR $APPDIR
+ADD . $APPDIR
 
-RUN mkdir -p /code
-WORKDIR /code
+RUN if [ "$ENVIRONMENT" = "deployment" ] ; then\
+        pip install .[$ENVIRONMENT] ; \
+    else \
+        pip install --editable .[$ENVIRONMENT] ; \
+    fi
 
-COPY . /code/
+# RUN mkdir -p /code
+# WORKDIR /code
 
-RUN pip install /code
+# COPY . /code/
+
+# RUN pip install /code
+
 
 CMD ["python", "--version"]
 
