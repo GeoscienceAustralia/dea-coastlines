@@ -11,7 +11,7 @@ def test_generate_rasters_cli():
         generate_rasters_cli,
         [
             "--config_path",
-            "configs/dea_coastlines_config.yaml",
+            "configs/dea_coastlines_config_testing.yaml",
             "--study_area",
             "1098",
             "--raster_version",
@@ -33,7 +33,7 @@ def test_generate_vector_cli():
         generate_vectors_cli,
         [
             "--config_path",
-            "configs/dea_coastlines_config.yaml",
+            "configs/dea_coastlines_config_testing.yaml",
             "--study_area",
             "1098",
             "--raster_version",
