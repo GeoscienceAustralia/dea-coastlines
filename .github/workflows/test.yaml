@@ -24,6 +24,9 @@ jobs:
         run: |
           mkdir artifacts
           chmod a+rw artifacts
+          wget https://www.dropbox.com/s/ivx93rcdl9yfdaf/tide_models_clipped.zip?dl=1 -O tide_models_clipped
+          unzip tide_model_unzipped
+
           docker-compose up -d
           docker-compose exec -T coastline /bin/sh -c "pytest --cov=dea_coastlines --cov-report=xml tests/"
           docker-compose exec -T coastline /bin/sh -c "cp /tmp/coverage.xml /mnt/artifacts"

@@ -29,5 +29,6 @@ services:
       - postgres
     volumes:
       - ./artifacts:/mnt/artifacts
+      - ./tide_models_clipped/:/root/tide_models_clipped
     restart: always
     command: tail -f /dev/null
