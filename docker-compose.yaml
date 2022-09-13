@@ -25,6 +25,7 @@ services:
       DB_USERNAME: odcuser
       DB_PASSWORD: odcpass
       DB_DATABASE: odc
+      AWS_NO_SIGN_REQUEST: yes
     depends_on:
       - postgres
     volumes:
