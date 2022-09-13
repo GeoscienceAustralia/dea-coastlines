@@ -33,4 +33,4 @@ services:
       - ./docker/coastline/wait-for-db:/usr/local/bin/wait-for-db
       - ./tide_models_clipped/:/root/tide_models_clipped
     restart: always
-    command: wait-for-db tail -f /dev/null
+    command: tail -f /dev/null

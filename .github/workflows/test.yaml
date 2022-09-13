@@ -28,7 +28,7 @@ jobs:
           unzip tide_models_clipped.zip
 
           docker-compose up -d
-          docker-compose exec -T coastline /bin/sh -c "pytest --cov=dea_coastlines --cov-report=xml tests/"
+          docker-compose exec -T coastline /bin/sh -c "sh ./docker/ows/wait-for-db; pytest --cov=dea_coastlines --cov-report=xml tests/"
           docker-compose exec -T coastline /bin/sh -c "cp /tmp/coverage.xml /mnt/artifacts"
           docker-compose down
 

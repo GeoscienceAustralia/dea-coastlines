@@ -12,6 +12,8 @@ RUN apt-get update \
     libpq-dev python3-dev \
     # For SSL
     ca-certificates \
+    # for pg_isready
+    postgresql-client \
     # Tidy up
     && apt-get autoclean && \
     apt-get autoremove && \
