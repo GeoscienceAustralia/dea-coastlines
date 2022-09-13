@@ -46,13 +46,6 @@ RUN if [ "$ENVIRONMENT" = "deployment" ] ; then\
         pip install --editable .[$ENVIRONMENT] ; \
     fi
 
-# RUN mkdir -p /code
-# WORKDIR /code
-
-# COPY . /code/
-
-# RUN pip install /code
-
 
 CMD ["python", "--version"]
 

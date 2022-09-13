@@ -9,7 +9,7 @@ services:
       - POSTGRES_PASSWORD=odcpass
       - POSTGRES_USER=odcuser
     ports:
-      - "5431:5432"
+      - "5432:5432"
     restart: always
   # Overwrite ows so it can talk to docker db
   coastline:
