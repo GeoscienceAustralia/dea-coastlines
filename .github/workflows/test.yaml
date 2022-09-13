@@ -22,17 +22,15 @@ jobs:
 
       - name: Dockerized Integration test
         run: |
-          docker-compose version
-          # mkdir artifacts
-          # chmod a+rw artifacts
-          # wget https://www.dropbox.com/s/ivx93rcdl9yfdaf/tide_models_clipped.zip?dl=1 -O tide_models_clipped.zip
-          # unzip tide_models_clipped.zip
-          docker version
-          # docker-compose up -d
-          # docker-compose exec -T coastline /bin/sh -c "datacube system check"
-          # docker-compose exec -T coastline /bin/sh -c "pytest --cov=dea_coastlines --cov-report=xml tests/"
-          # docker-compose exec -T coastline /bin/sh -c "cp /tmp/coverage.xml /mnt/artifacts"
-          # docker-compose down
+          mkdir artifacts
+          chmod a+rw artifacts
+          wget https://www.dropbox.com/s/ivx93rcdl9yfdaf/tide_models_clipped.zip?dl=1 -O tide_models_clipped.zip
+          unzip tide_models_clipped.zip
+
+          docker-compose up -d
+          docker-compose exec -T coastline /bin/sh -c "pytest --cov=dea_coastlines --cov-report=xml tests/"
+          docker-compose exec -T coastline /bin/sh -c "cp /tmp/coverage.xml /mnt/artifacts"
+          docker-compose down
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
