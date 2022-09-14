@@ -66,7 +66,7 @@ def test_generate_continental_cli():
             "--hotspots",
             "True",
             "--hotspots_radius",
-            "[200, 100]",
+            "100",
             "--baseline_year",
             "2020",
         ]
