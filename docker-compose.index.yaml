@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+  index:
+    image: opendatacube/datacube-index:latest
+    environment:
+      DB_PORT: 5432
+      DB_HOSTNAME: postgres
+      DB_USERNAME: odcuser
+      DB_PASSWORD: odcpass
+      DB_DATABASE: odc
+    restart: always
+    depends_on:
+      - postgres
+    command: tail -f /dev/null
+    links:
+      - postgres:postgres

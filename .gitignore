@@ -10,3 +10,4 @@
 !*.gitignore
 !*.sql
 !**.github
+!*.md
