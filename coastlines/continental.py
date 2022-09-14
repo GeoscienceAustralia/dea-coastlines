@@ -195,6 +195,35 @@ def continental_cli(
     else:
         log.info("Not writing annual rates of change points")
 
+    ###############################
+    # Load DEA CoastLines vectors #
+    ###############################
+
+    log.info("Generating continental hotspots")
+
+    # Load continental shoreline and rates of change data
+    try:
+
+        # Load continental rates of change data
+        ratesofchange_gdf = gpd.read_file(
+            OUTPUT_GPKG, layer="rates_of_change"
+        ).set_index("uid")
+
+        # Load continental shorelines data
+        shorelines_gdf = gpd.read_file(
+            OUTPUT_GPKG, layer="shorelines_annual"
+        ).set_index("year")
+        shorelines_gdf = shorelines_gdf.loc[shorelines_gdf.geometry.is_valid]
+
+    except (fiona.errors.DriverError, ValueError):
+
+        raise FileNotFoundError(
+            "Continental-scale annual shoreline and rates of "
+            "change layers are required for hotspot generation. "
+            "Try re-running this analysis with the following "
+            "settings: `--shorelines True --ratesofchange True`."
+        )
+        
     #####################
     # Generate hotspots #
     #####################
@@ -203,34 +232,7 @@ def continental_cli(
     # of hotspots of coastal erosion and growth
     if hotspots:
 
-        ###############################
-        # Load DEA CoastLines vectors #
-        ###############################
-
         log.info("Generating continental hotspots")
-
-        # Load continental shoreline and rates of change data
-        try:
-
-            # Load continental rates of change data
-            ratesofchange_gdf = gpd.read_file(
-                OUTPUT_GPKG, layer="rates_of_change"
-            ).set_index("uid")
-
-            # Load continental shorelines data
-            shorelines_gdf = gpd.read_file(
-                OUTPUT_GPKG, layer="shorelines_annual"
-            ).set_index("year")
-            shorelines_gdf = shorelines_gdf.loc[shorelines_gdf.geometry.is_valid]
-
-        except (fiona.errors.DriverError, ValueError):
-
-            raise FileNotFoundError(
-                "Continental-scale annual shoreline and rates of "
-                "change layers are required for hotspot generation. "
-                "Try re-running this analysis with the following "
-                "settings: `--shorelines True --ratesofchange True`."
-            )
 
         ######################
         # Calculate hotspots #
