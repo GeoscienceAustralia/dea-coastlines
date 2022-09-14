@@ -71,5 +71,5 @@ def test_generate_continental_cli():
             "2020",
         ]
     )
+    assert result.output == ''
     assert result.exit_code == 0
-    # assert result.output == ''
