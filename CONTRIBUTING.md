@@ -41,6 +41,8 @@ The following is a set of guidelines for contributing to dea-coastlines and its 
 ### Running test locally
 
 ```
+    mkdir artifacts
+    chmod a+rw artifacts
     wget https://www.dropbox.com/s/ivx93rcdl9yfdaf/tide_models_clipped.zip?dl=1 -O tide_models_clipped.zip
     unzip tide_models_clipped.zip
 
