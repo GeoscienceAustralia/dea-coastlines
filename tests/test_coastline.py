@@ -64,7 +64,7 @@ def test_generate_continental_cli():
             "--ratesofchange",
             "True",
             "--hotspots",
-            "False",
+            "True",
             "--baseline_year",
             "2020",
         ]
