@@ -1333,15 +1333,12 @@ def vector_schema(gdf, default="float:8.2"):
             "min_year": "int:4",
             "certainty": "str:25",
             "id_primary": "str:10",
-            
             # Annual shorelines only
             "year": "int:4",
             "tide_datum": "str:20",
-            
             # Hotspots only
             "n": "int:6",
             "radius_m": "int:6",
-            
             # WMS only
             "wms_conf": "float:8.1",
             "wms_grew": "int:1",
@@ -1517,7 +1514,7 @@ def generate_vectors(
         #   likely to reflect modelling issues than real-world coastal change
         # - High angular variability: the nearest shorelines for each year do not
         #   fall on an approximate line, making rates of change invalid
-        # - Insufficient observations: less than 25 valid annual shorelines, which
+        # - Insufficient observations: less than 7% valid annual shorelines, which
         #   make the resulting rates of change more likely to be inaccurate
         rocky = [
             "Bedrock breakdown debris (cobbles/boulders)",
@@ -1562,8 +1559,9 @@ def generate_vectors(
         ] = "high angular variability"
 
         # Flag shorelines with less than X valid shorelines
+        valid_obs_thresh = int(points_gdf.columns.str.contains("dist_").sum() * 0.75)
         points_gdf.loc[
-            points_gdf.valid_obs < 25, "certainty"
+            points_gdf.valid_obs < valid_obs_thresh, "certainty"
         ] = "insufficient observations"
 
         log.info(f"Study area {study_area}: Calculated rate of change certainty flags")
@@ -1629,8 +1627,8 @@ def generate_vectors(
     # Add region attributes
     contours_gdf = region_atttributes(
         contours_gdf, region_gdf, attribute_col="ID_Primary", rename_col="id_primary"
-    )    
-    
+    )
+
     # Set output path
     contour_path = (
         f"{output_dir}/annualshorelines_{study_area}_{vector_version}_"
@@ -1641,7 +1639,9 @@ def generate_vectors(
     contours_gdf["geometry"] = contours_gdf.intersection(gridcell_gdf.geometry.item())
 
     # Export to GeoJSON
-    contours_gdf.to_crs("EPSG:4326").to_file(f"{contour_path}.geojson", driver="GeoJSON")
+    contours_gdf.to_crs("EPSG:4326").to_file(
+        f"{contour_path}.geojson", driver="GeoJSON"
+    )
 
     # Export stats and contours as ESRI shapefiles
     contours_gdf.to_file(
@@ -1651,7 +1651,7 @@ def generate_vectors(
             "geometry": ["MultiLineString", "LineString"],
         },
     )
-    
+
     log.info(f"Study area {study_area}: Output vector files written to {output_dir}")
 
 
