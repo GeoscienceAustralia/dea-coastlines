@@ -1514,7 +1514,7 @@ def generate_vectors(
         #   likely to reflect modelling issues than real-world coastal change
         # - High angular variability: the nearest shorelines for each year do not
         #   fall on an approximate line, making rates of change invalid
-        # - Insufficient observations: less than 7% valid annual shorelines, which
+        # - Insufficient observations: less than 75% valid annual shorelines, which
         #   make the resulting rates of change more likely to be inaccurate
         rocky = [
             "Bedrock breakdown debris (cobbles/boulders)",
