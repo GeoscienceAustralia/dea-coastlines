@@ -1325,7 +1325,7 @@ def vector_schema(gdf, default="float:8.2"):
             "max_year": "int:4",
             "min_year": "int:4",
             "certainty": "str:25",
-            "id_primary": "str:10",
+            "country": "str:32",
             # Annual shorelines only
             "year": "int:4",
             "tide_datum": "str:20",
