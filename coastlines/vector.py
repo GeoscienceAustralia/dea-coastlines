@@ -49,8 +49,8 @@ def load_rasters(
     raster_version,
     study_area,
     water_index="mndwi",
-    start_year=2000,
-    end_year=2020,
+    start_year=1988,
+    end_year=2021,
 ):
     """
     Loads DEA Coastlines water index (e.g. 'MNDWI'), 'tide_m', 'count',
@@ -73,10 +73,10 @@ def load_rasters(
         Modified Normalised Difference Water Index.
     start_year : integer, optional
         The first annual layer to include in the analysis. Defaults to
-        2000.
+        1988.
     end_year : integer, optional
         The final annual layer to include in the analysis. Defaults to
-        2020.
+        2021.
 
     Returns:
     --------
