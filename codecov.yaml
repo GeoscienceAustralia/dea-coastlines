@@ -6,3 +6,5 @@ coverage:
   precision: 1
   round: down
   range: "50...90"
+
+branch: develop # set new Default branch
