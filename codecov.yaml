@@ -1,3 +1,5 @@
 # sample regex patterns
 ignore:
   - "coastlines/validation.py"
+
+branch: develop # set new Default branch

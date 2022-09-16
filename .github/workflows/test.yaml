@@ -45,7 +45,7 @@ jobs:
           docker-compose down
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
-          file: ./artifacts/*.xml
+          files: ./artifacts/*.xml
           fail_ci_if_error: false
