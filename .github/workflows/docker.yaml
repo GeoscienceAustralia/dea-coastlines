@@ -36,12 +36,12 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         image_tag: ${{ env.RELEASE }}
-    - name: Get git commit hash for push to main
+    - name: Get git commit hash for push to branch
       if: github.event_name != 'release'
       run: |
         git fetch --all --tags
         echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
-    - name: Build and Push unstable Docker Image for push to main
+    - name: Build and Push unstable Docker Image for push to branch
       uses: whoan/docker-build-with-cache-action@v4
       if: github.event_name != 'release'
       with:
