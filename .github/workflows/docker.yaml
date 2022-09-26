@@ -1,9 +1,9 @@
-name: Push
+name: Build and push image
 
 on:
   push:
     branches:
-      - github_action_test
+      - develop
     paths:
       - 'coastlines/**'
       - '.github/workflows/docker.yml'
