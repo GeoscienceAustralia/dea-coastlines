@@ -1,0 +1,51 @@
+name: Push
+
+on:
+  push:
+    branches:
+      - github_action_test
+    paths:
+      - 'coastlines/**'
+      - '.github/workflows/docker.yml'
+      - 'Dockerfile'
+
+  release:
+    types: [created, edited, published]
+
+env:
+  IMAGE_NAME: geoscienceaustralia/dea-coastlines
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Get tag for this build if it exists
+      if: github.event_name == 'release'
+      run: |
+        echo "RELEASE=${GITHUB_REF/refs\/tags\/}" >> $GITHUB_ENV
+    - name: Build and push tagged Docker image for release
+      uses: whoan/docker-build-with-cache-action@v4
+      if: github.event_name == 'release'
+      with:
+        image_name: ${{ env.IMAGE_NAME }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        image_tag: ${{ env.RELEASE }}
+    - name: Get git commit hash for push to main
+      if: github.event_name != 'release'
+      run: |
+        git fetch --all --tags
+        echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
+    - name: Build and Push unstable Docker Image for push to main
+      uses: whoan/docker-build-with-cache-action@v4
+      if: github.event_name != 'release'
+      with:
+        image_name: ${{ env.IMAGE_NAME }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        image_tag: latest,${{ env.RELEASE }}
