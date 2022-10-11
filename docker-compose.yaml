@@ -31,6 +31,6 @@ services:
     volumes:
       - ./artifacts:/mnt/artifacts
       - ./docker/coastline/wait-for-db:/usr/local/bin/wait-for-db
-      - ./tide_models_clipped/:/root/tide_models_clipped
+      - ./tide_models/:/root/tide_models
     restart: always
     command: tail -f /dev/null
