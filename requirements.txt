@@ -112,7 +112,7 @@ datacube[performance,s3]==1.8.6
     #   dea-tools
     #   odc-algo
     #   odc-ui
-dea-tools==0.2.8.dev13
+dea-tools==0.2.8.dev17
     # via -r requirements.in
 debugpy==1.5.1
     # via ipykernel
