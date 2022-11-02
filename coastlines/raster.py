@@ -546,7 +546,9 @@ def generate_rasters(
     # Add  this new data as a new variable in our satellite dataset to allow
     # each satellite pixel to be analysed and filtered/masked based on the
     # tide height at the exact moment of satellite image acquisition.
-    ds["tide_m"], tides_lowres = pixel_tides(ds, resample=True)
+    ds["tide_m"], tides_lowres = pixel_tides(
+        ds, resample=True, directory="/var/share/tide_models"
+    )
     log.info(f"Study area {study_area}: Finished modelling tide heights")
 
     # Based on the entire time-series of tide heights, compute the max
