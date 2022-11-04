@@ -238,7 +238,7 @@ def load_water_index(
     if mask_terrain_shadow:
         ds = terrain_shadow_masking(dc, query, ds, dem_product="dem_cop_30")
 
-    return ds[["mndwi", "ndwi"]]
+    return ds[["mndwi"]]
 
 
 def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
@@ -342,7 +342,7 @@ def tidal_composite(
 ):
     """
     For a given year of data, takes median, counts and standard
-    deviationo of valid water index results, and optionally writes
+    deviation of valid water index results, and optionally writes
     each water index, tide height, standard deviation and valid pixel
     counts for the time period to file as GeoTIFFs.
 
@@ -378,23 +378,23 @@ def tidal_composite(
 
     # Compute median water indices and counts of valid pixels
     median_ds = year_ds.median(dim="time", keep_attrs=True)
+    median_ds["stdev"] = year_ds.mndwi.std(dim="time", keep_attrs=True)
     median_ds["count"] = year_ds.mndwi.count(dim="time", keep_attrs=True).astype(
         "int16"
     )
-    median_ds["stdev"] = year_ds.mndwi.std(dim="time", keep_attrs=True)
 
-    # Set nodata values
-    median_ds["ndwi"].attrs["nodata"] = np.nan
-    median_ds["mndwi"].attrs["nodata"] = np.nan
-    median_ds["tide_m"].attrs["nodata"] = np.nan
-    median_ds["stdev"].attrs["nodata"] = np.nan
-    median_ds["count"].attrs["nodata"] = -999
+    # Set nodata values, using np.nan for floats and -999 for ints
+    for var_name, var in median_ds.data_vars.items():
+        median_ds[var_name].attrs["nodata"] = -999 if var.dtype == "int16" else np.nan
+
+    # Load data into memory
+    median_ds.load()
 
     # Write each variable to file
     if export_geotiff:
         for i in median_ds:
             write_cog(
-                geo_im=median_ds[i].compute(),
+                geo_im=median_ds[i],
                 fname=f"{output_dir}/{str(label)}_{i}{output_suffix}.tif",
                 overwrite=True,
             )
@@ -438,12 +438,13 @@ def export_annual_gapfill(ds, output_dir, tide_cutoff_min, tide_cutoff_max):
     # Iterate through each year in the dataset, starting at one year before
     for year in np.unique(ds.time.dt.year) - 1:
 
-        # Load data for the subsequent year
+        # Load data for the subsequent year; drop tide variable as
+        # we do not need to create annual composites from this data
         future_ds = load_tidal_subset(
             ds.sel(time=str(year + 1)),
             tide_cutoff_min=tide_cutoff_min,
             tide_cutoff_max=tide_cutoff_max,
-        )
+        ).drop("tide_m")
 
         # If the current year var contains data, combine these observations
         # into median annual high tide composites and export GeoTIFFs

@@ -53,7 +53,7 @@ def load_rasters(
     end_year=2021,
 ):
     """
-    Loads DEA Coastlines water index (e.g. 'MNDWI'), 'tide_m', 'count',
+    Loads DEA Coastlines water index (e.g. 'MNDWI'), 'count',
     and 'stdev' rasters for both annual and three-year gapfill data
     into a consistent `xarray.Dataset` format for further analysis.
 
@@ -82,12 +82,12 @@ def load_rasters(
     --------
     yearly_ds : xarray.Dataset
         An `xarray.Dataset` containing annual input rasters.
-        The dataset contains water index (e.g. 'MNDWI'), 'tide_m',
+        The dataset contains water index (e.g. 'MNDWI'),
         'count', and 'stdev' arrays for each year from 1988 onward.
     gapfill_ds : xarray.Dataset
         An `xarray.Dataset` containing three-year gapfill rasters.
         The dataset contains water index (e.g. 'MNDWI'),
-        'tide_m', 'count', and 'stdev' arrays for each year from
+        'count', and 'stdev' arrays for each year from
         `start_year` to `end_year`.
 
     """
@@ -100,7 +100,7 @@ def load_rasters(
         # List to hold output DataArrays
         da_list = []
 
-        for layer_name in [f"{water_index}", "ndwi", "tide_m", "count", "stdev"]:
+        for layer_name in [f"{water_index}", "count", "stdev"]:
 
             # Get paths of files that match pattern
             paths = glob.glob(
@@ -403,8 +403,8 @@ def contours_preprocess(
     index_threshold,
     tide_points_gdf,
     buffer_pixels=33,
-    mask_landcover=True,
-    mask_ndwi=True,
+    mask_landcover=False,
+    mask_ndwi=False,
     mask_temporal=True,
     mask_modifications=None,
 ):
