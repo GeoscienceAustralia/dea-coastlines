@@ -376,26 +376,6 @@ def tidal_composite(
         arrays with a dimension labelled by `label` and `label_dim`.
     """
 
-#     # Compute median water indices and counts of valid pixels
-#     median_ds = year_ds.median(dim="time", keep_attrs=True)
-#     median_ds["count"] = year_ds.mndwi.count(dim="time", keep_attrs=True).astype(
-#         "int16"
-#     )
-#     median_ds["stdev"] = year_ds.mndwi.std(dim="time", keep_attrs=True)
-
-#     # Set nodata values, using np.nan for floats and -999 for ints
-#     for var_name, var in median_ds.data_vars.items():
-#         median_ds[var_name].attrs["nodata"] = -999 if var.dtype == "int16" else np.nan
-
-#     # Write each variable to file
-#     if export_geotiff:
-#         for i in median_ds:
-#             write_cog(
-#                 geo_im=median_ds[i].compute(),
-#                 fname=f"{output_dir}/{str(label)}_{i}{output_suffix}.tif",
-#                 overwrite=True,
-#             )
-
     # Compute median water indices and counts of valid pixels
     median_ds = year_ds.median(dim="time", keep_attrs=True)
     median_ds["stdev"] = year_ds.mndwi.std(dim="time", keep_attrs=True)
