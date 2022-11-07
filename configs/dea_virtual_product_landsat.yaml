@@ -13,7 +13,6 @@ products:
                            oa_nbart_contiguity, oa_fmask]
             gqa_iterative_mean_xy: [0, 1]
             group_by: solar_day
-#             cloud_cover: [0, 90]
     
     # Loads Landsat 7 data based on bands included in the `ls8_nbart` product
     ls7_nbart:
@@ -28,8 +27,15 @@ products:
             &ls5_nbart
              <<: *ls8_nbart
              product: ga_ls5t_ard_3
-    
-    # Loads data from Landsat 5, 7 and 8, and combines this into a virtual 
+
+    # Loads Landsat 9 data based on bands included in the `ls8_nbart` product
+    ls9_nbart:
+         recipe:
+            &ls9_nbart
+             <<: *ls8_nbart
+             product: ga_ls9c_ard_3
+
+    # Loads data from Landsat 5, 7, 8 and 9, and combines this into a virtual 
     # product containing spectral bands (blue, green, red, nir, swir1, swir2),
     # a cloud masking band (fmask) and a contiguity band (contiguity).
     ls_nbart:
@@ -41,6 +47,7 @@ products:
                      - *ls5_nbart
                      - *ls7_nbart
                      - *ls8_nbart
+                     - *ls9_nbart
              output:
                  blue:
                      formula: nbart_blue
