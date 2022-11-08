@@ -1,44 +1,52 @@
-# Contributing to dea-coastlines
-
-:+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
-
-The following is a set of guidelines for contributing to dea-coastlines and its packages. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+# Integration test setup
 
 ## Integration test data
-### setting a NEW db dump
+### Setting up a new database dump
 
 ```
-    # bring up indexing and db container
+    # Bring up indexing and database container
     docker-compose -f docker-compose.index.yaml -f docker-compose.cleandb.yaml up
+
+    # Start by going to index container
+    docker exec -ti dea-coastlines_index_1 bash
+    datacube system init
+    exit
 ```
 
-### building on top of existing db dump
+### Building on top of existing database dump
 
 ```
   docker-compose -f docker-compose.yaml -f docker-compose.index.yaml up
 ```
 
-### indexing and create db dump
+### Indexing and creating database dump
+
+The products indexed into the existing database dump are:
+
+- https://explorer.dev.dea.ga.gov.au/product/ga_ls8c_ard_3/regions/089083
+- https://explorer.dev.dea.ga.gov.au/product/ga_ls5t_ard_3/regions/089083
+- https://explorer.dev.dea.ga.gov.au/product/ga_ls7e_ard_3/regions/089083
+- https://explorer.dev.dea.ga.gov.au/product/ga_ls9c_ard_3/regions/089083
 
 ```
-  # start by going to index container
+  # Start by going to index container
   docker exec -ti dea-coastlines_index_1 bash
-  datacube system init # OPTIONAL: no need to run this command if building off existing db
-  ... # anything extra to index
-  exit # after indexing is complete, exit
 
-  # return to index container
-  docker exec -it dea-coastlines_index_1 bash
-  pg_dump -U localhost -p 5432 -h localhost odc > dump.sql
-  # enter password on prompt: mysecretpassword or check .env file
-  exit
+  # Indexing example:
+  # - Add a new product
+  datacube product add https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/master/products/baseline_satellite_data/c3/ga_ls9c_ard_3.odc-product.yaml
 
+  # - Index datasets from s3
+  s3-to-dc --skip-lineage s3://dea-public-data/baseline/ga_ls9c_ard_3/089/083/**/*.odc-metadata.yaml ga_ls9c_ard_3
 
-  # copy the new dump to dea-coastlines/docker/database folder
-  docker cp dea-coastlines_index_1:/dump.sql dea-coastlines/docker/database
+  pg_dump -U odc -p 5432 -h postgres odc > dump.sql
+  # Enter password on prompt: odcpass or to check echo $DB_PASSWORD
+
+  # Copy the new database dump to the dea-coastlines/docker/database folder
+  docker cp dea-coastlines_index_1:/dump.sql dea-coastlines/docker/db/dump.sql
 ```
 
-### Running test locally
+### Running tests locally
 
 ```
     mkdir artifacts
