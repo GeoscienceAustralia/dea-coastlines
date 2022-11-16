@@ -11,7 +11,7 @@ def test_generate_rasters_cli():
         generate_rasters_cli,
         [
             "--config_path",
-            "configs/dea_coastlines_config_testing.yaml",
+            "configs/dea_coastlines_config_tests.yaml",
             "--study_area",
             "1098",
             "--raster_version",
@@ -20,20 +20,19 @@ def test_generate_rasters_cli():
             "2015",
             "--end_year",
             "2020",
-        ]
+        ],
     )
     assert result.exit_code == 0
-    # assert result.output == ''
 
 
-@pytest.mark.depends(on=['test_generate_rasters_cli'])
+@pytest.mark.depends(on=["test_generate_rasters_cli"])
 def test_generate_vector_cli():
     runner = CliRunner()
     result = runner.invoke(
         generate_vectors_cli,
         [
             "--config_path",
-            "configs/dea_coastlines_config_testing.yaml",
+            "configs/dea_coastlines_config_tests.yaml",
             "--study_area",
             "1098",
             "--raster_version",
@@ -44,14 +43,12 @@ def test_generate_vector_cli():
             "2020",
             "--baseline_year",
             "2020",
-        ]
+        ],
     )
     assert result.exit_code == 0
-    # assert result.output == ''
 
 
-
-@pytest.mark.depends(on=['test_generate_vector_cli'])
+@pytest.mark.depends(on=["test_generate_vector_cli"])
 def test_generate_continental_cli():
     runner = CliRunner()
     result = runner.invoke(
@@ -67,7 +64,7 @@ def test_generate_continental_cli():
             "True",
             "--baseline_year",
             "2020",
-        ]
+        ],
     )
     # assert result.output == '' # for debugging
     assert result.exit_code == 0
