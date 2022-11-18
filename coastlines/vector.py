@@ -378,8 +378,7 @@ def certainty_masking(yearly_ds, obs_threshold=5, stdev_threshold=0.25, sieve_si
     for i, arr in raster_mask.groupby("year"):
         vector_mask = xr_vectorize(
             arr,
-            crs=yearly_ds.geobox.crs,
-            transform=yearly_ds.geobox.affine,
+            crs=yearly_ds.odc.geobox.crs,
             attribute_col="certainty",
         )
 
@@ -1508,6 +1507,8 @@ def generate_vectors(
         log.info(f"Study area {study_area}: Calculated all of time statistics")
 
         # Add certainty column to flag points with:
+        # - Baseline outlier: The baseline shoreline is itself flagged as an
+        #   outlier, potentially resulting in inaccurate rates of change.
         # - Likely rocky shorelines: Rates of change can be unreliable in areas
         #   with steep rocky/bedrock shorelines due to terrain shadow.
         # - Extreme rate of change value (> 50 m per year change): these are more
@@ -1537,6 +1538,11 @@ def generate_vectors(
 
         # Initialise certainty column with good values
         points_gdf["certainty"] = "good"
+
+        # Flag points where the baseline shoreline is itself an outlier
+        points_gdf.loc[
+            points_gdf.outl_time.str.contains(str(baseline_year)), "certainty"
+        ] = "baseline outlier"
 
         # Flag rocky shorelines
         points_gdf.loc[
