@@ -979,7 +979,7 @@ def change_regress(
     return pd.Series(results_dict)
 
 
-def calculate_regressions(points_gdf, contours_gdf):
+def calculate_regressions(points_gdf):
     """
     For each rate of change point along the baseline annual coastline,
     compute linear regression rates of change against both time and
@@ -993,10 +993,6 @@ def calculate_regressions(points_gdf, contours_gdf):
     points_gdf : geopandas.GeoDataFrame
         A `geopandas.GeoDataFrame` containing rates of change points
         with 'dist_*' annual movement/distance data.
-    contours_gdf : geopandas.GeoDataFrame
-        A `geopandas.GeoDataFrame` containing annual coastlines. This
-        is used to ensure that all years in the annual coastlines data
-        are included in the regression.
 
     Returns:
     --------
@@ -1011,9 +1007,9 @@ def calculate_regressions(points_gdf, contours_gdf):
                        regression
     """
 
-    # Restrict climate and points data to years in datasets
-    x_years = contours_gdf.index.unique().astype(int).values
-    dist_years = [f"dist_{i}" for i in x_years]
+    # Restrict data to years in datasets
+    dist_years = points_gdf.columns[points_gdf.columns.str.contains("dist_")]
+    x_years = dist_years.str.replace("dist_", "").astype(int)
     points_subset = points_gdf[dist_years]
 
     # Compute coastal change rates by linearly regressing annual
@@ -1031,9 +1027,6 @@ def calculate_regressions(points_gdf, contours_gdf):
     # Copy slope and intercept into points_subset so they can be
     # used to temporally de-trend annual distances
     points_subset[["slope", "intercept"]] = rate_out[["slope", "intercept"]]
-
-    # Set CRS
-    points_gdf.crs = contours_gdf.crs
 
     # Custom sorting
     reg_cols = ["rate_time", "sig_time", "se_time", "outl_time"]
@@ -1451,13 +1444,21 @@ def generate_vectors(
         mask_landcover=False,
         mask_modifications=None,
     )
-    # Extract annual shorelines
-    contours_gdf = subpixel_contours(
-        da=masked_ds,
-        z_values=index_threshold + 1e-12,
-        min_vertices=10,
-        dim="year",
-    ).set_index("year")
+
+    try:
+        # Extract annual shorelines
+        contours_gdf = subpixel_contours(
+            da=masked_ds,
+            z_values=index_threshold,
+            min_vertices=10,
+            dim="year",
+        ).set_index("year")
+
+    except ValueError:
+        raise ValueError(
+            f"Study area {study_area}: Unable to extract any valid shorelines"
+        )
+
     log.info(f"Study area {study_area}: Extracted annual shorelines")
 
     ######################
@@ -1488,14 +1489,24 @@ def generate_vectors(
             yearly_ds,
             str(baseline_year),
             water_index,
-            max_valid_dist=5000,
+            max_valid_dist=1200,
+        )
+
+        # Reindex to add any missing annual columns to the dataset
+        points_gdf = points_gdf.reindex(
+            columns=[
+                "geometry",
+                *[f"dist_{i}" for i in range(start_year, end_year + 1)],
+                "angle_mean",
+                "angle_std",
+            ]
         )
         log.info(
             f"Study area {study_area}: Calculated distances to each annual shoreline"
         )
 
         # Calculate regressions
-        points_gdf = calculate_regressions(points_gdf, contours_gdf)
+        points_gdf = calculate_regressions(points_gdf)
         log.info(f"Study area {study_area}: Calculated rates of change regressions")
 
         # Add count and span of valid obs, Shoreline Change Envelope

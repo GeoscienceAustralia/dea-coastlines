@@ -436,18 +436,29 @@ def export_annual_gapfill(ds, output_dir, tide_cutoff_min, tide_cutoff_max):
     future_ds = None
 
     # Iterate through each year in the dataset, starting at one year before
-    for year in np.unique(ds.time.dt.year) - 1:
+    for year in np.arange(start_year - 2, end_year + 1):
 
-        # Load data for the subsequent year; drop tide variable as
-        # we do not need to create annual composites from this data
-        future_ds = load_tidal_subset(
-            ds.sel(time=str(year + 1)),
-            tide_cutoff_min=tide_cutoff_min,
-            tide_cutoff_max=tide_cutoff_max,
-        ).drop("tide_m")
+        try:
+            
+            # Load data for the subsequent year; drop tide variable as
+            # we do not need to create annual composites from this data
+            future_ds = load_tidal_subset(
+                ds.sel(time=str(year + 1)),
+                tide_cutoff_min=tide_cutoff_min,
+                tide_cutoff_max=tide_cutoff_max,
+            ).drop("tide_m")
+        
+        except KeyError:
+            
+            # Create empty array if error is raised due to no data being
+            # available for time period
+            future_ds = xr.DataArray(data=np.empty(shape=(0, len(ds.y), len(ds.x))), 
+                                     dims=['time', 'y', 'x'], 
+                                     coords={'x': ds.x, 'y': ds.y, 'time': []}, 
+                                     name='mndwi').to_dataset()
 
         # If the current year var contains data, combine these observations
-        # into median annual high tide composites and export GeoTIFFs
+        # into annual median composites and export GeoTIFFs
         if current_ds:
 
             # Generate composite
