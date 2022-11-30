@@ -243,7 +243,7 @@ def ocean_masking(ds, connectivity=1, dilation=None, land_dilation=10):
             if i.max_intensity
         ]
     )
-    
+
     # Dilate mask so that we include land pixels on the inland side
     # of each shoreline to ensure contour extraction accurately
     # seperates land and water spectra
@@ -258,8 +258,8 @@ def coastal_masking(ds, buffer=50, closing=None):
     Creates a symmetrical buffer around the land-water boundary
     in a input boolean array. This is used to create a study area
     mask that is focused on the coastal zone, excluding inland or
-    deeper ocean pixels. This region can be optionally dilated to 
-    ensure that the sub-pixel algorithm has pixels on either side 
+    deeper ocean pixels. This region can be optionally dilated to
+    ensure that the sub-pixel algorithm has pixels on either side
     of the water index threshold.
 
     Parameters:
@@ -1636,41 +1636,41 @@ def generate_vectors(
         # Export stats #
         ################
 
-        if points_gdf is not None and len(points_gdf) > 0:
+        #         if points_gdf is not None and len(points_gdf) > 0:
 
-            # Clip stats to study area extent
-            points_gdf = points_gdf[points_gdf.intersects(gridcell_gdf.geometry.item())]
+        # Clip stats to study area extent
+        points_gdf = points_gdf[points_gdf.intersects(gridcell_gdf.geometry.item())]
 
-            # Set output path
-            stats_path = (
-                f"{output_dir}/ratesofchange_{study_area}_"
-                f"{vector_version}_{water_index}_{index_threshold:.2f}"
+        # Set output path
+        stats_path = (
+            f"{output_dir}/ratesofchange_{study_area}_"
+            f"{vector_version}_{water_index}_{index_threshold:.2f}"
+        )
+
+        try:
+
+            # Export to GeoJSON
+            points_gdf.to_crs("EPSG:4326").to_file(
+                f"{stats_path}.geojson",
+                driver="GeoJSON",
             )
 
-            try:
+            # Export as ESRI shapefiles
+            points_gdf.to_file(
+                f"{stats_path}.shp",
+                schema={
+                    "properties": vector_schema(points_gdf),
+                    "geometry": "Point",
+                },
+            )
 
-                # Export to GeoJSON
-                points_gdf.to_crs("EPSG:4326").to_file(
-                    f"{stats_path}.geojson",
-                    driver="GeoJSON",
-                )
+        except ValueError:
+            raise ValueError(
+                f"Study area {study_area}: No vector points data to export after clipping to study area extent"
+            )
 
-                # Export as ESRI shapefiles
-                points_gdf.to_file(
-                    f"{stats_path}.shp",
-                    schema={
-                        "properties": vector_schema(points_gdf),
-                        "geometry": "Point",
-                    },
-                )
-
-            except ValueError:
-                raise ValueError(
-                    f"Study area {study_area}: No vector points data to export after clipping to study area extent"
-                )
-
-        else:
-            log.warning(f"Study area {study_area}: No points to process")
+    else:
+        log.warning(f"Study area {study_area}: No rates of change points to process")
 
     #####################
     # Export shorelines #
