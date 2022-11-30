@@ -20,6 +20,7 @@ import click
 import pyproj
 import datacube
 import odc.algo
+import odc.geo.xr
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -27,7 +28,6 @@ import geohash as gh
 import geopandas as gpd
 from affine import Affine
 from rasterio.features import sieve
-from rasterio.transform import array_bounds
 from scipy.stats import circstd, circmean, linregress
 from shapely.geometry import box
 from shapely.ops import nearest_points
@@ -128,10 +128,8 @@ def load_rasters(
             # Append to file
             da_list.append(layer_da)
 
-        # Combine into a single dataset and set CRS
+        # Combine into a single dataset and restrict to start and end year
         layer_ds = xr.merge(da_list).squeeze("band", drop=True)
-        layer_ds = layer_ds.assign_attrs(layer_da.attrs)
-        layer_ds.attrs["transform"] = Affine(*layer_ds.transform)
         layer_ds = layer_ds.sel(year=slice(str(start_year), str(end_year)))
 
         # Append to list
@@ -140,12 +138,62 @@ def load_rasters(
     return ds_list
 
 
-def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
+# def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
+#     """
+#     Identifies ocean by selecting the largest connected area of water
+#     pixels that contain tidal modelling points. This region can be
+#     optionally dilated to ensure that the sub-pixel algorithm has pixels
+#     on either side of the water index threshold.
+
+#     Parameters:
+#     -----------
+#     ds : xarray.DataArray
+#         An array containing True for land pixels, and False for water.
+#         This can be obtained by thresholding a water index
+#         array (e.g. MNDWI < 0).
+#     tide_points_gdf : geopandas.GeoDataFrame
+#         Spatial points located within the ocean. These points are used
+#         to ensure that all coastlines are directly connected to the
+#         ocean.
+#     connectivity : integer, optional
+#         An integer passed to the 'connectivity' parameter of the
+#         `skimage.measure.label` function.
+#     dilation : integer, optional
+#         The number of pixels to dilate ocean pixels to ensure than
+#         adequate land pixels are included for subpixel waterline
+#         extraction. Defaults to None.
+
+#     Returns:
+#     --------
+#     ocean_mask : xarray.DataArray
+#         An array containing the a mask consisting of identified ocean
+#         pixels as True.
+#     """
+
+#     # First, break boolean array into unique, discrete regions/blobs
+#     blobs = xr.apply_ufunc(label, ds, 1, False, 1)
+
+#     # Get blob ID for each tidal modelling point
+#     x = xr.DataArray(tide_points_gdf.geometry.x, dims="z")
+#     y = xr.DataArray(tide_points_gdf.geometry.y, dims="z")
+#     ocean_blobs = np.unique(blobs.interp(x=x, y=y, method="nearest"))
+
+#     # Return only blobs that contained tide modelling point
+#     ocean_mask = blobs.isin(ocean_blobs[ocean_blobs != 0])
+
+#     # Dilate mask so that we include land pixels on the inland side
+#     # of each shoreline to ensure contour extraction accurately
+#     # seperates land and water spectra
+#     if dilation:
+#         ocean_mask = xr.apply_ufunc(binary_dilation, ocean_mask, disk(dilation))
+
+#     return ocean_mask
+
+
+def ocean_masking(ds, connectivity=1, dilation=None, land_dilation=10):
     """
-    Identifies ocean by selecting the largest connected area of water
-    pixels that contain tidal modelling points. This region can be
-    optionally dilated to ensure that the sub-pixel algorithm has pixels
-    on either side of the water index threshold.
+    Identifies ocean by selecting regions of water that overlap
+    with ocean pixels in the Geodata Coast 100K layer.
 
     Parameters:
     -----------
@@ -153,14 +201,10 @@ def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
         An array containing True for land pixels, and False for water.
         This can be obtained by thresholding a water index
         array (e.g. MNDWI < 0).
-    tide_points_gdf : geopandas.GeoDataFrame
-        Spatial points located within the ocean. These points are used
-        to ensure that all coastlines are directly connected to the
-        ocean.
     connectivity : integer, optional
         An integer passed to the 'connectivity' parameter of the
         `skimage.measure.label` function.
-    dilation : integer, optional
+     dilation : integer, optional
         The number of pixels to dilate ocean pixels to ensure than
         adequate land pixels are included for subpixel waterline
         extraction. Defaults to None.
@@ -172,17 +216,34 @@ def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
         pixels as True.
     """
 
-    # First, break boolean array into unique, discrete regions/blobs
-    blobs = xr.apply_ufunc(label, ds, 1, False, 1)
+    dc = datacube.Datacube()
+    geodata_ds = dc.load(
+        product="geodata_coast_100k",
+        like=ds.odc.geobox.compat,
+        dask_chunks={},
+    ).squeeze("time")
 
-    # Get blob ID for each tidal modelling point
-    x = xr.DataArray(tide_points_gdf.geometry.x, dims="z")
-    y = xr.DataArray(tide_points_gdf.geometry.y, dims="z")
-    ocean_blobs = np.unique(blobs.interp(x=x, y=y, method="nearest"))
+    # Identify pixels that are land in either Geodata or ds
+    land_mask = (geodata_ds.land != 0) | ds
 
-    # Return only blobs that contained tide modelling point
-    ocean_mask = blobs.isin(ocean_blobs[ocean_blobs != 0])
+    # Dilate to restrict to deeper ocean, and invert to get water
+    water_mask = ~odc.algo.binary_dilation(land_mask, land_dilation)
 
+    # First, break all time array into unique, discrete regions/blobs
+    blobs = xr.apply_ufunc(label, ds, 1, False, connectivity)
+
+    # For each unique region/blob, use region properties to determine
+    # whether it overlaps with a water feature from `water_mask`. If
+    # it does, then it is considered to be directly connected with the
+    # ocean; if not, then it is an inland waterbody.
+    ocean_mask = blobs.isin(
+        [
+            i.label
+            for i in regionprops(blobs.values, water_mask.values)
+            if i.max_intensity
+        ]
+    )
+    
     # Dilate mask so that we include land pixels on the inland side
     # of each shoreline to ensure contour extraction accurately
     # seperates land and water spectra
@@ -192,22 +253,20 @@ def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
     return ocean_mask
 
 
-def coastal_masking(ds, tide_points_gdf, buffer=50, closing=None):
+def coastal_masking(ds, buffer=50, closing=None):
     """
     Creates a symmetrical buffer around the land-water boundary
     in a input boolean array. This is used to create a study area
     mask that is focused on the coastal zone, excluding inland or
-    deeper ocean pixels.
+    deeper ocean pixels. This region can be optionally dilated to 
+    ensure that the sub-pixel algorithm has pixels on either side 
+    of the water index threshold.
 
     Parameters:
     -----------
     ds : xarray.DataArray
         A single time-step boolean array containing True for land
         pixels, and False for water.
-    tide_points_gdf : geopandas.GeoDataFrame
-        Spatial points located within the ocean. These points are used
-        to ensure that all coastlines are directly connected to the
-        ocean.
     buffer : integer, optional
         The number of pixels to buffer the land-water boundary in
         each direction.
@@ -231,7 +290,7 @@ def coastal_masking(ds, tide_points_gdf, buffer=50, closing=None):
         ds = xr.apply_ufunc(binary_closing, ds, disk(closing))
 
     # Identify ocean pixels that are directly connected to tide points
-    all_time_ocean = ocean_masking(ds, tide_points_gdf)
+    all_time_ocean = ocean_masking(ds)
 
     # Generate coastal buffer from ocean-land boundary
     coastal_mask = xr.apply_ufunc(
@@ -378,7 +437,7 @@ def certainty_masking(yearly_ds, obs_threshold=5, stdev_threshold=0.25, sieve_si
     for i, arr in raster_mask.groupby("year"):
         vector_mask = xr_vectorize(
             arr,
-            crs=yearly_ds.odc.geobox.crs,
+            crs=yearly_ds.odc.crs,
             attribute_col="certainty",
         )
 
@@ -400,7 +459,6 @@ def contours_preprocess(
     gapfill_ds,
     water_index,
     index_threshold,
-    tide_points_gdf,
     buffer_pixels=33,
     mask_landcover=False,
     mask_ndwi=False,
@@ -435,13 +493,6 @@ def contours_preprocess(
     index_threshold : float
         A float giving the water index threshold used to separate land
         and water (e.g. 0.00).
-    tide_points_gdf : geopandas.GeoDataFrame
-        Spatial points located within the ocean. These points are used
-        by the `mask_ocean` to ensure that all coastlines are directly
-        connected to the ocean. These may be obtained from the tidal
-        modelling points used in the raster generation part of the DEA
-        Coastlines analysis, as these are guaranteed to be
-        located in coastal or marine waters.
     buffer_pixels : int, optional
         The number of pixels by which to buffer the all time shoreline
         detected by this function to produce an overall coastal buffer.
@@ -516,7 +567,7 @@ def contours_preprocess(
         # on the ESA World Cover dataset, loading persistent water
         # then shrinking this to ensure only deep water pixels are included
         landcover = datacube.Datacube().load(
-            product="esa_worldcover", like=yearly_ds.geobox
+            product="esa_worldcover", like=yearly_ds.odc.geobox
         )
         landcover_water = landcover.classification.isin([0, 80]).squeeze(dim="time")
         landcover_mask = ~odc.algo.mask_cleanup(
@@ -565,9 +616,9 @@ def contours_preprocess(
     # closing helps to "close" the entrances of estuaries and rivers, removing
     # them from the analysis
     all_time = thresholded_ds.mean(dim="year") >= 0.15
-    coastal_mask = coastal_masking(
-        ds=all_time, tide_points_gdf=tide_points_gdf, buffer=buffer_pixels, closing=15
-    )
+    all_time = all_time.odc.assign_crs(crs=yearly_ds.odc.crs)
+
+    coastal_mask = coastal_masking(ds=all_time, buffer=buffer_pixels, closing=15)
 
     # Optionally modify the coastal mask using manually supplied polygons to
     # add missing areas of shoreline, or remove unwanted areas from the mask.
@@ -590,7 +641,7 @@ def contours_preprocess(
 
     # Because the output of `coastal_masking` contains values of 2 that
     # represent pixels inland of the coastal buffer and values of 1 in
-    # the coastal buffer itself, seperate them for further use
+    # the coastal buffer itself, separate them for further use
     inland_mask = coastal_mask == 2
     coastal_mask = coastal_mask == 1
 
@@ -602,7 +653,7 @@ def contours_preprocess(
         (thresholded_ds != 0)  # Set both 1s and NaN to True
         .where(~inland_mask, 1)
         .groupby("year")
-        .apply(lambda x: ocean_masking(x, tide_points_gdf, 1, 3))
+        .apply(lambda x: ocean_masking(x, 1, 3))
     )
 
     # Keep pixels within annual mask layers, all time coastal buffer,
@@ -1388,28 +1439,13 @@ def generate_vectors(
     ####################
 
     # Get bounding box to load data for
-    bbox = gpd.GeoSeries(
-        box(
-            *array_bounds(
-                height=yearly_ds.sizes["y"],
-                width=yearly_ds.sizes["x"],
-                transform=yearly_ds.transform,
-            )
-        ),
-        crs=yearly_ds.crs,
-    )
-
-    # Tide points
-    tide_points_gdf = gpd.read_file(
-        config["Input files"]["points_path"], bbox=bbox
-    ).to_crs(yearly_ds.crs)
-    log.info(f"Study area {study_area}: Loaded ocean points")
+    bbox = gpd.GeoSeries(yearly_ds.odc.geobox.extent.geom, crs=yearly_ds.odc.crs)
 
     # Study area polygon
     gridcell_gdf = (
         gpd.read_file(config["Input files"]["grid_path"], bbox=bbox)
         .set_index("id")
-        .to_crs(str(yearly_ds.crs))
+        .to_crs(str(yearly_ds.odc.crs))
     )
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
@@ -1417,17 +1453,17 @@ def generate_vectors(
     #     # Coastal mask modifications
     #     modifications_gdf = gpd.read_file(
     #         config["Input files"]["modifications_path"], bbox=bbox
-    #     ).to_crs(str(yearly_ds.crs))
+    #     ).to_crs(str(yearly_ds.odc.crs))
 
     # Geomorphology dataset
     geomorphology_gdf = gpd.read_file(
         config["Input files"]["geomorphology_path"], bbox=bbox
-    ).to_crs(str(yearly_ds.crs))
+    ).to_crs(str(yearly_ds.odc.crs))
 
     # Region attribute dataset
     region_gdf = gpd.read_file(
         config["Input files"]["region_attributes_path"], bbox=bbox
-    ).to_crs(str(yearly_ds.crs))
+    ).to_crs(str(yearly_ds.odc.crs))
 
     ##############################
     # Extract shoreline contours #
@@ -1439,27 +1475,25 @@ def generate_vectors(
         gapfill_ds,
         water_index,
         index_threshold,
-        tide_points_gdf,
         buffer_pixels=33,
         mask_landcover=False,
         mask_modifications=None,
     )
 
-    try:
-        # Extract annual shorelines
-        contours_gdf = subpixel_contours(
-            da=masked_ds,
-            z_values=index_threshold,
-            min_vertices=10,
-            dim="year",
-        ).set_index("year")
+    # Extract annual shorelines
+    contours_gdf = subpixel_contours(
+        da=masked_ds,
+        z_values=index_threshold,
+        min_vertices=10,
+        dim="year",
+    ).set_index("year")
 
-    except ValueError:
+    if len(contours_gdf.index) == 0:
         raise ValueError(
-            f"Study area {study_area}: Unable to extract any valid shorelines"
+            f"Study area {study_area}: Unable to extract any valid shorelines from raster data"
         )
 
-    log.info(f"Study area {study_area}: Extracted annual shorelines")
+    log.info(f"Study area {study_area}: Extracted shorelines from raster data")
 
     ######################
     # Compute statistics #
@@ -1474,7 +1508,7 @@ def generate_vectors(
     except KeyError:
 
         log.warning(
-            f"Study area {study_area}: One or more years missing, so no statistics points were generated"
+            f"Study area {study_area}: Baseline year {baseline_year} missing from annual shorelines; unable to extract rates of change points"
         )
         points_gdf = None
 
@@ -1613,20 +1647,27 @@ def generate_vectors(
                 f"{vector_version}_{water_index}_{index_threshold:.2f}"
             )
 
-            # Export to GeoJSON
-            points_gdf.to_crs("EPSG:4326").to_file(
-                f"{stats_path}.geojson",
-                driver="GeoJSON",
-            )
+            try:
 
-            # Export as ESRI shapefiles
-            points_gdf.to_file(
-                f"{stats_path}.shp",
-                schema={
-                    "properties": vector_schema(points_gdf),
-                    "geometry": "Point",
-                },
-            )
+                # Export to GeoJSON
+                points_gdf.to_crs("EPSG:4326").to_file(
+                    f"{stats_path}.geojson",
+                    driver="GeoJSON",
+                )
+
+                # Export as ESRI shapefiles
+                points_gdf.to_file(
+                    f"{stats_path}.shp",
+                    schema={
+                        "properties": vector_schema(points_gdf),
+                        "geometry": "Point",
+                    },
+                )
+
+            except ValueError:
+                raise ValueError(
+                    f"Study area {study_area}: No vector points data to export after clipping to study area extent"
+                )
 
         else:
             log.warning(f"Study area {study_area}: No points to process")
@@ -1655,19 +1696,26 @@ def generate_vectors(
     # Clip annual shoreline contours to study area extent
     contours_gdf["geometry"] = contours_gdf.intersection(gridcell_gdf.geometry.item())
 
-    # Export to GeoJSON
-    contours_gdf.to_crs("EPSG:4326").to_file(
-        f"{contour_path}.geojson", driver="GeoJSON"
-    )
+    try:
 
-    # Export stats and contours as ESRI shapefiles
-    contours_gdf.to_file(
-        f"{contour_path}.shp",
-        schema={
-            "properties": vector_schema(contours_gdf),
-            "geometry": ["MultiLineString", "LineString"],
-        },
-    )
+        # Export to GeoJSON
+        contours_gdf.to_crs("EPSG:4326").to_file(
+            f"{contour_path}.geojson", driver="GeoJSON"
+        )
+
+        # Export stats and contours as ESRI shapefiles
+        contours_gdf.to_file(
+            f"{contour_path}.shp",
+            schema={
+                "properties": vector_schema(contours_gdf),
+                "geometry": ["MultiLineString", "LineString"],
+            },
+        )
+
+    except ValueError:
+        raise ValueError(
+            f"Study area {study_area}: No vector shorelines data to export after clipping to study area extent"
+        )
 
     log.info(f"Study area {study_area}: Output vector files written to {output_dir}")
 
