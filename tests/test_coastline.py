@@ -5,6 +5,7 @@ from coastlines.continental import continental_cli
 from coastlines.vector import generate_vectors_cli
 
 
+@pytest.mark.dependency()
 def test_generate_rasters_cli():
     runner = CliRunner()
     result = runner.invoke(
@@ -17,7 +18,7 @@ def test_generate_rasters_cli():
             "--raster_version",
             "testing",
             "--start_year",
-            "2015",
+            "2018",
             "--end_year",
             "2020",
         ],
@@ -25,7 +26,7 @@ def test_generate_rasters_cli():
     assert result.exit_code == 0
 
 
-@pytest.mark.depends(on=["test_generate_rasters_cli"])
+@pytest.mark.dependency(depends=["test_generate_rasters_cli"])
 def test_generate_vector_cli():
     runner = CliRunner()
     result = runner.invoke(
@@ -38,7 +39,7 @@ def test_generate_vector_cli():
             "--raster_version",
             "testing",
             "--start_year",
-            "2015",
+            "2018",
             "--end_year",
             "2020",
             "--baseline_year",
@@ -48,7 +49,7 @@ def test_generate_vector_cli():
     assert result.exit_code == 0
 
 
-@pytest.mark.depends(on=["test_generate_vector_cli"])
+@pytest.mark.dependency(depends=["test_generate_vector_cli"])
 def test_generate_continental_cli():
     runner = CliRunner()
     result = runner.invoke(

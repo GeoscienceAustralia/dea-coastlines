@@ -8,7 +8,7 @@ IS_SANDBOX = "sandbox" in os.getenv("JUPYTER_IMAGE", default="")
 
 tests_require = [
     "pytest",
-    "pytest-depends",
+    "pytest-dependency",
     "pytest-cov",
 ]
 
