@@ -32,7 +32,13 @@ from scipy.stats import circstd, circmean, linregress
 from shapely.geometry import box
 from shapely.ops import nearest_points
 from skimage.measure import label, regionprops
-from skimage.morphology import binary_closing, binary_dilation, dilation, disk
+from skimage.morphology import (
+    binary_closing,
+    binary_dilation,
+    binary_erosion,
+    dilation,
+    disk,
+)
 
 from coastlines.utils import configure_logging, load_config
 from dea_tools.spatial import subpixel_contours, xr_vectorize, xr_rasterize
@@ -190,7 +196,7 @@ def load_rasters(
 #     return ocean_mask
 
 
-def ocean_masking(ds, ocean_land_da, connectivity=1, dilation=None, land_dilation=10):
+def ocean_masking(ds, ocean_da, connectivity=1, dilation=None):
     """
     Identifies ocean by selecting regions of water that overlap
     with ocean pixels. This region can be optionally dilated to
@@ -203,13 +209,13 @@ def ocean_masking(ds, ocean_land_da, connectivity=1, dilation=None, land_dilatio
         An array containing True for land pixels, and False for water.
         This can be obtained by thresholding a water index
         array (e.g. MNDWI < 0).
-    ocean_land_da : xarray.DataArray
-        A supplementary dataset used to separate ocean waters from
-        other inland water. The array should contain values of 0
-        for ocean, and values of 1 or greater for land pixels.
-        For Australia, we use the  Geodata 100K coastline dataset,
-        rasterized as the "geodata_coast_100k" product on the
-        DEA datacube.
+    ocean_da : xarray.DataArray
+        A supplementary static dataset used to separate ocean waters
+        from other inland water. The array should contain values of 1
+        for high certainty ocean pixels, and 0 for all other pixels
+        (land, inland water etc). For Australia, we use the  Geodata
+        100K coastline dataset, rasterized as the "geodata_coast_100k"
+        product on the DEA datacube.
     connectivity : integer, optional
         An integer passed to the 'connectivity' parameter of the
         `skimage.measure.label` function.
@@ -217,11 +223,6 @@ def ocean_masking(ds, ocean_land_da, connectivity=1, dilation=None, land_dilatio
         The number of pixels to dilate ocean pixels to ensure than
         adequate land pixels are included for subpixel waterline
         extraction. Defaults to None.
-    land_dilation : integer, optional
-        The number of pixels by which to dilate land pixels in
-        `ocean_land_da`. This ensures that we only select true
-        deeper ocean pixels when separating inland from ocean
-        waters.
 
     Returns:
     --------
@@ -230,11 +231,8 @@ def ocean_masking(ds, ocean_land_da, connectivity=1, dilation=None, land_dilatio
         pixels as True.
     """
 
-    # Identify pixels that are land in either Geodata or ds
-    land_mask = (ocean_land_da != 0) | ds
-
-    # Dilate to restrict to deeper ocean, and invert to get water
-    water_mask = ~odc.algo.binary_dilation(land_mask, land_dilation)
+    # Update `ocean_da` to mask out any pixels that are land in `ds` too
+    ocean_da = ocean_da & (ds != 1)
 
     # First, break all time array into unique, discrete regions/blobs
     blobs = xr.apply_ufunc(label, ds, 1, False, connectivity)
@@ -244,11 +242,7 @@ def ocean_masking(ds, ocean_land_da, connectivity=1, dilation=None, land_dilatio
     # it does, then it is considered to be directly connected with the
     # ocean; if not, then it is an inland waterbody.
     ocean_mask = blobs.isin(
-        [
-            i.label
-            for i in regionprops(blobs.values, water_mask.values)
-            if i.max_intensity
-        ]
+        [i.label for i in regionprops(blobs.values, ocean_da.values) if i.max_intensity]
     )
 
     # Dilate mask so that we include land pixels on the inland side
@@ -260,7 +254,7 @@ def ocean_masking(ds, ocean_land_da, connectivity=1, dilation=None, land_dilatio
     return ocean_mask
 
 
-def coastal_masking(ds, ocean_land_da, buffer=50, closing=None):
+def coastal_masking(ds, ocean_da, buffer=50, closing=None):
     """
     Creates a symmetrical buffer around the land-water boundary
     in a input boolean array. This is used to create a study area
@@ -272,13 +266,13 @@ def coastal_masking(ds, ocean_land_da, buffer=50, closing=None):
     ds : xarray.DataArray
         A single time-step boolean array containing True for land
         pixels, and False for water.
-    ocean_land_da : xarray.DataArray
-        A supplementary dataset used to separate ocean waters from
-        other inland water. The array should contain values of 0
-        for ocean, and values of 1 or greater for land pixels.
-        For Australia, we use the  Geodata 100K coastline dataset,
-        rasterized as the "geodata_coast_100k" product on the
-        DEA datacube.
+    ocean_da : xarray.DataArray
+        A supplementary static dataset used to separate ocean waters
+        from other inland water. The array should contain values of 1
+        for high certainty ocean pixels, and 0 for all other pixels
+        (land, inland water etc). For Australia, we use the  Geodata
+        100K coastline dataset, rasterized as the "geodata_coast_100k"
+        product on the DEA datacube.
     buffer : integer, optional
         The number of pixels to buffer the land-water boundary in
         each direction.
@@ -303,7 +297,7 @@ def coastal_masking(ds, ocean_land_da, buffer=50, closing=None):
 
     # Identify ocean pixels based on overlap with the Geodata
     # 100K coastline dataset
-    all_time_ocean = ocean_masking(ds, ocean_land_da)
+    all_time_ocean = ocean_masking(ds, ocean_da)
 
     # Generate coastal buffer from ocean-land boundary
     coastal_mask = xr.apply_ufunc(
@@ -632,19 +626,22 @@ def contours_preprocess(
 
     # Load Geodata 100K coastal layer to use to separate ocean waters from
     # other inland waters. This product has values of 0 for ocean waters,
-    # and values of 1 and 2 for mainland/island pixels.
+    # and values of 1 and 2 for mainland/island pixels. We extract ocean
+    # pixels (value 0), then erode these by 10 pixels to ensure we only
+    # use high certainty deeper water ocean regions for identifying ocean
+    # pixel in our satellite imagery
     dc = datacube.Datacube()
     geodata_da = dc.load(
         product="geodata_coast_100k",
         like=all_time.odc.geobox.compat,
-        dask_chunks={},
     ).land.squeeze("time")
+    ocean_da = xr.apply_ufunc(binary_erosion, geodata_da == 0, disk(10))
 
     # Use all time and Geodata 100K data to produce the buffered coastal
     # study area. Morphological closing helps to "close" the entrances of
     # estuaries and rivers, removing them from the analysis.
     coastal_mask = coastal_masking(
-        ds=all_time, ocean_land_da=geodata_da, buffer=buffer_pixels, closing=15
+        ds=all_time, ocean_da=ocean_da, buffer=buffer_pixels, closing=15
     )
 
     # Optionally modify the coastal mask using manually supplied polygons to
@@ -680,7 +677,7 @@ def contours_preprocess(
         (thresholded_ds != 0)  # Set both 1s and NaN to True
         .where(~inland_mask, 1)
         .groupby("year")
-        .apply(lambda x: ocean_masking(x, geodata_da, 1, 3))
+        .apply(lambda x: ocean_masking(x, ocean_da, 1, 3))
     )
 
     # Keep pixels within annual mask layers, all time coastal buffer,
