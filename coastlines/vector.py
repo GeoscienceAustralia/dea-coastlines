@@ -18,7 +18,6 @@ import warnings
 
 import click
 import pyproj
-import datacube
 import odc.algo
 import odc.geo.xr
 import numpy as np
@@ -39,6 +38,9 @@ from skimage.morphology import (
     dilation,
     disk,
 )
+
+import datacube
+from datacube.utils.aws import configure_s3_access
 
 from coastlines.utils import configure_logging, load_config
 from dea_tools.spatial import subpixel_contours, xr_vectorize, xr_rasterize
@@ -142,58 +144,6 @@ def load_rasters(
         ds_list.append(layer_ds)
 
     return ds_list
-
-
-# def ocean_masking(ds, tide_points_gdf, connectivity=1, dilation=None):
-#     """
-#     Identifies ocean by selecting the largest connected area of water
-#     pixels that contain tidal modelling points. This region can be
-#     optionally dilated to ensure that the sub-pixel algorithm has pixels
-#     on either side of the water index threshold.
-
-#     Parameters:
-#     -----------
-#     ds : xarray.DataArray
-#         An array containing True for land pixels, and False for water.
-#         This can be obtained by thresholding a water index
-#         array (e.g. MNDWI < 0).
-#     tide_points_gdf : geopandas.GeoDataFrame
-#         Spatial points located within the ocean. These points are used
-#         to ensure that all coastlines are directly connected to the
-#         ocean.
-#     connectivity : integer, optional
-#         An integer passed to the 'connectivity' parameter of the
-#         `skimage.measure.label` function.
-#     dilation : integer, optional
-#         The number of pixels to dilate ocean pixels to ensure than
-#         adequate land pixels are included for subpixel waterline
-#         extraction. Defaults to None.
-
-#     Returns:
-#     --------
-#     ocean_mask : xarray.DataArray
-#         An array containing the a mask consisting of identified ocean
-#         pixels as True.
-#     """
-
-#     # First, break boolean array into unique, discrete regions/blobs
-#     blobs = xr.apply_ufunc(label, ds, 1, False, 1)
-
-#     # Get blob ID for each tidal modelling point
-#     x = xr.DataArray(tide_points_gdf.geometry.x, dims="z")
-#     y = xr.DataArray(tide_points_gdf.geometry.y, dims="z")
-#     ocean_blobs = np.unique(blobs.interp(x=x, y=y, method="nearest"))
-
-#     # Return only blobs that contained tide modelling point
-#     ocean_mask = blobs.isin(ocean_blobs[ocean_blobs != 0])
-
-#     # Dilate mask so that we include land pixels on the inland side
-#     # of each shoreline to ensure contour extraction accurately
-#     # seperates land and water spectra
-#     if dilation:
-#         ocean_mask = xr.apply_ufunc(binary_dilation, ocean_mask, disk(dilation))
-
-#     return ocean_mask
 
 
 def ocean_masking(ds, ocean_da, connectivity=1, dilation=None):
@@ -629,7 +579,7 @@ def contours_preprocess(
     # and values of 1 and 2 for mainland/island pixels. We extract ocean
     # pixels (value 0), then erode these by 10 pixels to ensure we only
     # use high certainty deeper water ocean regions for identifying ocean
-    # pixel in our satellite imagery
+    # pixels in our satellite imagery
     dc = datacube.Datacube()
     geodata_da = dc.load(
         product="geodata_coast_100k",
@@ -1821,6 +1771,12 @@ def generate_vectors(
     "the dataset (i.e. the same as `--end_year`).",
 )
 @click.option(
+    "--aws_unsigned/--no-aws_unsigned",
+    type=bool,
+    default=True,
+    help="Whether to use sign AWS requests for S3 access",
+)
+@click.option(
     "--overwrite/--no-overwrite",
     type=bool,
     default=True,
@@ -1837,6 +1793,7 @@ def generate_vectors_cli(
     start_year,
     end_year,
     baseline_year,
+    aws_unsigned,
     overwrite,
 ):
 
@@ -1856,6 +1813,9 @@ def generate_vectors_cli(
 
     # Load analysis params from config file
     config = load_config(config_path=config_path)
+    
+    # Do an opinionated configuration of S3
+    configure_s3_access(cloud_defaults=True, aws_unsigned=aws_unsigned)
 
     # Run the code to generate vectors
     try:
