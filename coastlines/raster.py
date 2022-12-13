@@ -675,12 +675,12 @@ def generate_rasters_cli(
     aws_unsigned,
     overwrite,
 ):
+
     log = configure_logging(f"Coastlines raster generation for study area {study_area}")
 
-    # Test if study area has already been run by checking if final raster exists
-    output_exists = os.path.exists(
-        f"data/interim/raster/{raster_version}/{study_area}_{raster_version}/{int(end_year) - 1}_mndwi.tif"
-    )
+    # Test if study area has already been run by checking if run status file exists
+    run_status_file = f"data/interim/raster/{raster_version}/{study_area}_{raster_version}/run_completed"
+    output_exists = os.path.exists(run_status_file)
 
     # Skip if outputs exist but overwrite is False
     if output_exists and not overwrite:
@@ -708,6 +708,14 @@ def generate_rasters_cli(
             end_year,
             log=log,
         )
+
+        # Create blank run status file to indicate run completion
+        with open(
+            run_status_file,
+            mode="w",
+        ):
+            pass
+
     except Exception as e:
         log.exception(f"Study area {study_area}: Failed to run process with error {e}")
         sys.exit(1)

@@ -810,7 +810,7 @@ def contours_preprocess(
     # Remove low obs pixels and replace with 3-year gapfill
     combined_ds = yearly_ds.where(yearly_ds["count"] > 5, gapfill_ds)
 
-    # Set any pixels with only one observation to NaN, as these are 
+    # Set any pixels with only one observation to NaN, as these are
     # extremely vulnerable to noise
     combined_ds = combined_ds.where(yearly_ds["count"] > 1)
 
@@ -819,26 +819,26 @@ def contours_preprocess(
     thresholded_ds = combined_ds[water_index] < index_threshold
     thresholded_ds = thresholded_ds.where(~nodata)
 
-    # Compute temporal mask that restricts the analysis to land pixels 
-    # with a direct spatial connection (e.g. contiguous) to land pixels 
-    # in the previous or subsequent timestep. Set any pixels outside 
+    # Compute temporal mask that restricts the analysis to land pixels
+    # with a direct spatial connection (e.g. contiguous) to land pixels
+    # in the previous or subsequent timestep. Set any pixels outside
     # mask to 0 to represent water
     temporal_mask = temporal_masking(thresholded_ds == 1)
     thresholded_ds = thresholded_ds.where(temporal_mask)
 
-    # Create all time layer by identifying pixels that are land in at 
-    # least 15% of valid observations; this is used to generate an 
+    # Create all time layer by identifying pixels that are land in at
+    # least 15% of valid observations; this is used to generate an
     # all-of-time buffered coastal study area that constrains the Coastlines
     # analysis to the coastal zone
     all_time = thresholded_ds.mean(dim="year") > 0.15
 
-    # Remoe narrow river and stream features from all time layer using 
+    # Remoe narrow river and stream features from all time layer using
     # the `black_tophat` transform
     rivers = xr.apply_ufunc(black_tophat, all_time, disk(5))
     all_time_clean = all_time.where(~rivers, True)
 
-    # Create a river mask by eroding the all time layer to clip out river 
-    # and estuary mouths, then expanding river features to include stream 
+    # Create a river mask by eroding the all time layer to clip out river
+    # and estuary mouths, then expanding river features to include stream
     # banks and account for migrating rivers
     all_time_eroded = xr.apply_ufunc(binary_erosion, all_time_clean, disk(10))
     rivers = rivers.where(all_time_eroded, False)
@@ -864,12 +864,12 @@ def contours_preprocess(
         ds=all_time_clean, ocean_da=ocean_da, buffer=buffer_pixels
     )
 
-    # The output of `coastal_masking` contains values of 2 that represent 
+    # The output of `coastal_masking` contains values of 2 that represent
     # pixels inland of the coastal buffer. Use this to create
     # a mask of inland regions:
     inland_mask = coastal_mask != 2
 
-    # Generate individual annual masks by selecting only water pixels that 
+    # Generate individual annual masks by selecting only water pixels that
     # are directly connected to the ocean in each yearly timestep
     annual_mask = (
         # Treat both 1s and NaN pixels as land (i.e. True)
@@ -887,7 +887,9 @@ def contours_preprocess(
 
     # Finally, apply temporal and annual masks to our surface water
     # index data, then clip to the all-of-time coastal study area
-    masked_ds = combined_ds[water_index].where(temporal_mask & annual_mask & coastal_mask)
+    masked_ds = combined_ds[water_index].where(
+        temporal_mask & annual_mask & coastal_mask
+    )
 
     # Generate annual vector polygon masks containing information
     # about the certainty of each shoreline feature
@@ -1996,10 +1998,9 @@ def generate_vectors_cli(
 
     log = configure_logging(f"Coastlines vector generation for study area {study_area}")
 
-    # Test if study area has already been run by checking if shoreline data exists
-    output_exists = os.path.exists(
-        f"data/interim/vector/{vector_version}/{study_area}_{vector_version}/annualshorelines_{study_area}_{vector_version}_{water_index}_{index_threshold:.2f}.shp"
-    )
+    # Test if study area has already been run by checking if run status file exists
+    run_status_file = f"data/interim/vector/{vector_version}/{study_area}_{vector_version}/run_completed"
+    output_exists = os.path.exists(run_status_file)
 
     # Skip if outputs exist but overwrite is False
     if output_exists and not overwrite:
@@ -2028,6 +2029,14 @@ def generate_vectors_cli(
             baseline_year,
             log=log,
         )
+
+        # Create blank run status file to indicate run completion
+        with open(
+            run_status_file,
+            mode="w",
+        ):
+            pass
+
     except Exception as e:
         log.exception(f"Study area {study_area}: Failed to run process with error {e}")
         sys.exit(1)
