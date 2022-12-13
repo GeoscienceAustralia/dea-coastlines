@@ -1648,7 +1648,6 @@ def generate_vectors(
         water_index,
         index_threshold,
         buffer_pixels=33,
-        mask_landcover=False,
         mask_modifications=None,
     )
 

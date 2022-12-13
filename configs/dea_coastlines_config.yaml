@@ -3,7 +3,6 @@ Virtual product:
     virtual_product_name: ls_nbart_ndwi
 Input files:
     grid_path: https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/albers_grids/ga_summary_grid_c3_48km_coastal_clipped.geojson
-    points_path: https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/tide_points_coastal.geojson
     modifications_path: https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/estuary_mask_modifications.geojson
     geomorphology_path: https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/Smartline.gpkg
     region_attributes_path: https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/Primary_compartments.geojson
