@@ -1600,11 +1600,8 @@ def generate_vectors(
         end_year=end_year,
     )
     log.info(f"Study area {study_area}: Loaded rasters")
-
+    
     # Create output vector folder using supplied vector version string;
-    # if no vector version is provided, copy this from raster version
-    if vector_version is None:
-        vector_version = raster_version
     output_dir = f"data/interim/vector/{vector_version}/{study_area}_{vector_version}"
     os.makedirs(output_dir, exist_ok=True)
 
@@ -1997,6 +1994,10 @@ def generate_vectors_cli(
 ):
 
     log = configure_logging(f"Coastlines vector generation for study area {study_area}")
+    
+    # If no vector version is provided, copy raster version
+    if vector_version is None:
+        vector_version = raster_version
 
     # Test if study area has already been run by checking if run status file exists
     run_status_file = f"data/interim/vector/{vector_version}/{study_area}_{vector_version}/run_completed"
