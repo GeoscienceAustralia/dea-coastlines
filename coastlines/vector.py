@@ -581,11 +581,15 @@ def contours_preprocess(
     # least 15% of valid observations; this is used to generate an
     # all-of-time buffered coastal study area that constrains the Coastlines
     # analysis to the coastal zone
-    all_time = thresholded_ds.mean(dim="year") > 0.5 #0.15
+    all_time = thresholded_ds.mean(dim="year") > 0.5  # 0.15
 
-    # Remoe narrow river and stream features from all time layer using
-    # the `black_tophat` transform
-    rivers = xr.apply_ufunc(black_tophat, all_time, disk(5))
+    # Remove narrow river and stream features from all time layer using
+    # the `black_tophat` transform. So narrow channels between islands
+    # and the mainland aren't mistaken for rivers, first apply `sieve`
+    # to any connected land pixels (i.e. islands) smaller than 5 km^2
+    island_size = int(5000000 / (30 * 30))  # 5 km^2
+    sieved = xr.apply_ufunc(sieve, all_time.astype(np.int16), island_size)
+    rivers = xr.apply_ufunc(black_tophat, (sieved & all_time), disk(5)) == 1
     all_time_clean = all_time.where(~rivers, True)
 
     # Create a river mask by eroding the all time layer to clip out river
