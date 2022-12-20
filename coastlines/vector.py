@@ -185,8 +185,9 @@ def ocean_masking(ds, ocean_da, connectivity=1, dilation=None):
     # Update `ocean_da` to mask out any pixels that are land in `ds` too
     ocean_da = ocean_da & (ds != 1)
 
-    # First, break all time array into unique, discrete regions/blobs
-    blobs = xr.apply_ufunc(label, ds, 1, False, connectivity)
+    # First, break all time array into unique, discrete regions/blobs.
+    # Fill NaN with 1 so it is treated as a background pixel
+    blobs = xr.apply_ufunc(label, ds.fillna(1), 1, False, connectivity)
 
     # For each unique region/blob, use region properties to determine
     # whether it overlaps with a water feature from `water_mask`. If
@@ -477,256 +478,15 @@ def contour_certainty(contours_gdf, certainty_masks):
     return contours_gdf
 
 
-# def contours_preprocess(
-#     yearly_ds,
-#     gapfill_ds,
-#     water_index,
-#     index_threshold,
-#     buffer_pixels=33,
-#     mask_landcover=False,
-#     mask_ndwi=False,
-#     mask_temporal=True,
-#     mask_modifications=None,
-# ):
-#     """
-#     Prepares and preprocesses DEA Coastlines raster data to
-#     restrict the analysis to coastal shorelines, and extract data
-#     that is used to assess the certainty of extracted shorelines.
-
-#     This function:
-
-#     1) Identifies areas affected by either unstable composites or low data
-#     2) Fills low data areas in annual layers with three-year gapfill
-#     3) Computes an all-time coastal mask based on the observed timeseries
-#        of water and land pixels, after first optionally cleaning the data
-#        using land cover data, NDWI values and a temporal contiguity mask
-#     4) Identifies pixels directly connected to the ocean in each annual
-#        timestep, and uses this to remove inland waterbodies from the analyis
-
-#     Parameters:
-#     -----------
-#     yearly_ds : xarray.Dataset
-#         An `xarray.Dataset` containing annual DEA Coastlines rasters.
-#     gapfill_ds : xarray.Dataset
-#         An `xarray.Dataset` containing three-year gapfill DEA Coastlines
-#         rasters.
-#     water_index : string
-#         A string giving the name of the water index included in the
-#         annual and gapfill datasets (e.g. 'mndwi').
-#     index_threshold : float
-#         A float giving the water index threshold used to separate land
-#         and water (e.g. 0.00).
-#     buffer_pixels : int, optional
-#         The number of pixels by which to buffer the all time shoreline
-#         detected by this function to produce an overall coastal buffer.
-#         The default is 33 pixels, which at 30 m Landsat resolution
-#         produces a coastal buffer with a radius of approximately 1000 m.
-#     mask_landcover : bool, optional
-#         Whether to apply a mask derived from the ESA World Cover dataset
-#         to flag deep water pixels as water before computing the all-time
-#         coastal mask. This can help remove aerosol-based noise over open
-#         water in USGS Collection 2 Level 2 data. Defaults to True.
-#     mask_ndwi : bool, optional
-#         Whether to apply an additional mask based on the Normalised
-#         Difference Water Index (NDWI) to flag pixels with high water
-#         values as water. This can help reduce aerosol-based noise over
-#         open water in USGS Collection 2 Level 2 data, as NDWI is less
-#         impacted by this than MNDWI. Defaults to True.
-#     mask_temporal : bool, optional
-#         Whether to apply a temporal contiguity mask by identifying land
-#         pixels with a direct spatial connection (e.g. contiguous) to
-#         land pixels in either the previous or subsequent timestep. This is
-#         used to clean up noisy land pixels (e.g. caused by clouds,
-#         white water, sensor issues), as these pixels typically occur
-#         randomly with no relationship to the distribution of land in
-#         neighbouring timesteps. True land, however, is likely to appear
-#         in proximity to land before or after the specific timestep.
-#         Defaults to True.
-#     mask_modifications : geopandas.GeoDataFrame, optional
-#         An optional polygon dataset including features to remove or add
-#         to the all-time coastal mask. This should include a column/field
-#         named 'type' that contains two possible values:
-#             - 'add': features to add to the coastal mask (e.g. for
-#                      including areas of missing shorelines that were
-#                      previously removed by the coastal mask)
-#             - 'remove': features to remove from the coastal mask (e.g.
-#                         areas of non-coastal rivers or estuaries,
-#                         irrigated fields or aquaculture that you wish
-#                         to exclude from the analysis)
-
-#     Returns:
-#     --------
-#     masked_ds : xarray.Dataset
-#         A dataset containing water index data for each annual timestep
-#         that has been masked to the coastal zone. This can then be used
-#         as an input to subpixel waterline extraction.
-#     certainty_masks : dict
-#         A dictionary containg one `geopandas.GeoDataFrame` for each year
-#         in the time period, with polygons identifying any potentially
-#         problematic region. This is used to assign each output shoreline
-#         with a certainty column.
-#     """
-
-#     # Remove low obs pixels and replace with 3-year gapfill
-#     yearly_ds = yearly_ds.where(yearly_ds["count"] > 5, gapfill_ds)
-
-#     # Set any pixels with only one observation to NaN, as these
-#     # are extremely vulnerable to noise
-#     yearly_ds = yearly_ds.where(yearly_ds["count"] > 1)
-
-#     # Apply water index threshold and re-apply nodata values
-#     thresholded_ds = yearly_ds[water_index] < index_threshold
-#     nodata = yearly_ds[water_index].isnull()
-#     thresholded_ds = thresholded_ds.where(~nodata)
-
-#     # Set defaults which are overwritten if masks are requested
-#     landcover_mask = True
-#     ndwi_mask = True
-#     temporal_mask = True
-
-#     if mask_landcover:
-
-#         # To remove aerosol-based noise over open water, apply a mask based
-#         # on the ESA World Cover dataset, loading persistent water
-#         # then shrinking this to ensure only deep water pixels are included
-#         landcover = datacube.Datacube().load(
-#             product="esa_worldcover", like=yearly_ds.odc.geobox
-#         )
-#         landcover_water = landcover.classification.isin([0, 80]).squeeze(dim="time")
-#         landcover_mask = ~odc.algo.mask_cleanup(
-#             landcover_water, mask_filters=[("erosion", buffer_pixels)]
-#         )
-
-#         # Set any pixels outside mask to 0 to represent water
-#         thresholded_ds = thresholded_ds.where(landcover_mask, 0)
-
-#     if mask_ndwi:
-
-#         # To remove remaining aerosol-based noise over open water, apply an additional
-#         # mask based on NDWI. This works because NIR is less affected by the aerosol
-#         # issues than SWIR, and NDWI tends to be less aggressive at mapping
-#         # water than MNDWI, which ensures that masking by NDWI will not remove useful
-#         # along the actual coastline.
-#         ndwi_land = yearly_ds["ndwi"] < 0
-#         ndwi_mask = odc.algo.mask_cleanup(
-#             ndwi_land, mask_filters=[("dilation", 2)]
-#         )  # This ensures NDWI mask does not affect pixels along the coastline
-#         ndwi_mask = ndwi_mask.where(~nodata, 1)  # Ensure the mask doesn't modify nodata
-
-#         # Set any pixels outside mask to 0 to represent water
-#         thresholded_ds = thresholded_ds.where(ndwi_mask, 0)
-
-#     if mask_temporal:
-
-#         # Create a temporal mask by identifying land pixels with a direct
-#         # spatial connection (e.g. contiguous) to land pixels in either the
-#         # previous or subsequent timestep.
-
-#         # This is used to clean up noisy land pixels (e.g. caused by clouds,
-#         # white water, sensor issues), as these pixels typically occur
-#         # randomly with no relationship to the distribution of land in
-#         # neighbouring timesteps. True land, however, is likely to appear
-#         # in proximity to land before or after the specific timestep.
-
-#         # Compute temporal mask
-#         temporal_mask = temporal_masking(thresholded_ds == 1)
-
-#         # Set any pixels outside mask to 0 to represent water
-#         thresholded_ds = thresholded_ds.where(temporal_mask, 0)
-
-#     # Identify pixels that are land in at least 15% of valid observations;
-#     # this is used to generate an all-of-time buffered coastal study area
-#     # that constrains the Coastlines analysis to the coastal zone
-#     all_time = thresholded_ds.mean(dim="year") >= 0.15
-#     all_time = all_time.odc.assign_crs(crs=yearly_ds.odc.crs)
-
-
-#     from skimage.morphology import black_tophat
-#     rivers = xr.apply_ufunc(black_tophat, all_time, disk(5))
-#     all_time_cleaned = all_time.where(~rivers, True)
-#     rivers = rivers.where(xr.apply_ufunc(binary_erosion, all_time_cleaned, disk(8)), False)
-#     rivers = xr.apply_ufunc(binary_dilation, rivers, disk(3))
-
-#     # Load Geodata 100K coastal layer to use to separate ocean waters from
-#     # other inland waters. This product has values of 0 for ocean waters,
-#     # and values of 1 and 2 for mainland/island pixels. We extract ocean
-#     # pixels (value 0), then erode these by 10 pixels to ensure we only
-#     # use high certainty deeper water ocean regions for identifying ocean
-#     # pixels in our satellite imagery
-#     dc = datacube.Datacube()
-#     geodata_da = dc.load(
-#         product="geodata_coast_100k",
-#         like=all_time.odc.geobox.compat,
-#     ).land.squeeze("time")
-#     ocean_da = xr.apply_ufunc(binary_erosion, geodata_da == 0, disk(10))
-
-#     # Use all time and Geodata 100K data to produce the buffered coastal
-#     # study area. Morphological closing helps to "close" the entrances of
-#     # estuaries and rivers, removing them from the analysis.
-#     coastal_mask = coastal_masking(
-#         ds=all_time, ocean_da=ocean_da, buffer=buffer_pixels, closing=None  #15
-#     )
-
-#     # Optionally modify the coastal mask using manually supplied polygons to
-#     # add missing areas of shoreline, or remove unwanted areas from the mask.
-#     if mask_modifications is not None:
-
-#         # Only proceed if there are polygons available
-#         if len(mask_modifications.index) > 0:
-
-#             # Convert type column to integer, with 1 representing pixels to add
-#             # to the coastal mask, and 2 representing pixels to remove from the mask
-#             mask_modifications = mask_modifications.replace({"add": 1, "remove": 2})
-
-#             # Rasterise polygons into extent of satellite data
-#             modifications_da = xr_rasterize(
-#                 mask_modifications, da=yearly_ds, attribute_col="type"
-#             )
-
-#             # Apply modifications to mask
-#             coastal_mask = coastal_mask.where(modifications_da == 0, modifications_da)
-
-#     # Because the output of `coastal_masking` contains values of 2 that
-#     # represent pixels inland of the coastal buffer and values of 1 in
-#     # the coastal buffer itself, separate them for further use
-#     inland_mask = coastal_mask == 2
-#     coastal_mask = coastal_mask == 1
-
-#     # Generate annual masks by selecting only water pixels that are
-#     # directly connected to the ocean in each yearly timestep, and
-#     # not within the inland mask (this prevents isolated sections of
-#     # inland rivers/waterbodies being included in the data)
-#     annual_mask = (
-#         (thresholded_ds != 0)  # Set both 1s and NaN to True
-#         .where(~inland_mask, 1)
-#         .where(~rivers, 1)
-#         .groupby("year")
-#         .apply(lambda x: ocean_masking(x, ocean_da, 1, 3))
-#     )
-
-#     # Keep pixels within annual mask layers, all time coastal buffer,
-#     # NDWI mask and temporal mask
-#     masked_ds = yearly_ds[water_index].where(
-#         annual_mask & coastal_mask & ndwi_mask & temporal_mask
-#     )
-
-#     # Generate annual vector polygon masks containing information
-#     # about the certainty of each shoreline feature
-#     certainty_masks = certainty_masking(yearly_ds, stdev_threshold=0.3)
-
-#     return masked_ds, certainty_masks, all_time
-
-
 def contours_preprocess(
     yearly_ds,
     gapfill_ds,
     water_index,
     index_threshold,
     buffer_pixels=33,
-    mask_landcover=False,
-    mask_ndwi=False,
     mask_temporal=True,
     mask_modifications=None,
+    debug=False,
 ):
     """
     Prepares and preprocesses DEA Coastlines raster data to
@@ -761,17 +521,6 @@ def contours_preprocess(
         detected by this function to produce an overall coastal buffer.
         The default is 33 pixels, which at 30 m Landsat resolution
         produces a coastal buffer with a radius of approximately 1000 m.
-    mask_landcover : bool, optional
-        Whether to apply a mask derived from the ESA World Cover dataset
-        to flag deep water pixels as water before computing the all-time
-        coastal mask. This can help remove aerosol-based noise over open
-        water in USGS Collection 2 Level 2 data. Defaults to True.
-    mask_ndwi : bool, optional
-        Whether to apply an additional mask based on the Normalised
-        Difference Water Index (NDWI) to flag pixels with high water
-        values as water. This can help reduce aerosol-based noise over
-        open water in USGS Collection 2 Level 2 data, as NDWI is less
-        impacted by this than MNDWI. Defaults to True.
     mask_temporal : bool, optional
         Whether to apply a temporal contiguity mask by identifying land
         pixels with a direct spatial connection (e.g. contiguous) to
@@ -793,6 +542,8 @@ def contours_preprocess(
                         areas of non-coastal rivers or estuaries,
                         irrigated fields or aquaculture that you wish
                         to exclude from the analysis)
+    debug : boolean, optional
+        Whether to return all intermediate layers for troubleshooting.
 
     Returns:
     --------
@@ -830,7 +581,7 @@ def contours_preprocess(
     # least 15% of valid observations; this is used to generate an
     # all-of-time buffered coastal study area that constrains the Coastlines
     # analysis to the coastal zone
-    all_time = thresholded_ds.mean(dim="year") > 0.15
+    all_time = thresholded_ds.mean(dim="year") > 0.5 #0.15
 
     # Remoe narrow river and stream features from all time layer using
     # the `black_tophat` transform
@@ -895,7 +646,23 @@ def contours_preprocess(
     # about the certainty of each shoreline feature
     certainty_masks = certainty_masking(combined_ds, stdev_threshold=0.3)
 
-    return masked_ds, certainty_masks
+    # Return all intermediate layers if debug=True
+    if debug:
+        return (
+            masked_ds,
+            certainty_masks,
+            all_time,
+            all_time_clean,
+            river_mask,
+            ocean_da,
+            coastal_mask,
+            inland_mask,
+            thresholded_ds,
+            annual_mask,
+        )
+
+    else:
+        return masked_ds, certainty_masks
 
 
 def points_on_line(gdf, index, distance=30):
@@ -1600,7 +1367,7 @@ def generate_vectors(
         end_year=end_year,
     )
     log.info(f"Study area {study_area}: Loaded rasters")
-    
+
     # Create output vector folder using supplied vector version string;
     output_dir = f"data/interim/vector/{vector_version}/{study_area}_{vector_version}"
     os.makedirs(output_dir, exist_ok=True)
@@ -1994,7 +1761,7 @@ def generate_vectors_cli(
 ):
 
     log = configure_logging(f"Coastlines vector generation for study area {study_area}")
-    
+
     # If no vector version is provided, copy raster version
     if vector_version is None:
         vector_version = raster_version
