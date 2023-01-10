@@ -265,7 +265,7 @@ def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
     tide_centre : float, optional
         The central tide height used to compute the min and max
         tide height cutoffs. Tide heights will be masked so all
-        satellite observations are approximiately centred over this
+        satellite observations are approximately centred over this
         value. The default is 0.0 which represents 0 m Above Mean
         Sea Level.
     resampling : string, optional
@@ -451,7 +451,7 @@ def export_annual_gapfill(
                 ds.sel(time=str(year + 1)),
                 tide_cutoff_min=tide_cutoff_min,
                 tide_cutoff_max=tide_cutoff_max,
-            ).drop("tide_m")
+            ).drop_vars("tide_m")
 
         except KeyError:
 
@@ -503,7 +503,7 @@ def export_annual_gapfill(
 
 
 def generate_rasters(
-    dc, config, study_area, raster_version, start_year, end_year, log=None
+    dc, config, study_area, raster_version, start_year, end_year, tide_centre, log=None
 ):
     #####################################
     # Connect to datacube, Dask cluster #
@@ -572,7 +572,9 @@ def generate_rasters(
     # and min satellite-observed tide height for each pixel, then
     # calculate tide cutoffs used to restrict our data to satellite
     # observations centred over mid-tide (0 m Above Mean Sea Level).
-    tide_cutoff_min, tide_cutoff_max = tide_cutoffs(ds, tides_lowres, tide_centre=0.0)
+    tide_cutoff_min, tide_cutoff_max = tide_cutoffs(
+        ds, tides_lowres, tide_centre=tide_centre
+    )
     log.info(
         f"Study area {study_area}: Calculating low and high tide cutoffs for each pixel"
     )
@@ -654,6 +656,15 @@ def generate_rasters(
     "datacube after `--end_year`.",
 )
 @click.option(
+    "--tide_centre",
+    type=float,
+    default=0.0,
+    help="The central tide height used to compute the min and max tide "
+    "height cutoffs. Tide heights will be masked so all satellite "
+    "observations are approximately centred over this value. The "
+    "default is 0.0 which represents 0 m Above Mean Sea Level.",
+)
+@click.option(
     "--aws_unsigned/--no-aws_unsigned",
     type=bool,
     default=True,
@@ -672,6 +683,7 @@ def generate_rasters_cli(
     raster_version,
     start_year,
     end_year,
+    tide_centre,
     aws_unsigned,
     overwrite,
 ):
@@ -706,6 +718,7 @@ def generate_rasters_cli(
             raster_version,
             start_year,
             end_year,
+            tide_centre,
             log=log,
         )
 

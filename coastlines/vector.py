@@ -790,8 +790,7 @@ def annual_movements(
             lambda x: x.geometry.distance(x[f"p_{comp_year}"]), axis=1
         )
 
-        # Set any value over X m to NaN, and drop any points with
-        # less than 50% valid observations
+        # Set any value over X m to NaN
         points_gdf[f"dist_{comp_year}"] = distances.where(distances < max_valid_dist)
 
         # Extract comparison array containing water index values for the
