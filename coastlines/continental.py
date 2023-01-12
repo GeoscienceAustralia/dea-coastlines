@@ -136,6 +136,8 @@ def continental_cli(
     baseline_year,
     include_styles,
 ):
+    
+    print(hotspots)
 
     #################
     # Merge vectors #

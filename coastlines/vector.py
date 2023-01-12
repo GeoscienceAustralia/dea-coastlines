@@ -483,7 +483,7 @@ def contours_preprocess(
     gapfill_ds,
     water_index,
     index_threshold,
-    buffer_pixels=33,
+    buffer_pixels=50,
     mask_temporal=True,
     mask_modifications=None,
     debug=False,
@@ -577,27 +577,34 @@ def contours_preprocess(
     temporal_mask = temporal_masking(thresholded_ds == 1)
     thresholded_ds = thresholded_ds.where(temporal_mask)
 
-    # Create all time layer by identifying pixels that are land in at
-    # least 15% of valid observations; this is used to generate an
-    # all-of-time buffered coastal study area that constrains the Coastlines
-    # analysis to the coastal zone
-    all_time = thresholded_ds.mean(dim="year") > 0.5  # 0.15
+    # Create all time layers by identifying pixels that are land in at
+    # least 15% and 50% of valid observations; the 15% layer is used to
+    # identify pixels that contain land for even a small period of time;
+    # this is used for producing an all-time buffered "coastal" study area.
+    # The 50% layer is used to more conservatively identify pixels that
+    # are land for a majority of years; this is used for extracting
+    # rivers.
+    all_time_15 = thresholded_ds.mean(dim="year") > 0.15
+    all_time_50 = thresholded_ds.mean(dim="year") > 0.5
 
-    # Remove narrow river and stream features from all time layer using
-    # the `black_tophat` transform. So narrow channels between islands
-    # and the mainland aren't mistaken for rivers, first apply `sieve`
-    # to any connected land pixels (i.e. islands) smaller than 5 km^2
+    # Identify narrow river and stream features using the `black_tophat`
+    # transform. To avoid narrow channels between islands and the
+    # mainland being mistaken for rivers, first apply `sieve` to any
+    # connected land pixels (i.e. islands) smaller than 5 km^2.
+    # Use a disk of size 8 to identify any rivers/streams smaller than
+    # approximately 240 m (e.g. 8 * 30 m = 240 m).
     island_size = int(5000000 / (30 * 30))  # 5 km^2
-    sieved = xr.apply_ufunc(sieve, all_time.astype(np.int16), island_size)
-    rivers = xr.apply_ufunc(black_tophat, (sieved & all_time), disk(5)) == 1
-    all_time_clean = all_time.where(~rivers, True)
+    sieved = xr.apply_ufunc(sieve, all_time_50.astype(np.int16), island_size)
+    rivers = xr.apply_ufunc(black_tophat, (sieved & all_time_50), disk(8)) == 1
 
     # Create a river mask by eroding the all time layer to clip out river
-    # and estuary mouths, then expanding river features to include stream
-    # banks and account for migrating rivers
-    all_time_eroded = xr.apply_ufunc(binary_erosion, all_time_clean, disk(10))
-    rivers = rivers.where(all_time_eroded, False)
-    river_mask = ~xr.apply_ufunc(binary_dilation, rivers, disk(5))
+    # mouths, then expanding river features to include stream banks and
+    # account for migrating rivers
+    river_mouth_mask = xr.apply_ufunc(
+        binary_erosion, all_time_50.where(~rivers, True), disk(12)
+    )
+    rivers = rivers.where(river_mouth_mask, False)
+    river_mask = ~xr.apply_ufunc(binary_dilation, rivers, disk(4))
 
     # Load Geodata 100K coastal layer to use to separate ocean waters from
     # other inland waters. This product has values of 0 for ocean waters,
@@ -613,24 +620,46 @@ def contours_preprocess(
     ocean_da = xr.apply_ufunc(binary_erosion, geodata_da == 0, disk(10))
 
     # Use all time and Geodata 100K data to produce the buffered coastal
-    # study area. Morphological closing helps to "close" the entrances of
-    # estuaries and rivers, removing them from the analysis.
+    # study area. The output has values of 0 representing non-coastal
+    # "ocean", values of 1 representing "coastal", and values of 2
+    # representing non-coastal "inland" pixels.
     coastal_mask = coastal_masking(
-        ds=all_time_clean, ocean_da=ocean_da, buffer=buffer_pixels
+        ds=all_time_15.where(~rivers, True), ocean_da=ocean_da, buffer=buffer_pixels
     )
 
-    # The output of `coastal_masking` contains values of 2 that represent
-    # pixels inland of the coastal buffer. Use this to create
-    # a mask of inland regions:
-    inland_mask = coastal_mask != 2
+    # Add rivers as "inland" pixels in the coastal mask
+    coastal_mask = xr.where(river_mask, coastal_mask, 2)
+
+    # Optionally modify the coastal mask using manually supplied
+    # polygons to add missing areas of shoreline, or remove unwanted
+    # areas from the mask.
+    if mask_modifications is not None:
+
+        # Only proceed if there are polygons available
+        if len(mask_modifications.index) > 0:
+
+            # Convert type column to integer, with 1 representing pixels
+            # to add to the coastal mask (by setting them as "coastal"
+            # pixels, and 2 representing pixels to remove from the mask
+            # (by setting them as "inland data")
+            mask_modifications = mask_modifications.replace({"add": 1, "remove": 2})
+
+            # Rasterise polygons into extent of satellite data
+            modifications_da = xr_rasterize(
+                mask_modifications, da=yearly_ds, attribute_col="type"
+            )
+
+            # Where `modifications_da` has a value other than 0,
+            # replace values from `coastal_mask` with `modifications_da`
+            coastal_mask = coastal_mask.where(modifications_da == 0, modifications_da)
 
     # Generate individual annual masks by selecting only water pixels that
     # are directly connected to the ocean in each yearly timestep
     annual_mask = (
         # Treat both 1s and NaN pixels as land (i.e. True)
         (thresholded_ds != 0)
-        # Mask out rivers and inland regions
-        .where(river_mask & inland_mask)
+        # Mask out inland regions (i.e. values of 2 in `coastal_mask`)
+        .where(coastal_mask != 2)
         # Keep pixels directly connected to ocean in each timestep
         .groupby("year").map(
             func=ocean_masking,
@@ -641,9 +670,9 @@ def contours_preprocess(
     )
 
     # Finally, apply temporal and annual masks to our surface water
-    # index data, then clip to the all-of-time coastal study area
+    # index data, then clip to "coastal" pixels in `coastal_mask`
     masked_ds = combined_ds[water_index].where(
-        temporal_mask & annual_mask & coastal_mask
+        temporal_mask & annual_mask & (coastal_mask == 1)
     )
 
     # Generate annual vector polygon masks containing information
@@ -655,14 +684,14 @@ def contours_preprocess(
         return (
             masked_ds,
             certainty_masks,
-            all_time,
-            all_time_clean,
+            all_time_15,
+            all_time_50,
             river_mask,
             ocean_da,
-            coastal_mask,
-            inland_mask,
             thresholded_ds,
+            temporal_mask,
             annual_mask,
+            coastal_mask,
         )
 
     else:
@@ -1391,10 +1420,10 @@ def generate_vectors(
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
 
-    #     # Coastal mask modifications
-    #     modifications_gdf = gpd.read_file(
-    #         config["Input files"]["modifications_path"], bbox=bbox
-    #     ).to_crs(str(yearly_ds.odc.crs))
+    # Coastal mask modifications
+    modifications_gdf = gpd.read_file(
+        config["Input files"]["modifications_path"], bbox=bbox
+    ).to_crs(str(yearly_ds.odc.crs))
 
     # Geomorphology dataset
     geomorphology_gdf = gpd.read_file(
@@ -1417,7 +1446,7 @@ def generate_vectors(
         water_index,
         index_threshold,
         buffer_pixels=33,
-        mask_modifications=None,
+        mask_modifications=modifications_gdf,
     )
 
     # Extract annual shorelines
