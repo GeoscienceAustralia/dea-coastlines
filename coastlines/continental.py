@@ -95,9 +95,9 @@ def wms_fields(gdf):
     "--hotspots",
     type=bool,
     default=True,
-    help="A boolean indicating whether to generate a "
-    "continental-scale hotspots of coastal change summary "
-    "layer.",
+    help="A boolean indicating whether to generate "
+    "continental-scale coastal change hotspot summary layers "
+    "(this can be very slow depending on the radii requested).",
 )
 @click.option(
     "--hotspots_radius",
@@ -121,10 +121,19 @@ def wms_fields(gdf):
     "annual shoreline in the dataset.",
 )
 @click.option(
+    "--shapefiles",
+    type=bool,
+    default=True,
+    help="A boolean indicating whether to export outputs as a zipped "
+    "ESRI Shapefile dataset (this can be slow depending on the size "
+    "of the analysis).",
+)
+@click.option(
     "--include-styles/--no-include-styles",
     is_flag=True,
     default=True,
-    help="Set this to indicate whether to include styles " "in output GeoPackage file.",
+    help="Set this to indicate whether to include styles "
+    "in the output OGC GeoPackage file.",
 )
 def continental_cli(
     vector_version,
@@ -134,14 +143,12 @@ def continental_cli(
     hotspots,
     hotspots_radius,
     baseline_year,
+    shapefiles,
     include_styles,
 ):
-    
-    print(hotspots)
-
-    #################
-    # Merge vectors #
-    #################
+    #########
+    # Setup #
+    #########
 
     log = configure_logging("Continental layers and hotspots generation")
 
@@ -153,6 +160,10 @@ def continental_cli(
     output_dir.mkdir(exist_ok=True, parents=True)
     log.info(f"Writing data to {output_dir}")
 
+    ######################
+    # Merge tile vectors #
+    ######################
+
     # Setup input and output file paths
     shoreline_paths = (
         f"data/interim/vector/{vector_version}/*/" f"annualshorelines*.shp"
@@ -161,13 +172,8 @@ def continental_cli(
         f"data/interim/vector/{vector_version}/*/" f"ratesofchange*.shp"
     )
 
-    # Output path for geopackage and zipped shapefiles
+    # Output path for geopackage
     OUTPUT_GPKG = output_dir / f"coastlines_{continental_version}.gpkg"
-    OUTPUT_SHPS = output_dir / f"coastlines_{continental_version}.shp.zip"
-
-    # If shapefile zip exists, delete it first
-    if OUTPUT_SHPS.exists():
-        OUTPUT_SHPS.unlink()
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
@@ -197,35 +203,54 @@ def continental_cli(
     else:
         log.info("Not writing annual rates of change points")
 
-    ###############################
-    # Load DEA CoastLines vectors #
-    ###############################
+    # If shapefiles are requested, set up file paths
+    if shapefiles:
 
-    log.info("Generating continental hotspots")
+        # Output path for zipped shapefiles
+        OUTPUT_SHPS = output_dir / f"coastlines_{continental_version}.shp.zip"
 
-    # Load continental shoreline and rates of change data
-    try:
+        # If shapefile zip exists, delete it first
+        if OUTPUT_SHPS.exists():
+            OUTPUT_SHPS.unlink()
 
-        # Load continental rates of change data
-        ratesofchange_gdf = gpd.read_file(
-            OUTPUT_GPKG, layer="rates_of_change"
-        ).set_index("uid")
+    else:
+        log.info("Not exporting zipped ESRI Shapefile outputs")
 
-        # Load continental shorelines data
-        shorelines_gdf = gpd.read_file(
-            OUTPUT_GPKG, layer="shorelines_annual"
-        ).set_index("year")
-        shorelines_gdf = shorelines_gdf.loc[shorelines_gdf.geometry.is_valid]
+    ############################
+    # Load continental vectors #
+    ############################
 
-    except (fiona.errors.DriverError, ValueError):
+    # Load merged continental data into memory if either hotspot
+    # generation or zipped shapefile exports are required
+    if hotspots or shapefiles:
 
-        raise FileNotFoundError(
-            "Continental-scale annual shoreline and rates of "
-            "change layers are required for hotspot generation. "
-            "Try re-running this analysis with the following "
-            "settings: `--shorelines True --ratesofchange True`."
-        )
-        
+        # Load continental shoreline and rates of change data
+        try:
+
+            # Load continental rates of change data
+            ratesofchange_gdf = gpd.read_file(
+                OUTPUT_GPKG, layer="rates_of_change"
+            ).set_index("uid")
+
+            # Load continental shorelines data
+            shorelines_gdf = gpd.read_file(
+                OUTPUT_GPKG, layer="shorelines_annual"
+            ).set_index("year")
+            shorelines_gdf = shorelines_gdf.loc[shorelines_gdf.geometry.is_valid]
+
+            log.info(
+                "Loading continental shoreline and rates of change data into memory"
+            )
+
+        except (fiona.errors.DriverError, ValueError):
+
+            raise FileNotFoundError(
+                "Continental-scale annual shoreline and rates of "
+                "change layers are required for hotspot generation or "
+                "shapefile export. Try re-running this analysis with "
+                "the following settings: `--shorelines True --ratesofchange True`."
+            )
+
     #####################
     # Generate hotspots #
     #####################
@@ -234,7 +259,7 @@ def continental_cli(
     # of hotspots of coastal erosion and growth
     if hotspots:
 
-        log.info("Generating continental hotspots")
+        log.info("Generating coastal change hotspots")
 
         ######################
         # Calculate hotspots #
@@ -326,66 +351,74 @@ def continental_cli(
                     },
                 )
 
-                # Add additional WMS fields and add to shapefile
-                hotspots_gdf = pd.concat(
-                    [hotspots_gdf, wms_fields(gdf=hotspots_gdf)], axis=1
-                )
-                hotspots_gdf.to_file(
-                    OUTPUT_SHPS,
-                    layer=f"coastlines_{continental_version}_{layer_name}",
-                    schema={
-                        "properties": vector_schema(hotspots_gdf),
-                        "geometry": "Point",
-                    },
-                )
+                if shapefiles:
+
+                    # Add additional WMS fields and add to shapefile
+                    hotspots_gdf = pd.concat(
+                        [hotspots_gdf, wms_fields(gdf=hotspots_gdf)], axis=1
+                    )
+                    hotspots_gdf.to_file(
+                        OUTPUT_SHPS,
+                        layer=f"coastlines_{continental_version}_{layer_name}",
+                        schema={
+                            "properties": vector_schema(hotspots_gdf),
+                            "geometry": "Point",
+                        },
+                    )
 
             except ValueError as e:
 
                 log.exception(f"Failed to generate hotspots with error: {e}")
                 sys.exit(1)
 
-        log.info("Writing hotspots complete")
+        log.info("Writing coastal change hotspots complete")
 
     else:
 
-        log.info("Not writing hotspots...")
+        log.info("Not generating coastal change hotspots")
 
     ############################
     # Export zipped shapefiles #
     ############################
 
-    if ratesofchange:
+    if shapefiles:
 
-        # Add rates of change points to shapefile zip
-        # Add additional WMS fields and add to shapefile
-        ratesofchange_gdf = pd.concat(
-            [ratesofchange_gdf, wms_fields(gdf=ratesofchange_gdf)], axis=1
-        )
+        log.info("Started writing outputs as zipped ESRI Shapefiles")
 
-        ratesofchange_gdf.to_file(
-            OUTPUT_SHPS,
-            layer=f"coastlines_{continental_version}_rates_of_change",
-            schema={
-                "properties": vector_schema(ratesofchange_gdf),
-                "geometry": "Point",
-            },
-        )
+        if ratesofchange:
 
-        log.info("Writing rates of change points to zipped shapefiles complete")
+            # Add rates of change points to shapefile zip
+            # Add additional WMS fields and add to shapefile
+            ratesofchange_gdf = pd.concat(
+                [ratesofchange_gdf, wms_fields(gdf=ratesofchange_gdf)], axis=1
+            )
 
-    if shorelines:
+            ratesofchange_gdf.to_file(
+                OUTPUT_SHPS,
+                layer=f"coastlines_{continental_version}_rates_of_change",
+                schema={
+                    "properties": vector_schema(ratesofchange_gdf),
+                    "geometry": "Point",
+                },
+            )
 
-        # Add annual shorelines to shapefile zip
-        shorelines_gdf.to_file(
-            OUTPUT_SHPS,
-            layer=f"coastlines_{continental_version}_shorelines_annual",
-            schema={
-                "properties": vector_schema(shorelines_gdf),
-                "geometry": ["MultiLineString", "LineString"],
-            },
-        )
+            log.info(
+                "Completed writing rates of change points to zipped ESRI Shapefiles"
+            )
 
-        log.info("Writing annual shorelines to zipped shapefiles complete")
+        if shorelines:
+
+            # Add annual shorelines to shapefile zip
+            shorelines_gdf.to_file(
+                OUTPUT_SHPS,
+                layer=f"coastlines_{continental_version}_shorelines_annual",
+                schema={
+                    "properties": vector_schema(shorelines_gdf),
+                    "geometry": ["MultiLineString", "LineString"],
+                },
+            )
+
+            log.info("Completed writing annual shorelines to zipped ESRI Shapefiles")
 
     #########################
     # Add GeoPackage styles #
@@ -395,11 +428,11 @@ def continental_cli(
 
         styles = gpd.read_file(STYLES_FILE)
         styles.to_file(OUTPUT_GPKG, layer="layer_styles")
-        log.info("Writing styles to GeoPackage file complete")
+        log.info("Writing styles to OGC GeoPackage file complete")
 
     else:
 
-        log.info("Not writing styles to GeoPackage")
+        log.info("Not writing styles to OGC GeoPackage")
 
 
 if __name__ == "__main__":
