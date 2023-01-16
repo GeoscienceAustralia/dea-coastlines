@@ -578,14 +578,14 @@ def contours_preprocess(
     thresholded_ds = thresholded_ds.where(temporal_mask)
 
     # Create all time layers by identifying pixels that are land in at
-    # least 15% and 50% of valid observations; the 15% layer is used to
+    # least 20% and 80% of valid observations; the 20% layer is used to
     # identify pixels that contain land for even a small period of time;
     # this is used for producing an all-time buffered "coastal" study area.
-    # The 50% layer is used to more conservatively identify pixels that
-    # are land for a majority of years; this is used for extracting
-    # rivers.
-    all_time_15 = thresholded_ds.mean(dim="year") > 0.15
-    all_time_50 = thresholded_ds.mean(dim="year") > 0.5
+    # The 80% layer is used to more conservatively identify pixels that
+    # are land for most of the time series years; this is used for extracting
+    # rivers as it better accounts for migrating/dynamic river channels.
+    all_time_20 = thresholded_ds.mean(dim="year") > 0.2
+    all_time_80 = thresholded_ds.mean(dim="year") > 0.8
 
     # Identify narrow river and stream features using the `black_tophat`
     # transform. To avoid narrow channels between islands and the
@@ -594,14 +594,14 @@ def contours_preprocess(
     # Use a disk of size 8 to identify any rivers/streams smaller than
     # approximately 240 m (e.g. 8 * 30 m = 240 m).
     island_size = int(5000000 / (30 * 30))  # 5 km^2
-    sieved = xr.apply_ufunc(sieve, all_time_50.astype(np.int16), island_size)
-    rivers = xr.apply_ufunc(black_tophat, (sieved & all_time_50), disk(8)) == 1
+    sieved = xr.apply_ufunc(sieve, all_time_80.astype(np.int16), island_size)
+    rivers = xr.apply_ufunc(black_tophat, (sieved & all_time_80), disk(8)) == 1
 
     # Create a river mask by eroding the all time layer to clip out river
     # mouths, then expanding river features to include stream banks and
     # account for migrating rivers
     river_mouth_mask = xr.apply_ufunc(
-        binary_erosion, all_time_50.where(~rivers, True), disk(12)
+        binary_erosion, all_time_80.where(~rivers, True), disk(12)
     )
     rivers = rivers.where(river_mouth_mask, False)
     river_mask = ~xr.apply_ufunc(binary_dilation, rivers, disk(4))
@@ -624,7 +624,7 @@ def contours_preprocess(
     # "ocean", values of 1 representing "coastal", and values of 2
     # representing non-coastal "inland" pixels.
     coastal_mask = coastal_masking(
-        ds=all_time_15.where(~rivers, True), ocean_da=ocean_da, buffer=buffer_pixels
+        ds=all_time_20.where(~rivers, True), ocean_da=ocean_da, buffer=buffer_pixels
     )
 
     # Add rivers as "inland" pixels in the coastal mask
@@ -684,8 +684,8 @@ def contours_preprocess(
         return (
             masked_ds,
             certainty_masks,
-            all_time_15,
-            all_time_50,
+            all_time_20,
+            all_time_80,
             river_mask,
             ocean_da,
             thresholded_ds,
