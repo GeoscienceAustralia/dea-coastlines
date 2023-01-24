@@ -1,0 +1,84 @@
+{
+    "type": "Feature",
+    "stac_version": "1.0.0",
+    "id": "deafricacoastlines_v0.4.0.shp.zip",
+    "properties": {
+        "format": "shapefile",
+        "proj:epsg": 4326,
+        "proj:shape": [
+            768,
+            732
+        ],
+        "proj:transform": [
+            0.09409720264812489,
+            0.0,
+            -17.529918743821995,
+            0.0,
+            -0.09398040251386575,
+            37.34408308455104,
+            0.0,
+            0.0,
+            1.0
+        ],
+        "datetime": "2023-01-19T17:43:19.930727Z",
+        "provider": "AWS"
+    },
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    -17.529918743821995,
+                    -34.832866046097855
+                ],
+                [
+                    51.34923359460542,
+                    -34.832866046097855
+                ],
+                [
+                    51.34923359460542,
+                    37.34408308455104
+                ],
+                [
+                    -17.529918743821995,
+                    37.34408308455104
+                ],
+                [
+                    -17.529918743821995,
+                    -34.832866046097855
+                ]
+            ]
+        ]
+    },
+    "links": [
+        {
+            "rel": "product_overview",
+            "href": "https://geoserver.digitalearth.africa/geoserver/web/",
+            "type": "application/json"
+        },
+        {
+            "rel": "self",
+            "href": "s3://deafrica-services/coastlines/v0.4.0/deafricacoastlines_v0.4.0.shp.zip",
+            "type": "application/json"
+        }
+    ],
+    "assets": {
+        "coastlines": {
+            "href": "https://deafrica-services.s3.af-south-1.amazonaws.com/coastlines/v0.4.0/deafricacoastlines_v0.4.0.shp.zip",
+            "type": "application/zip",
+            "title": "coastlines",
+            "roles": [
+                "data"
+            ]
+        }
+    },
+    "bbox": [
+        -17.529918743821995,
+        -34.832866046097855,
+        51.34923359460542,
+        37.34408308455104
+    ],
+    "stac_extensions": [
+        "https://stac-extensions.github.io/projection/v1.0.0/schema.json"
+    ]
+}

@@ -1,0 +1,40 @@
+{
+    "stac_version": "1.0.0",
+    "id": "dea_coastlines",
+    "title": "dea_coastlines",
+    "type": "Collection",
+    "license": "CC-BY-4.0",
+    "description": "Coastlines for Africa produced by Digital Earth Africa.",
+    "properties": {},
+    "providers": [],
+    "extent": {
+        "temporal": {
+            "interval": [
+                [
+                    null,
+                    null
+                ]
+            ]
+        },
+        "spatial": {
+            "bbox": [
+                [
+                    -17.529918743821995,
+                    -34.832866046097855,
+                    51.34923359460542,
+                    37.34408308455104
+                ]
+            ]
+        }
+    },
+    "links": [
+        {
+            "rel": "items",
+            "href": "https://raw.githubusercontent.com/Indiphile/coastline_stac_metadata/master/coastlines_stac_item.json"
+        },
+        {
+            "rel": "root",
+            "href": "https://explorer.dev.digitalearth.africa/stac"
+        }
+    ]
+}
