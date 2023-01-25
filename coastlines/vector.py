@@ -611,13 +611,17 @@ def contours_preprocess(
     # and values of 1 and 2 for mainland/island pixels. We extract ocean
     # pixels (value 0), then erode these by 10 pixels to ensure we only
     # use high certainty deeper water ocean regions for identifying ocean
-    # pixels in our satellite imagery
-    dc = datacube.Datacube()
-    geodata_da = dc.load(
-        product="geodata_coast_100k",
-        like=combined_ds.odc.geobox.compat,
-    ).land.squeeze("time")
-    ocean_da = xr.apply_ufunc(binary_erosion, geodata_da == 0, disk(10))
+    # pixels in our satellite imagery. If no Geodata data exists (e.g.
+    # over remote ocean waters, use an all True array to represent ocean.
+    try:
+        dc = datacube.Datacube()
+        geodata_da = dc.load(
+            product="geodata_coast_100k",
+            like=combined_ds.odc.geobox.compat,
+        ).land.squeeze("time")
+        ocean_da = xr.apply_ufunc(binary_erosion, geodata_da == 0, disk(10))
+    except AttributeError:
+        ocean_da = odc.geo.xr.xr_zeros(combined_ds.odc.geobox) == 0
 
     # Use all time and Geodata 100K data to produce the buffered coastal
     # study area. The output has values of 0 representing non-coastal
