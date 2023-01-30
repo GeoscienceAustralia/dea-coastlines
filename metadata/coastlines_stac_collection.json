@@ -30,7 +30,7 @@
     "links": [
         {
             "rel": "items",
-            "href": "https://raw.githubusercontent.com/Indiphile/coastline_stac_metadata/master/coastlines_stac_item.json"
+            "href": "https://raw.githubusercontent.com/digitalearthafrica/deafrica-coastlines/main/metadata/coastlines_stac_item.json"
         },
         {
             "rel": "root",
