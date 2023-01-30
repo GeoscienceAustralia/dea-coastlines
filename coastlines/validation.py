@@ -1800,20 +1800,10 @@ def smartline_attrs(val_gdf, bbox, advanced=True):
 
         return out_gdf
     
-    # Optionally load either Smartline advanced or basic data
-    if advanced:
-
-        # Join advanced Smartline data
-        smartline = gpd.read_file('../input_data/Smartline.gdb',
-                                  bbox=bbox.buffer(100)).to_crs('EPSG:3577').rename(
-                                      {'INTERTD1_V': 'smartline'}, axis=1)
-        
-    else:
-    
-        # Join basic Smartline data
-        smartline = gpd.read_file('../input_data/Smartline_basic/smartline_basic.shp',
+    # Load Smartline advanced data
+    smartline = gpd.read_file('https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/Smartline.gpkg',
                               bbox=bbox.buffer(100)).to_crs('EPSG:3577').rename(
-                                  {'erode_v': 'smartline'}, axis=1)
+                                  {'INTERTD1_V': 'smartline'}, axis=1)
 
     # Identify unique profiles (no need to repeat Smartline extraction for each time)
     inds = [i[1][0] for i in val_gdf.groupby('id').groups.items()]
@@ -1857,9 +1847,23 @@ def deacl_validation(val_path,
         maxx, miny = val_df.max().loc[[f'{datum}_x', f'{datum}_y']]
         bbox = gpd.GeoSeries(box(minx, miny, maxx, maxy), crs='EPSG:3577')
 
-        # Import corresponding waterline contours
-        deacl_gdf = (gpd.read_file(deacl_path,
-                                  bbox=bbox.buffer(100))
+#         # Import corresponding waterline contours
+#         deacl_gdf = (gpd.read_file(deacl_path,
+#                                   bbox=bbox.buffer(100))
+#                      .to_crs('EPSG:3577')
+#                      .dissolve('year')
+#                      .reset_index())
+
+#         deacl_gdf = (gpd.read_file(deacl_path, 
+#                                   bbox=bbox.buffer(100), 
+#                                   layer='coastlines_v0.0.2_shorelines_annual')
+#                      .to_crs('EPSG:3577')
+#                      .dissolve('year')
+#                      .reset_index())
+    
+        deacl_gdf = (gpd.read_file(deacl_path, 
+                                  bbox=bbox.buffer(100), 
+                                  layer='shorelines_annual')
                      .to_crs('EPSG:3577')
                      .dissolve('year')
                      .reset_index())
@@ -1958,4 +1962,4 @@ def deacl_validation(val_path,
                                          'error_m']]
 
                 # Export data
-                results_df.to_csv(out_name, index=False)
+                results_df.to_csv(f"data/validation/processed/{out_name}", index=False)
