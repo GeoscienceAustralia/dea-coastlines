@@ -1609,10 +1609,8 @@ def generate_vectors(
         # Export stats #
         ################
 
-        #         if points_gdf is not None and len(points_gdf) > 0:
-
         # Clip stats to study area extent
-        points_gdf = points_gdf[points_gdf.intersects(gridcell_gdf.geometry.item())]
+        points_gdf_clipped = points_gdf.clip(gridcell_gdf)
 
         # Set output path
         stats_path = (
@@ -1623,23 +1621,22 @@ def generate_vectors(
         try:
 
             # Export to GeoJSON
-            points_gdf.to_crs("EPSG:4326").to_file(
+            points_gdf_clipped.to_crs("EPSG:4326").to_file(
                 f"{stats_path}.geojson",
                 driver="GeoJSON",
             )
 
             # Export as ESRI shapefiles
-            points_gdf.to_file(
+            points_gdf_clipped.to_file(
                 f"{stats_path}.shp",
                 schema={
-                    "properties": vector_schema(points_gdf),
+                    "properties": vector_schema(points_gdf_clipped),
                     "geometry": "Point",
                 },
             )
 
         except ValueError:
-            raise ValueError(
-                f"Study area {study_area}: No vector points data to export after clipping to study area extent"
+            log.warning(f"Study area {study_area}: No vector points data to export after clipping to study area extent"
             )
 
     else:
@@ -1653,7 +1650,7 @@ def generate_vectors(
     contours_gdf = contour_certainty(contours_gdf, certainty_masks)
 
     # Add tide datum details (this supports future addition of extra tide datums)
-    contours_gdf["tide_datum"] = "0 m AMSL"
+    contours_gdf["tide_datum"] = "0.0 m AMSL"
 
     # Add region attributes
     contours_gdf = region_atttributes(
@@ -1667,20 +1664,20 @@ def generate_vectors(
     )
 
     # Clip annual shoreline contours to study area extent
-    contours_gdf["geometry"] = contours_gdf.intersection(gridcell_gdf.geometry.item())
+    contours_gdf_clipped = contours_gdf.clip(gridcell_gdf)
 
     try:
 
         # Export to GeoJSON
-        contours_gdf.to_crs("EPSG:4326").to_file(
+        contours_gdf_clipped.to_crs("EPSG:4326").to_file(
             f"{contour_path}.geojson", driver="GeoJSON"
         )
 
         # Export stats and contours as ESRI shapefiles
-        contours_gdf.to_file(
+        contours_gdf_clipped.to_file(
             f"{contour_path}.shp",
             schema={
-                "properties": vector_schema(contours_gdf),
+                "properties": vector_schema(contours_gdf_clipped),
                 "geometry": ["MultiLineString", "LineString"],
             },
         )
