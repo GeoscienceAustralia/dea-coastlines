@@ -1829,7 +1829,8 @@ def deacl_validation(val_path,
                      prefix='temp',
                      overwrite=False,
                      sat_label='deacl',
-                     val_label='val'):    
+                     val_label='val',
+                     layer_name='shorelines_annual'):    
    
     # Test if file exists
     out_name = val_path.split('/')[-1]
@@ -1863,7 +1864,7 @@ def deacl_validation(val_path,
     
         deacl_gdf = (gpd.read_file(deacl_path, 
                                   bbox=bbox.buffer(100), 
-                                  layer='shorelines_annual')
+                                  layer=layer_name)
                      .to_crs('EPSG:3577')
                      .dissolve('year')
                      .reset_index())
