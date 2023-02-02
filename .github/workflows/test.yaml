@@ -46,37 +46,15 @@ jobs:
           docker-compose exec -T coastline /bin/sh -c "cp coverage.xml /mnt/artifacts"
           docker-compose down
           
-      - run: find . -name '*.gpkg' -print
-
       - run: ls
       
-      - run: ls artifacts
-      
-      - run: ls data
-      
-      - run: ls data/processed
-      
       - run: ls data/processed/testing
+      
+      - run: find . -name '*.gpkg' -print
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           directory: ./artifacts/
           fail_ci_if_error: false
-          
-      - uses: actions/upload-artifact@v3
-        with:
-          name: output_geopackage1
-          path: data/processed/testing/coastlines_testing.gpkg
 
-      - uses: actions/upload-artifact@v3
-        if: success() || failure()
-        with:
-          name: output_geopackage2
-          path: ./artifacts/data/processed/testing/coastlines_testing.gpkg
-
-      - uses: actions/upload-artifact@v3
-        if: success() || failure()
-        with:
-          name: output_geopackage3
-          path: ./data/processed/testing/coastlines_testing.gpkg
