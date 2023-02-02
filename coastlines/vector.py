@@ -622,8 +622,8 @@ def contours_preprocess(
         ocean_da = xr.apply_ufunc(binary_erosion, geodata_da == 0, disk(10))
     except AttributeError:
         ocean_da = odc.geo.xr.xr_zeros(combined_ds.odc.geobox) == 0
-    except ValueError:
-        ocean_da = all_time_20
+    except ValueError:  # Temporary workaround for no geodata access for tests
+        ocean_da = xr.apply_ufunc(binary_erosion, all_time_20==0, disk(20))
 
     # Use all time and Geodata 100K data to produce the buffered coastal
     # study area. The output has values of 0 representing non-coastal
