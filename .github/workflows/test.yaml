@@ -55,4 +55,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: output_geopackage
-          path: data/processed/testing/coastlines_development.gpkg
+          path: data/processed/testing/coastlines_testing.gpkg
