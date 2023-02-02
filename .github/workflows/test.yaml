@@ -51,6 +51,11 @@ jobs:
       - run: ls data/processed/testing
       
       - run: find . -name '*.gpkg' -print
+      
+      - uses: actions/upload-artifact@v3
+        with:
+          name: output_geopackage
+          path: data/processed/testing/coastlines_testing.gpkg
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
