@@ -47,11 +47,8 @@ jobs:
           docker-compose exec -T coastline /bin/sh -c "cp data/processed/tests/coastlines_tests.gpkg /mnt/artifacts/coastlines_tests.gpkg"
           docker-compose down
           
-      - run: ls
-      
-      - run: ls artifacts
-      
-      - run: find . -name '*.gpkg' -print
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       
       - uses: actions/upload-artifact@v3
         with:
