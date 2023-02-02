@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
         - 'develop'
+        - 'tests_validation'
     paths:
       - '**'
       - '.github/workflows/test.yml'
@@ -16,6 +17,7 @@ on:
   push:
     branches:
       - 'develop'
+      - 'tests_validation'
     paths:
       - '**'
       - '.github/workflows/test.yml'
