@@ -54,5 +54,17 @@ jobs:
           
       - uses: actions/upload-artifact@v3
         with:
-          name: output_geopackage
+          name: output_geopackage1
           path: data/processed/testing/coastlines_testing.gpkg
+
+      - uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: output_geopackage2
+          path: ./artifacts/data/processed/testing/coastlines_testing.gpkg
+
+      - uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: output_geopackage3
+          path: ./data/processed/testing/coastlines_testing.gpkg
