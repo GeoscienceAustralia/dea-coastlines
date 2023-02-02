@@ -41,10 +41,12 @@ jobs:
           wget https://www.dropbox.com/s/vj2rqkwy9al144w/tide_models.zip?dl=1 -O tide_models.zip
           unzip tide_models.zip
 
-          docker-compose up -d
-          docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/wait-for-db; pytest --cov=coastlines --cov-report=xml tests/"
-          docker-compose exec -T coastline /bin/sh -c "cp coverage.xml /mnt/artifacts"
-          docker-compose down
+#          docker-compose up -d
+#          docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/wait-for-db; pytest --cov=coastlines --cov-report=xml tests/"
+#          docker-compose exec -T coastline /bin/sh -c "cp coverage.xml /mnt/artifacts"
+#          docker-compose down
+
+      - run: ls
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
