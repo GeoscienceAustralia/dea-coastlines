@@ -46,7 +46,13 @@ jobs:
 #          docker-compose exec -T coastline /bin/sh -c "cp coverage.xml /mnt/artifacts"
 #          docker-compose down
 
-      - run: ls
+      - run: ls data
+      
+      - run: ls data
+      
+      - run: ls data/processed
+      
+      - run: ls data/processed/testing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
