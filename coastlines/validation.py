@@ -2527,6 +2527,12 @@ def deacl_validation(
     default=True,
     help="",
 )
+@click.option(
+    "--markdown_report",
+    type=bool,
+    default=False,
+    help="",
+)
 def validation_cli(
     inputs_path,
     deacl_path,
@@ -2536,6 +2542,7 @@ def validation_cli(
     layer_name,
     append_stats,
     parallelised,
+    markdown_report,
 ):
 
     # Simplify smartline categories
@@ -2645,19 +2652,21 @@ def validation_cli(
         stats_df.to_csv(filename)
       
     # Plot data
-    stats_df.rmse.plot(legend=True)
-    stats_df.mae.plot(legend=True)
+    stats_df.rmse.plot(style='.-', legend=True)
+    stats_df.mae.plot(style='.-', legend=True)
     plt.savefig(f"data/validation/processed/stats_{prefix}.png")
     
-    # Create markdown report
-    from mdutils.mdutils import MdUtils
-    from mdutils import Html
+    if markdown_report:
+        
+        # Create markdown report
+        from mdutils.mdutils import MdUtils
+        from mdutils import Html
 
-    mdFile = MdUtils(file_name='tests/README.md', title='Integration test results')
-    mdFile.new_header(level=1, title='Latest integration test results')
-    mdFile.new_paragraph(f"The latest integration test had an RMSE accuracy of {stats_df.rmse[-1]} m, and an MAE accuracy of {stats_df.mae[-1]} m.")
-    mdFile.new_paragraph(Html.image(path=f"integration_test_results.png", size='600'))
-    mdFile.create_md_file()    
+        mdFile = MdUtils(file_name='tests/README.md', title='Integration test results')
+        mdFile.new_header(level=1, title='Latest integration test results')
+        mdFile.new_paragraph(f"The latest integration test ({str(stats_df.index[-1])[0:16]}) had an RMSE accuracy of {stats_df.rmse[-1]} m, and an MAE accuracy of {stats_df.mae[-1]} m.")
+        mdFile.new_paragraph(Html.image(path=f"integration_test_results.png", size='600'))
+        mdFile.create_md_file()    
 
 
 if __name__ == "__main__":
