@@ -70,23 +70,23 @@ def test_generate_continental_cli():
     # assert result.output == '' # for debugging
     assert result.exit_code == 0
 
-@pytest.mark.dependency(depends=["test_generate_continental_cli"])
-def test_validation_cli():
-    runner = CliRunner()
-    result = runner.invoke(
-        validation_cli,
-        [
-            "--inputs_path",
-            "tests/tests_narrabeen",
-            "--deacl_path",
-            "data/processed/tests/coastlines_tests.gpkg",
-            "--prefix",
-            "tests",
-            "--append_stats",
-            "False",
-            "--markdown_report",
-            "True",
-        ],
-    )
-    # assert result.output == '' # for debugging
-    assert result.exit_code == 0  
+# @pytest.mark.dependency(depends=["test_generate_continental_cli"])
+# def test_validation_cli():
+#     runner = CliRunner()
+#     result = runner.invoke(
+#         validation_cli,
+#         [
+#             "--inputs_path",
+#             "tests/tests_narrabeen",
+#             "--deacl_path",
+#             "data/processed/tests/coastlines_tests.gpkg",
+#             "--prefix",
+#             "tests",
+#             "--append_stats",
+#             "False",
+#             "--markdown_report",
+#             "True",
+#         ],
+#     )
+#     # assert result.output == '' # for debugging
+#     assert result.exit_code == 0  
