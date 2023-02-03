@@ -83,7 +83,7 @@ def test_validation_cli():
             "--prefix",
             "tests",
             "--append_stats",
-            "False",
+            "True",
             "--markdown_report",
             "True",
         ],
