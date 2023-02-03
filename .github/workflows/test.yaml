@@ -49,6 +49,12 @@ jobs:
           docker-compose exec -T coastline /bin/sh -c "cp tests/README.md /mnt/artifacts/README.md"
           docker-compose down
 
+      - name: Commit integration results
+        run: |
+          cp ./artifacts/stats_tests.png ./tests/stats_tests.png
+          cp ./artifacts/README.md ./tests/README.md
+          git status
+
       - uses: actions/upload-artifact@v3
         with:
           name: output_geopackage
