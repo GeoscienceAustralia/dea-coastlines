@@ -58,6 +58,7 @@ jobs:
           cp ./artifacts/stats_tests.png ./tests/stats_tests.png
           cp ./artifacts/stats_tests.csv ./data/validation/processed/stats_tests.csv
           cp ./artifacts/README.md ./tests/README.md
+          git pull
           git status
 
       - uses: stefanzweifel/git-auto-commit-action@v4
