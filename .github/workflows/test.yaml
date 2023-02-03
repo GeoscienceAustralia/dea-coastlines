@@ -52,17 +52,17 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: output_geopackage
-          path: artifacts/coastlines_tests.gpkg
+          path: ./artifacts/coastlines_tests.gpkg
 
       - uses: actions/upload-artifact@v3
         with:
           name: png
-          path: artifacts/stats_tests.png
+          path: ./artifacts/stats_tests.png
 
       - uses: actions/upload-artifact@v3
         with:
           name: readme
-          path: artifacts/README.md
+          path: ./artifacts/README.md
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
