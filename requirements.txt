@@ -246,6 +246,8 @@ matplotlib-inline==0.1.3
     # via
     #   ipykernel
     #   ipython
+mdutils==1.4.0
+    # via -r requirements.in
 mistune==0.8.4
     # via nbconvert
 msgpack==1.0.3

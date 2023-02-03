@@ -8,6 +8,7 @@ dea_tools>=0.2.8.dev26
 Fiona>=1.8.20
 geopandas>=0.10.2
 matplotlib>=3.4.3
+mdutils==1.4.0
 numpy==1.21.4
 odc-geo>=0.2.1
 odc_ui>=0.2.0a2
