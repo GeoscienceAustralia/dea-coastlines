@@ -55,7 +55,7 @@ jobs:
 
       - name: Commit integration results
         run: |
-          cp ./artifacts/stats_tests.png ./tests/integration_test_results.png
+          cp ./artifacts/stats_tests.png ./tests/stats_tests.png
           cp ./artifacts/stats_tests.csv ./data/validation/processed/stats_tests.csv
           cp ./artifacts/README.md ./tests/README.md
           git status
@@ -63,7 +63,7 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Automatically update integration test validation results
-          file_pattern: 'tests/integration_test_results.png data/validation/processed/stats_tests.csv tests/README.md'
+          file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
 
       - uses: actions/upload-artifact@v3
         with:

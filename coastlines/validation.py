@@ -2668,7 +2668,7 @@ def validation_cli(
 
         mdFile = MdUtils(file_name='tests/README.md', title='Latest integration test results')
         mdFile.new_paragraph(f"The latest integration test ({str(stats_df.index[-1])[0:16]}) had an RMSE accuracy of {stats_df.rmse[-1]} m, an MAE accuracy of {stats_df.mae[-1]} m, and a Pearson correlation of {stats_df['corr'][-1]}.")
-        mdFile.new_paragraph(Html.image(path=f"integration_test_results.png", size='600'))
+        mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size='600'))
         mdFile.create_md_file()    
 
 
