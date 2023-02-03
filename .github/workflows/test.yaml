@@ -63,6 +63,7 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Automatically update integration test validation results
+          file_pattern: 'tests/integration_test_results.png data/validation/processed/stats_tests.csv tests/README.md'
 
       - uses: actions/upload-artifact@v3
         with:
