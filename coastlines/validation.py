@@ -2591,8 +2591,8 @@ def validation_cli(
     val_paths = glob.glob(f"{inputs_path}*.csv")
 
     # Create output directories if they don't exist
-    os.makedirs("data/validation/interim", exist_ok=True)
-    os.makedirs("data/validation/processed", exist_ok=True)
+    # os.makedirs("data/validation/interim", exist_ok=True)
+    # os.makedirs("data/validation/processed", exist_ok=True)
 
     if parallelised:
 
