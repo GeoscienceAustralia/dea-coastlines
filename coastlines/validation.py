@@ -94,21 +94,19 @@ def export_eval(df, output_name, output_crs="EPSG:3577"):
     val_gdf = gpd.GeoDataFrame(data=df, geometry=val_points, crs=output_crs).to_crs(
         "EPSG:4326"
     )
-    val_gdf.to_file(f"figures/eval/{output_name}_val.geojson", driver="GeoJSON")
+    val_gdf.to_file(f"{output_name}_val.geojson", driver="GeoJSON")
 
     # Export DEACL points
     deacl_gdf = gpd.GeoDataFrame(data=df, geometry=deacl_points, crs=output_crs).to_crs(
         "EPSG:4326"
     )
-    deacl_gdf.to_file(f"figures/eval/{output_name}_deacl.geojson", driver="GeoJSON")
+    deacl_gdf.to_file(f"{output_name}_deacl.geojson", driver="GeoJSON")
 
     # Export profiles
     profile_gdf = gpd.GeoDataFrame(
         data=df_profiles, geometry=profile_lines, crs=output_crs
     ).to_crs("EPSG:4326")
-    profile_gdf.to_file(
-        f"figures/eval/{output_name}_profiles.geojson", driver="GeoJSON"
-    )
+    profile_gdf.to_file(f"{output_name}_profiles.geojson", driver="GeoJSON")
 
 
 def deacl_val_stats(val_dist, deacl_dist, n=None, remove_bias=False):
@@ -2325,7 +2323,7 @@ def deacl_validation(
     # Set up output file name
     out_name = val_path.split("/")[-1]
     out_name = f"data/validation/processed/outputs_{prefix}_{out_name}"
-    
+
     # Run analysis if file doesn't exist and overwrite is True
     if not os.path.exists(out_name) or overwrite:
 
@@ -2472,67 +2470,67 @@ def deacl_validation(
 
                 # Export data
                 results_df.to_csv(out_name, index=False)
-    
+
     # Else skip
     else:
-        print('Skipping; file either exists or overwrite set to false')
+        print("Skipping; file either exists or overwrite set to false")
 
 
-@click.command()
-@click.option(
-    "--inputs_path",
-    type=str,
-    required=True,
-    help="",
-)
-@click.option(
-    "--deacl_path",
-    type=str,
-    required=True,
-    help="",
-)
-@click.option(
-    "--prefix",
-    type=str,
-    default="temp",
-    help="",
-)
-@click.option(
-    "--datum",
-    type=str,
-    default=0,
-    help="",
-)
-@click.option(
-    "--overwrite",
-    type=bool,
-    default=False,
-    help="",
-)
-@click.option(
-    "--layer_name",
-    type=str,
-    default="shorelines_annual",
-    help="",
-)
-@click.option(
-    "--append_stats",
-    type=bool,
-    default=False,
-    help="",
-)
-@click.option(
-    "--parallelised",
-    type=bool,
-    default=True,
-    help="",
-)
-@click.option(
-    "--markdown_report",
-    type=bool,
-    default=False,
-    help="",
-)
+# @click.command()
+# @click.option(
+#     "--inputs_path",
+#     type=str,
+#     required=True,
+#     help="",
+# )
+# @click.option(
+#     "--deacl_path",
+#     type=str,
+#     required=True,
+#     help="",
+# )
+# @click.option(
+#     "--prefix",
+#     type=str,
+#     default="temp",
+#     help="",
+# )
+# @click.option(
+#     "--datum",
+#     type=str,
+#     default=0,
+#     help="",
+# )
+# @click.option(
+#     "--overwrite",
+#     type=bool,
+#     default=False,
+#     help="",
+# )
+# @click.option(
+#     "--layer_name",
+#     type=str,
+#     default="shorelines_annual",
+#     help="",
+# )
+# @click.option(
+#     "--append_stats",
+#     type=bool,
+#     default=False,
+#     help="",
+# )
+# @click.option(
+#     "--parallelised",
+#     type=bool,
+#     default=True,
+#     help="",
+# )
+# @click.option(
+#     "--markdown_report",
+#     type=bool,
+#     default=False,
+#     help="",
+# )
 def validation_cli(
     inputs_path,
     deacl_path,
@@ -2628,12 +2626,15 @@ def validation_cli(
 
     # Run stats
     stats_df = deacl_val_stats(
-        outputs_df.val_dist, outputs_df.deacl_dist, n=outputs_df.n, remove_bias=False
+        val_dist=outputs_df.val_dist,
+        deacl_dist=outputs_df.deacl_dist,
+        n=outputs_df.n,
+        remove_bias=False,
     )
 
     # Transpose and add index time and prefix name
     stats_df = pd.DataFrame({pd.to_datetime("now"): stats_df}).T.assign(name=prefix)
-    stats_df.index.name = 'time'
+    stats_df.index.name = "time"
     filename = f"data/validation/processed/stats_{prefix}.csv"
 
     if append_stats:
@@ -2643,29 +2644,113 @@ def validation_cli(
             mode="a",
             header=(not os.path.exists(filename)),
         )
-        
+
         # Read in stats from disk (ensures we get older results)
         stats_df = pd.read_csv(filename, index_col=0, parse_dates=True)
 
     else:
 
         stats_df.to_csv(filename)
-      
+
     # Plot data
-    stats_df.rmse.plot(style='.-', legend=True)
-    stats_df.mae.plot(style='.-', legend=True)
-    plt.savefig(f"data/validation/processed/stats_{prefix}.png")
-    
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+    # Extract integration test run times and convert to local time
+    times_local = stats_df.index.tz_localize("UTC").tz_convert(tz="Australia/Canberra")
+    stats_df.index = times_local
+
+    # Compute stats
+    n, mae, rmse, stdev, corr, bias, _ = stats_df.iloc[-1]
+    offset_str = "landward offset" if bias > 0 else "ocean-ward offset"
+
+    # Plot latest integration test results as scatterplot
+    outputs_df.plot.scatter(ax=axes[0], x="val_dist", y="deacl_dist")
+    axes[0].plot([0, 150], [0, 150], linestyle="--", color="black", linewidth=0.5)
+    axes[0].set_title(
+        "Latest integration test run:\nDEA Coastlines vs. validation scatterplot"
+    )
+    axes[0].set_ylabel("DEA Coastlines shoreline positions (m)")
+    axes[0].set_xlabel("Validation shoreline positions (m)")
+    axes[0].annotate(
+        f"Mean Absolute Error: {mae:.1f} m\n"
+        f"RMSE: {rmse:.1f} m\n"
+        f"Standard deviation: {stdev:.1f} m\n"
+        f"Bias: {bias:.1f} m {offset_str}\n"
+        f"Correlation: {corr:.2f}\n",
+        xy=(0.05, 0.95),
+        horizontalalignment="left",
+        verticalalignment="top",
+        xycoords="axes fraction",
+    )
+
+    # Plot latest integration test results by year
+    outputs_df.groupby("year").deacl_dist.mean().rename("DEA Coastlines").plot(
+        ax=axes[1], legend=True
+    )
+    outputs_df.groupby("year").val_dist.mean().rename("Validation").plot(
+        ax=axes[1], legend=True
+    )
+    axes[1].set_ylim((20, 100))
+    axes[1].set_title(
+        f"Latest integration test run:\nDEA Coastlines vs. validation by year"
+    )
+    axes[1].set_ylabel("Average shoreline position (m)")
+    axes[1].set_xlabel("Annual shoreline")
+    axes[1].set_xticks(outputs_df.year.unique())
+
+    # Plot all integration test accuracies and biases over time
+    stats_df.rmse.rename("RMSE").plot(ax=axes[2], style=".-", legend=True)
+    min_q, max_q = stats_df.rmse.quantile((0.1, 0.9)).values
+    axes[2].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+
+    stats_df.mae.rename("MAE").plot(ax=axes[2], style=".-", legend=True)
+    min_q, max_q = stats_df.mae.quantile((0.1, 0.9)).values
+    axes[2].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+
+    stats_df.bias.rename("Bias").plot(ax=axes[2], style=".-", legend=True)
+    min_q, max_q = stats_df.bias.quantile((0.1, 0.9)).values
+    axes[2].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+    axes[2].set_title("Accuracy and bias across\n all integration test runs")
+    axes[2].set_ylabel("Metres (m)")
+    axes[2].set_xlabel(None)
+
+    # Add overall title
+    plt.suptitle(
+        f"Latest DEA Coastlines integration test outputs validation ({str(times_local[-1])[0:16]})",
+        size=14,
+        fontweight="bold",
+        y=1.03,
+    )
+
+    # Export to file
+    plt.savefig(f"data/validation/processed/stats_{prefix}.png", bbox_inches="tight")
+
+
     if markdown_report:
-        
+
         # Create markdown report
         from mdutils.mdutils import MdUtils
         from mdutils import Html
 
-        mdFile = MdUtils(file_name='tests/README.md', title='Latest integration test results')
-        mdFile.new_paragraph(f"The latest integration test ({str(stats_df.index[-1])[0:16]}) had an RMSE accuracy of {stats_df.rmse[-1]} m, an MAE accuracy of {stats_df.mae[-1]} m, and a Pearson correlation of {stats_df['corr'][-1]}.")
-        mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size='600'))
-        mdFile.create_md_file()    
+        # Calculate recent change and convert to plain text
+        recent_diff = stats_df.drop("name", axis=1).diff(1).iloc[-1].to_frame("diff")
+        recent_diff.iloc[2] = 0.4  # TO REMOVE
+        recent_diff.iloc[4] = -0.2  # TO REMOVE
+        recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = "deteriorated by "
+        recent_diff.loc[recent_diff["diff"] == 0, "prefix"] = "no change"
+        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = "improved by "
+        recent_diff["suffix"] = recent_diff["diff"].replace({0: ""})
+        recent_diff = recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str)
+
+        mdFile = MdUtils(
+            file_name="tests/README.md", title="Latest integration test validation results"
+        )
+        mdFile.new_paragraph(
+            f"The latest integration test completed at **{str(stats_df.index[-1])[0:16]}**. "
+            f"Compared to the previous run, it had an RMSE accuracy of **{stats_df.rmse[-1]} m ({recent_diff.rmse})**, an MAE accuracy of **{stats_df.mae[-1]} m ({recent_diff.mae})**, and a Pearson correlation of **{stats_df['corr'][-1]} ({recent_diff['corr']})**."
+        )
+        mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="850"))
+        mdFile.create_md_file()
 
 
 if __name__ == "__main__":
