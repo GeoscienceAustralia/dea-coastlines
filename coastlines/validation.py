@@ -2720,7 +2720,7 @@ def validation_cli(
         recent_diff = stats_df.drop("name", axis=1).diff(1).iloc[-1].to_frame("diff")
         recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = ":heavy_check_mark: improved by "
         recent_diff.loc[recent_diff["diff"] == 0, "prefix"] = ":heavy_minus_sign: no change"
-        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = ":heavy_exclamation_mark: deteriorate by "
+        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = ":heavy_exclamation_mark: deteriorated by "
         recent_diff["suffix"] = recent_diff["diff"].replace({0: ""})
         recent_diff = recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str).str[0:4]
 
