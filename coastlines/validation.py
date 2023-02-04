@@ -2653,7 +2653,7 @@ def validation_cli(
         stats_df.to_csv(filename)
 
     # Plot data
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(15, 7.5))
 
     # Extract integration test run times and convert to local time
     times_local = stats_df.index.tz_localize("UTC").tz_convert(tz="Australia/Canberra")
@@ -2683,36 +2683,21 @@ def validation_cli(
         xycoords="axes fraction",
     )
 
-    # Plot latest integration test results by year
-    outputs_df.groupby("year").deacl_dist.mean().rename("DEA Coastlines").plot(
-        ax=axes[1], legend=True
-    )
-    outputs_df.groupby("year").val_dist.mean().rename("Validation").plot(
-        ax=axes[1], legend=True
-    )
-    axes[1].set_ylim((20, 100))
-    axes[1].set_title(
-        f"Latest integration test run:\nDEA Coastlines vs. validation by year"
-    )
-    axes[1].set_ylabel("Average shoreline position (m)")
-    axes[1].set_xlabel("Annual shoreline")
-    axes[1].set_xticks(outputs_df.year.unique())
-
     # Plot all integration test accuracies and biases over time
-    stats_df.rmse.rename("RMSE").plot(ax=axes[2], style=".-", legend=True)
+    stats_df.rmse.rename("RMSE").plot(ax=axes[1], style=".-", legend=True)
     min_q, max_q = stats_df.rmse.quantile((0.1, 0.9)).values
-    axes[2].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+    axes[1].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
 
-    stats_df.mae.rename("MAE").plot(ax=axes[2], style=".-", legend=True)
+    stats_df.mae.rename("MAE").plot(ax=axes[1], style=".-", legend=True)
     min_q, max_q = stats_df.mae.quantile((0.1, 0.9)).values
-    axes[2].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+    axes[1].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
 
-    stats_df.bias.rename("Bias").plot(ax=axes[2], style=".-", legend=True)
+    stats_df.bias.rename("Bias").plot(ax=axes[1], style=".-", legend=True)
     min_q, max_q = stats_df.bias.quantile((0.1, 0.9)).values
-    axes[2].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
-    axes[2].set_title("Accuracy and bias across\n all integration test runs")
-    axes[2].set_ylabel("Metres (m)")
-    axes[2].set_xlabel(None)
+    axes[1].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+    axes[1].set_title("Accuracy and bias across\n all integration test runs")
+    axes[1].set_ylabel("Metres (m)")
+    axes[1].set_xlabel(None)
 
     # Add overall title
     plt.suptitle(
@@ -2725,7 +2710,6 @@ def validation_cli(
     # Export to file
     plt.savefig(f"data/validation/processed/stats_{prefix}.png", bbox_inches="tight")
 
-
     if markdown_report:
 
         # Create markdown report
@@ -2734,17 +2718,23 @@ def validation_cli(
 
         # Calculate recent change and convert to plain text
         recent_diff = stats_df.drop("name", axis=1).diff(1).iloc[-1].to_frame("diff")
-        recent_diff.iloc[2] = 0.4  # TO REMOVE
-        recent_diff.iloc[4] = -0.2  # TO REMOVE
         recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = "deteriorated by "
         recent_diff.loc[recent_diff["diff"] == 0, "prefix"] = "no change"
         recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = "improved by "
         recent_diff["suffix"] = recent_diff["diff"].replace({0: ""})
         recent_diff = recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str)
 
-        mdFile = MdUtils(
-            file_name="tests/README.md", title="Latest integration test validation results"
+        mdFile = MdUtils(file_name="tests/README.md", title="Integration tests")
+        mdFile.new_paragraph(
+            "This directory contains integration tests that are run to verify that the entire Coastlines code runs correctly. The ``test_coastline.py`` file runs a simple Coastlines analysis over a single beach (Narrabeen Beach in northern Sydney), using the DEA Coastlines [Command Line Interface (CLI) tools](../notebooks/DEACoastlines_generation_CLI.ipynb) to run the raster, vector, continental layers and validation analysis steps."
         )
+
+        mdFile.new_header(level=1, title="Validation")
+        mdFile.new_paragraph(
+            "In addition to testing whether the code runs, we also run a small-scale validation of the results of the integration tests by comparing them to validation data from the [Narrabeen-Collaroy Beach Survey Program](https://doi.org/10.1038/sdata.2016.24). The ensures that the code both works, and generates sensible results. Note that this integration test validation is for a single site and a limited number of years - it is not intended to be representative of DEA Coastline's accuracy overall."
+        )
+
+        mdFile.new_header(level=2, title="Latest integration test validation results")
         mdFile.new_paragraph(
             f"The latest integration test completed at **{str(stats_df.index[-1])[0:16]}**. "
             f"Compared to the previous run, it had an RMSE accuracy of **{stats_df.rmse[-1]} m ({recent_diff.rmse})**, an MAE accuracy of **{stats_df.mae[-1]} m ({recent_diff.mae})**, and a Pearson correlation of **{stats_df['corr'][-1]} ({recent_diff['corr']})**."
