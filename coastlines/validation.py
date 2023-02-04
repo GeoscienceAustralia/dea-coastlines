@@ -2676,7 +2676,7 @@ def validation_cli(
         f"RMSE: {rmse:.1f} m\n"
         f"Standard deviation: {stdev:.1f} m\n"
         f"Bias: {bias:.1f} m {offset_str}\n"
-        f"Correlation: {corr:.2f}\n",
+        f"Correlation: {corr:.3f}\n",
         xy=(0.05, 0.95),
         horizontalalignment="left",
         verticalalignment="top",
@@ -2731,7 +2731,7 @@ def validation_cli(
 
         mdFile.new_header(level=1, title="Validation")
         mdFile.new_paragraph(
-            "In addition to testing whether the code runs, we also run a small-scale validation of the results of the integration tests by comparing them to validation data from the [Narrabeen-Collaroy Beach Survey Program](https://doi.org/10.1038/sdata.2016.24). The ensures that the code both works, and generates sensible results. Note that this integration test validation is for a single site and a limited number of years - it is not intended to be representative of DEA Coastline's accuracy overall."
+            "In addition to testing whether the code runs without errors, we also run a small-scale validation of the results of the integration tests by comparing them to validation data from the [Narrabeen-Collaroy Beach Survey Program](https://doi.org/10.1038/sdata.2016.24). The ensures that the code both works, and generates sensible results. Note that this integration test validation is for a single site and a limited number of years - it is not intended to be representative of DEA Coastline's accuracy overall."
         )
 
         mdFile.new_header(level=2, title="Latest integration test validation results")
@@ -2739,7 +2739,7 @@ def validation_cli(
             f"The latest integration test completed at **{str(stats_df.index[-1])[0:16]}**. "
             f"Compared to the previous run, it had an RMSE accuracy of **{stats_df.rmse[-1]} m ({recent_diff.rmse})**, an MAE accuracy of **{stats_df.mae[-1]} m ({recent_diff.mae})**, and a Pearson correlation of **{stats_df['corr'][-1]} ({recent_diff['corr']})**."
         )
-        mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="850"))
+        mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="950"))
         mdFile.create_md_file()
 
 
