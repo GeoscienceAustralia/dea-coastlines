@@ -77,7 +77,7 @@ def test_validation_cli():
         validation_cli,
         [
             "--inputs_path",
-            "tests/tests_narrabeen",
+            "data/validation/interim/wrl_narrabeen",
             "--deacl_path",
             "data/processed/tests/coastlines_tests.gpkg",
             "--prefix",
