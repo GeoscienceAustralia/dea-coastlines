@@ -2672,10 +2672,10 @@ def validation_cli(
     axes[0].set_ylabel("DEA Coastlines shoreline positions (m)")
     axes[0].set_xlabel("Validation shoreline positions (m)")
     axes[0].annotate(
-        f"Mean Absolute Error: {mae:.1f} m\n"
-        f"RMSE: {rmse:.1f} m\n"
-        f"Standard deviation: {stdev:.1f} m\n"
-        f"Bias: {bias:.1f} m {offset_str}\n"
+        f"Mean Absolute Error: {mae:.2f} m\n"
+        f"RMSE: {rmse:.2f} m\n"
+        f"Standard deviation: {stdev:.2f} m\n"
+        f"Bias: {bias:.2f} m {offset_str}\n"
         f"Correlation: {corr:.3f}\n",
         xy=(0.05, 0.95),
         horizontalalignment="left",
@@ -2718,9 +2718,9 @@ def validation_cli(
 
         # Calculate recent change and convert to plain text
         recent_diff = stats_df.drop("name", axis=1).diff(1).iloc[-1].to_frame("diff")
-        recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = "deteriorated by "
+        recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = ":small_red_triangle_down: decreased by "
         recent_diff.loc[recent_diff["diff"] == 0, "prefix"] = "no change"
-        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = "improved by "
+        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = ":small_red_triangle: increased by "
         recent_diff["suffix"] = recent_diff["diff"].replace({0: ""})
         recent_diff = recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str)
 
@@ -2737,7 +2737,7 @@ def validation_cli(
         mdFile.new_header(level=2, title="Latest integration test validation results")
         mdFile.new_paragraph(
             f"The latest integration test completed at **{str(stats_df.index[-1])[0:16]}**. "
-            f"Compared to the previous run, it had an RMSE accuracy of **{stats_df.rmse[-1]} m ({recent_diff.rmse})**, an MAE accuracy of **{stats_df.mae[-1]} m ({recent_diff.mae})**, and a Pearson correlation of **{stats_df['corr'][-1]} ({recent_diff['corr']})**."
+            f"Compared to the previous run, it had an RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ({recent_diff.rmse:.2f})**, an MAE accuracy of **{stats_df.mae[-1]:.2f} m ({recent_diff.mae:.2f})**, and a Pearson correlation of **{stats_df['corr'][-1]:.3f} ({recent_diff['corr']:.3f})**."
         )
         mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="950"))
         mdFile.create_md_file()
