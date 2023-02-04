@@ -11,6 +11,6 @@ In addition to testing whether the code runs without errors, we also run a small
 ## Latest integration test validation results
 
 
-The latest integration test completed at **2023-02-04 21:51**. Compared to the previous run, it had an RMSE accuracy of **6.19 m (:heavy_minus_sign: no change)**, an MAE accuracy of **4.38 m (:heavy_minus_sign: no change)**, and a Pearson correlation of **0.990 (:heavy_minus_sign: no change)**.
+The latest integration test completed at **2023-02-04 22:14**. Compared to the previous run, it had an RMSE accuracy of **6.52 m (:heavy_exclamation_mark: deteriorated by 0.32)**, an MAE accuracy of **4.87 m (:heavy_exclamation_mark: deteriorated by 0.49)**, and a Pearson correlation of **0.988 (:heavy_check_mark: improved by -0.0)**.
 
 <img src="stats_tests.png" width="950"/>
