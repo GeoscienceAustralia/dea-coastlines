@@ -2476,61 +2476,61 @@ def deacl_validation(
         print("Skipping; file either exists or overwrite set to false")
 
 
-# @click.command()
-# @click.option(
-#     "--inputs_path",
-#     type=str,
-#     required=True,
-#     help="",
-# )
-# @click.option(
-#     "--deacl_path",
-#     type=str,
-#     required=True,
-#     help="",
-# )
-# @click.option(
-#     "--prefix",
-#     type=str,
-#     default="temp",
-#     help="",
-# )
-# @click.option(
-#     "--datum",
-#     type=str,
-#     default=0,
-#     help="",
-# )
-# @click.option(
-#     "--overwrite",
-#     type=bool,
-#     default=False,
-#     help="",
-# )
-# @click.option(
-#     "--layer_name",
-#     type=str,
-#     default="shorelines_annual",
-#     help="",
-# )
-# @click.option(
-#     "--append_stats",
-#     type=bool,
-#     default=False,
-#     help="",
-# )
-# @click.option(
-#     "--parallelised",
-#     type=bool,
-#     default=True,
-#     help="",
-# )
-# @click.option(
-#     "--markdown_report",
-#     type=bool,
-#     default=False,
-#     help="",
-# )
+@click.command()
+@click.option(
+    "--inputs_path",
+    type=str,
+    required=True,
+    help="",
+)
+@click.option(
+    "--deacl_path",
+    type=str,
+    required=True,
+    help="",
+)
+@click.option(
+    "--prefix",
+    type=str,
+    default="temp",
+    help="",
+)
+@click.option(
+    "--datum",
+    type=str,
+    default=0,
+    help="",
+)
+@click.option(
+    "--overwrite",
+    type=bool,
+    default=False,
+    help="",
+)
+@click.option(
+    "--layer_name",
+    type=str,
+    default="shorelines_annual",
+    help="",
+)
+@click.option(
+    "--append_stats",
+    type=bool,
+    default=False,
+    help="",
+)
+@click.option(
+    "--parallelised",
+    type=bool,
+    default=True,
+    help="",
+)
+@click.option(
+    "--markdown_report",
+    type=bool,
+    default=False,
+    help="",
+)
 def validation_cli(
     inputs_path,
     deacl_path,
