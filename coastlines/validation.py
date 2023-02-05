@@ -2746,8 +2746,13 @@ def validation_cli(
         mdFile.new_header(level=2, title="Latest integration test validation results")
         mdFile.new_paragraph(
             f"The latest integration test completed at **{str(stats_df.index[-1])[0:16]}**. "
-            f"Compared to the previous run, it had an RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ({recent_diff.rmse})**, an MAE accuracy of **{stats_df.mae[-1]:.2f} m ({recent_diff.mae})**, a bias of **{stats_df['bias'][-1]:.2f} m ({recent_diff['bias']})**, and a Pearson correlation of **{stats_df['corr'][-1]:.3f} ({recent_diff['corr']})**."
+            f"Compared to the previous run, it had an:"
         )
+        items = [f"RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ({recent_diff.rmse})**", 
+                 f"MAE accuracy of **{stats_df.mae[-1]:.2f} m ({recent_diff.mae})**", 
+                 f"Bias of **{stats_df['bias'][-1]:.2f} m ({recent_diff['bias']})**",
+                 f"Pearson correlation of **{stats_df['corr'][-1]:.3f} ({recent_diff['corr']})**"]
+        mdFile.new_list(items=items)
         mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="950"))
         mdFile.create_md_file()
 
