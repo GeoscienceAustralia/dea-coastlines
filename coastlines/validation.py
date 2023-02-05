@@ -2651,8 +2651,6 @@ def validation_cli(
     else:
 
         stats_df.to_csv(filename)
-        
-    return outputs_df, stats_df 
 
     # Plot data
     fig, axes = plt.subplots(1, 2, figsize=(15, 7.5))
