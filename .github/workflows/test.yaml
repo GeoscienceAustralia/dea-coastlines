@@ -47,6 +47,7 @@ jobs:
 
           # Run integration tests using Docker  
           docker-compose up -d
+          docker-compose exec -T coastline /bin/sh -c "ls"
           docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/run_tests.sh"
           docker-compose down
 
