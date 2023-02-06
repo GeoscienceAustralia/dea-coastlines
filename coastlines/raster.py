@@ -700,6 +700,7 @@ def generate_rasters_cli(
     start_year,
     end_year,
     tide_centre,
+    buffer,
     aws_unsigned,
     overwrite,
 ):
