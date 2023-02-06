@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Wait for datacube database
-sh ./docker/coastline/wait_for_database.sh
+sh wait_for_database.sh
 
 # Run integration tests and generate code coverage
 pytest --cov=coastlines --cov-report=xml tests/
