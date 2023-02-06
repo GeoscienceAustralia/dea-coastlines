@@ -21,6 +21,8 @@ def test_generate_rasters_cli():
             "2010",
             "--end_year",
             "2020",
+            "--buffer",
+            "0.01",
         ],
     )
     assert result.exit_code == 0

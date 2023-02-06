@@ -503,7 +503,7 @@ def export_annual_gapfill(
 
 
 def generate_rasters(
-    dc, config, study_area, raster_version, start_year, end_year, tide_centre, log=None
+    dc, config, study_area, raster_version, start_year, end_year, tide_centre, buffer, log=None
 ):
     #####################################
     # Connect to datacube, Dask cluster #
@@ -537,7 +537,7 @@ def generate_rasters(
     # on either side to facilitate gapfilling low data observations
     geopoly = Geometry(gridcell_gdf.iloc[0].geometry, crs=gridcell_gdf.crs)
     query = {
-        "geopolygon": geopoly.buffer(0.05),
+        "geopolygon": geopoly.buffer(buffer),
         "time": (str(start_year - 1), str(end_year + 1)),
         "dask_chunks": {"time": 1, "x": 2048, "y": 2048},
     }
@@ -671,6 +671,16 @@ def generate_rasters(
     "default is 0.0 which represents 0 m Above Mean Sea Level.",
 )
 @click.option(
+    "--buffer",
+    type=float,
+    default=0.05,
+    help="The distance (in degrees) to buffer the study area grid cell "
+    "extent. This buffer is important for ensuring that generated "
+    "rasters overlap along the boundaries of neighbouring study areas "
+    "so that we can extract seamless vector shorelines. Defaults to "
+    "0.05 degrees, or roughly 5 km at the equator.",
+)
+@click.option(
     "--aws_unsigned/--no-aws_unsigned",
     type=bool,
     default=True,
@@ -725,6 +735,7 @@ def generate_rasters_cli(
             start_year,
             end_year,
             tide_centre,
+            buffer,
             log=log,
         )
 
