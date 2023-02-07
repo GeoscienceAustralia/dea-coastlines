@@ -18,11 +18,11 @@ def test_generate_rasters_cli():
             "--raster_version",
             "tests",
             "--start_year",
-            "2010",
+            "1988",
             "--end_year",
             "2020",
             "--buffer",
-            "0.01",
+            "0.0",
         ],
     )
     assert result.exit_code == 0
@@ -41,7 +41,7 @@ def test_generate_vector_cli():
             "--raster_version",
             "tests",
             "--start_year",
-            "2010",
+            "1988",
             "--end_year",
             "2020",
             "--baseline_year",

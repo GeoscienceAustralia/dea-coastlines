@@ -1,16 +1,10 @@
 #!/bin/sh
 
-ls
-
 # Wait for datacube database
 sh docker/coastline/wait_for_database
 
-ls 
-
 # Run integration tests and generate code coverage
 pytest --cov=coastlines --cov-report=xml tests/
-
-ls 
 
 # Copy code coverage and other integration test validation
 # outputs to to artifacts directory so they are accessible
