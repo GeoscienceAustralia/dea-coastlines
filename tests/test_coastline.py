@@ -20,7 +20,7 @@ def test_generate_rasters_cli():
             "--start_year",
             "1988",
             "--end_year",
-            "2020",
+            "2021",
             "--buffer",
             "0.0",
         ],
@@ -43,9 +43,9 @@ def test_generate_vector_cli():
             "--start_year",
             "1988",
             "--end_year",
-            "2020",
+            "2021",
             "--baseline_year",
-            "2020",
+            "2021",
         ],
     )
     assert result.exit_code == 0
@@ -66,7 +66,7 @@ def test_generate_continental_cli():
             "--hotspots",
             "True",
             "--baseline_year",
-            "2020",
+            "2021",
         ],
     )
     # assert result.output == '' # for debugging
