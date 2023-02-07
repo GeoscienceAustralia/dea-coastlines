@@ -1,7 +1,11 @@
 #!/bin/sh
 
+ls
+
 # Change to top level directory
 cd ../..
+
+ls 
 
 # Wait for datacube database
 sh docker/coastline/wait_for_database
