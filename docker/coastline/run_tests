@@ -1,16 +1,19 @@
 #!/bin/sh
 
+# Change to top level directory
+cd ../..
+
 # Wait for datacube database
-sh wait_for_database
+sh docker/coastline/wait_for_database
 
 # Run integration tests and generate code coverage
-pytest --cov=coastlines --cov-report=xml ../../tests/
+pytest --cov=coastlines --cov-report=xml tests/
 
 # Copy code coverage and other integration test validation
 # outputs to to artifacts directory so they are accessible
 # outside the docker container via the mounted volume
-cp ../../coverage.xml /mnt/artifacts/
-cp ../../data/processed/tests/coastlines_tests.gpkg /mnt/artifacts/coastlines_tests.gpkg
-cp ../../data/validation/processed/stats_tests.png /mnt/artifacts/stats_tests.png
-cp ../../data/validation/processed/stats_tests.csv /mnt/artifacts/stats_tests.csv
-cp ../../tests/README.md /mnt/artifacts/README.md
+cp coverage.xml /mnt/artifacts/
+cp data/processed/tests/coastlines_tests.gpkg /mnt/artifacts/coastlines_tests.gpkg
+cp data/validation/processed/stats_tests.png /mnt/artifacts/stats_tests.png
+cp data/validation/processed/stats_tests.csv /mnt/artifacts/stats_tests.csv
+cp tests/README.md /mnt/artifacts/README.md
