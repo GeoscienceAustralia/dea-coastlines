@@ -5,7 +5,7 @@
 
 ```
     # Bring up indexing and database container
-    docker-compose -f docker-compose.index.yaml -f docker-compose.cleandb.yaml up
+    docker-compose -f docker/docker-compose.index.yaml -f docker/docker-compose.cleandb.yaml up
 
     # Start by going to index container
     docker exec -ti dea-coastlines_index_1 bash
@@ -16,7 +16,7 @@
 ### Building on top of existing database dump
 
 ```
-  docker-compose -f docker-compose.yaml -f docker-compose.index.yaml up
+  docker-compose -f docker-compose.yaml -f docker/docker-compose.index.yaml up
 ```
 
 ### Indexing and creating database dump
@@ -55,7 +55,7 @@ The products indexed into the existing database dump are:
     unzip tide_models_clipped.zip
 
     docker-compose up -d
-    docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/wait-for-db; pytest --cov=dea_coastlines --cov-report=xml tests/"
+    docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/wait_for_database; pytest --cov=dea_coastlines --cov-report=xml tests/"
     docker-compose exec -T coastline /bin/sh -c "cp /tmp/coverage.xml /mnt/artifacts"
     docker-compose down
 ```
