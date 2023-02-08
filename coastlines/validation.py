@@ -2652,8 +2652,18 @@ def validation_cli(
 
         stats_df.to_csv(filename)
 
-    # Plot data
-    fig, axes = plt.subplots(1, 2, figsize=(15, 7.5))
+    # Print output
+    print(stats_df)
+
+    #############
+    # Plot data #
+    #############
+
+    # If markdown report is requested, create a two column plot
+    if markdown_report:
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 7.5))
+    else:
+        fig, ax1 = plt.subplots(1, 1, figsize=(7.5, 7.5))
 
     # Extract integration test run times and convert to local time
     times_local = stats_df.index.tz_localize("UTC").tz_convert(tz="Australia/Canberra")
@@ -2664,14 +2674,13 @@ def validation_cli(
     offset_str = "(towards land)" if bias > 0 else "(towards ocean)"
 
     # Plot latest integration test results as scatterplot
-    outputs_df.plot.scatter(ax=axes[0], x="val_dist", y="deacl_dist")
-    axes[0].plot([0, 150], [0, 150], linestyle="--", color="black", linewidth=0.5)
-    axes[0].set_title(
-        "Latest integration test run:\nDEA Coastlines vs. validation scatterplot"
-    )
-    axes[0].set_ylabel("DEA Coastlines shoreline positions (m)")
-    axes[0].set_xlabel("Validation shoreline positions (m)")
-    axes[0].annotate(
+    outputs_df.plot.scatter(ax=ax1, x="val_dist", y="deacl_dist")
+    ax1.plot([0, 150], [0, 150], linestyle="--", color="black", linewidth=0.5)
+    title_prefix = "Latest integration test run:\n" if markdown_report else ""
+    ax1.set_title(f"{title_prefix}DEA Coastlines vs. validation scatterplot")
+    ax1.set_ylabel("DEA Coastlines shoreline positions (m)")
+    ax1.set_xlabel("Validation shoreline positions (m)")
+    ax1.annotate(
         f"Mean Absolute Error: {mae:.2f} m\n"
         f"RMSE: {rmse:.2f} m\n"
         f"Standard deviation: {stdev:.2f} m\n"
@@ -2683,33 +2692,37 @@ def validation_cli(
         xycoords="axes fraction",
     )
 
-    # Plot all integration test accuracies and biases over time
-    stats_df.rmse.rename("RMSE").plot(ax=axes[1], style=".-", legend=True)
-    min_q, max_q = stats_df.rmse.quantile((0.1, 0.9)).values
-    axes[1].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+    # Populate second column of plot if markdown report is requested
+    if markdown_report:
 
-    stats_df.mae.rename("MAE").plot(ax=axes[1], style=".-", legend=True)
-    min_q, max_q = stats_df.mae.quantile((0.1, 0.9)).values
-    axes[1].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+        # Plot all integration test accuracies and biases over time
+        stats_df.rmse.rename("RMSE").plot(ax=ax2, style=".-", legend=True)
+        min_q, max_q = stats_df.rmse.quantile((0.1, 0.9)).values
+        ax2.fill_between(stats_df.index, min_q, max_q, alpha=0.2)
 
-    stats_df.bias.rename("Bias").plot(ax=axes[1], style=".-", legend=True)
-    min_q, max_q = stats_df.bias.quantile((0.1, 0.9)).values
-    axes[1].fill_between(stats_df.index, min_q, max_q, alpha=0.2)
-    axes[1].set_title("Accuracy and bias across\n all integration test runs")
-    axes[1].set_ylabel("Metres (m)")
-    axes[1].set_xlabel(None)
+        stats_df.mae.rename("MAE").plot(ax=ax2, style=".-", legend=True)
+        min_q, max_q = stats_df.mae.quantile((0.1, 0.9)).values
+        ax2.fill_between(stats_df.index, min_q, max_q, alpha=0.2)
 
-    # Add overall title
-    plt.suptitle(
-        f"Latest DEA Coastlines integration test outputs validation ({str(times_local[-1])[0:16]})",
-        size=14,
-        fontweight="bold",
-        y=1.03,
-    )
+        stats_df.bias.rename("Bias").plot(ax=ax2, style=".-", legend=True)
+        min_q, max_q = stats_df.bias.quantile((0.1, 0.9)).values
+        ax2.fill_between(stats_df.index, min_q, max_q, alpha=0.2)
+        ax2.set_title("Accuracy and bias across\n all integration test runs")
+        ax2.set_ylabel("Metres (m)")
+        ax2.set_xlabel(None)
 
-    # Export to file
+        # Add overall title
+        plt.suptitle(
+            f"Latest DEA Coastlines integration test outputs validation ({str(times_local[-1])[0:16]})",
+            size=14,
+            fontweight="bold",
+            y=1.03,
+        )
+
+    # Export plot to file
     plt.savefig(f"data/validation/processed/stats_{prefix}.png", bbox_inches="tight")
 
+    # Create markdown file containing report on latest integration test run
     if markdown_report:
 
         # Create markdown report
@@ -2718,15 +2731,25 @@ def validation_cli(
 
         # Calculate recent change and convert to plain text
         stats_df_temp = stats_df.drop("name", axis=1).copy()
-        stats_df_temp['bias'] = stats_df_temp['bias'].abs()
+        stats_df_temp["bias"] = stats_df_temp["bias"].abs()
         recent_diff = stats_df_temp.diff(1).iloc[-1].to_frame("diff")
-        recent_diff.loc['corr'] = -recent_diff.loc['corr']  # Invert as higher corrs are good
-        recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = ":heavy_check_mark: improved by "
-        recent_diff.loc[recent_diff["diff"] == 0, "prefix"] = ":heavy_minus_sign: no change"
-        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = ":heavy_exclamation_mark: worsened by "
+        recent_diff.loc["corr"] = -recent_diff.loc[
+            "corr"
+        ]  # Invert as higher corrs are good
+        recent_diff.loc[
+            recent_diff["diff"] < 0, "prefix"
+        ] = ":heavy_check_mark: improved by "
+        recent_diff.loc[
+            recent_diff["diff"] == 0, "prefix"
+        ] = ":heavy_minus_sign: no change"
+        recent_diff.loc[
+            recent_diff["diff"] > 0, "prefix"
+        ] = ":heavy_exclamation_mark: worsened by "
         recent_diff["suffix"] = recent_diff["diff"].abs().round(3).replace({0: ""})
-        recent_diff = recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str).str[0:5]
-        
+        recent_diff = (
+            recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str).str[0:5]
+        )
+
         mdFile = MdUtils(file_name="tests/README.md", title="Integration tests")
         mdFile.new_paragraph(
             "> *This readme is automatically generated by the ``coastlines.validation.py`` script; edits should be made to the ``validation_cli`` function [located here](../coastlines/validation.py).*"
@@ -2748,10 +2771,12 @@ def validation_cli(
             f"The latest integration test completed at **{str(stats_df.index[-1])[0:16]}**. "
             f"Compared to the previous run, it had an:"
         )
-        items = [f"RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ({recent_diff.rmse})**", 
-                 f"MAE accuracy of **{stats_df.mae[-1]:.2f} m ({recent_diff.mae})**", 
-                 f"Bias of **{stats_df['bias'][-1]:.2f} m ({recent_diff['bias']})**",
-                 f"Pearson correlation of **{stats_df['corr'][-1]:.3f} ({recent_diff['corr']})**"]
+        items = [
+            f"RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ({recent_diff.rmse})**",
+            f"MAE accuracy of **{stats_df.mae[-1]:.2f} m ({recent_diff.mae})**",
+            f"Bias of **{stats_df['bias'][-1]:.2f} m ({recent_diff['bias']})**",
+            f"Pearson correlation of **{stats_df['corr'][-1]:.3f} ({recent_diff['corr']})**",
+        ]
         mdFile.new_list(items=items)
         mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="950"))
         mdFile.create_md_file()
