@@ -50,9 +50,6 @@ jobs:
           docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/run_tests"
           docker-compose down
 
-          # Run git pull to ensure we have the latest version of the repo
-          git pull
-
           # Copy out validation outputs produced by the integration tests and place them 
           # in correct output locations so they can be committed back into the repository  
           cp ./artifacts/stats_tests.png ./tests/stats_tests.png
