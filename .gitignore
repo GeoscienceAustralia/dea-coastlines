@@ -11,3 +11,4 @@
 !*.sql
 !**.github
 !*.md
+!tests/*.png

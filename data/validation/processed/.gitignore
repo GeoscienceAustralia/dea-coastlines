@@ -1,0 +1,10 @@
+# Ignore all
+*.*
+
+# Except for
+!*.py
+!*.ipynb
+!*.sh
+!*.csv
+!*.yaml
+!*.gitignore

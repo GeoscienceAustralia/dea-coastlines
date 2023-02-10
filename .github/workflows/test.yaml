@@ -32,22 +32,49 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 0          
 
-      - name: Dockerized Integration test
+      - name: Run dockerized integration tests and copy outputs
         run: |
+          # Set up artifacts directory to house outputs from integration tests,
+          # giving all users read and write permissions
           mkdir artifacts
           chmod a+rw artifacts
-          wget https://www.dropbox.com/s/vj2rqkwy9al144w/tide_models.zip?dl=1 -O tide_models.zip
-          unzip tide_models.zip
 
+          # Download tide modelling files and unzip
+          wget --no-verbose https://www.dropbox.com/s/vj2rqkwy9al144w/tide_models.zip?dl=1 -O tide_models.zip
+          unzip -q tide_models.zip
+
+          # Run integration tests using Docker  
           docker-compose up -d
-          docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/wait-for-db; pytest --cov=coastlines --cov-report=xml tests/"
-          docker-compose exec -T coastline /bin/sh -c "cp coverage.xml /mnt/artifacts"
+          docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/run_tests"
           docker-compose down
 
+          # Copy out validation outputs produced by the integration tests and place them 
+          # in correct output locations so they can be committed back into the repository  
+          cp ./artifacts/stats_tests.png ./tests/stats_tests.png
+          cp ./artifacts/stats_tests.csv ./data/validation/processed/stats_tests.csv
+          cp ./artifacts/README.md ./tests/README.md
+
+#      - name: Setup upterm session
+#        uses: lhotari/action-upterm@v1
+
+      # Commit validation results produced by integration tests back into repo
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Automatically update integration test validation results
+          file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
+
+      # Add output vector GeoPackage data to Actions artifact so it can be downloaded 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: output_geopackage
+          path: ./artifacts/coastlines_tests.gpkg
+
+      # Update code coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           directory: ./artifacts/
           fail_ci_if_error: false
+
