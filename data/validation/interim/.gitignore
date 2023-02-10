@@ -1,0 +1,9 @@
+# Ignore all
+*.*
+
+# Except for
+!*.py
+!*.ipynb
+!*.sh
+!*.yaml
+!*.gitignore

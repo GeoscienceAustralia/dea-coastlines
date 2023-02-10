@@ -1,9 +1,0 @@
-Virtual product:
-    virtual_product_path: configs/deafrica_virtual_product_landsat.yaml
-    virtual_product_name: ls_mndwi
-Input files:
-    coastal_grid_path: data/raw/32km_coastal_grid_deafrica.geojson
-    coastal_points_path: data/raw/5km_coastal_points_deafrica.geojson
-    coastal_classification_path:
-    waterbody_mask_path:
-    waterbody_modifications_path:

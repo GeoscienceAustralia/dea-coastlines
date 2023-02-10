@@ -1,0 +1,8 @@
+Virtual product:
+    virtual_product_path: configs/dea_virtual_product_landsat.yaml
+    virtual_product_name: ls_nbart_ndwi
+Input files:
+    grid_path: data/raw/coastlines_development.geojson
+    modifications_path: data/raw/modifications_deacoastlines.geojson
+    geomorphology_path: https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/Smartline.gpkg
+    region_attributes_path: https://dea-public-data.s3.ap-southeast-2.amazonaws.com/derivative/dea_coastlines/supplementary/Primary_compartments.geojson

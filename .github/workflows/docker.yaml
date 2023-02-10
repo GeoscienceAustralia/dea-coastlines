@@ -1,0 +1,61 @@
+name: Build and push image
+
+# Run action on both a push to the "develop" branch,
+# and when a Github release is created/edited/published
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'coastlines/**'
+      - '.github/workflows/docker.yaml'
+      - 'Dockerfile'
+
+  release:
+    types: [created, edited, published]
+
+env:
+  IMAGE_NAME: geoscienceaustralia/dea-coastlines
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    # If action is triggered by a release, push image to 
+    # Dockerhub using custom image tag extracted from the release
+    - name: Get current version tag from release to use as image tag
+      if: github.event_name == 'release'
+      run: |
+        echo "RELEASE=${GITHUB_REF/refs\/tags\/}" >> $GITHUB_ENV
+
+    - name: Build and push tagged Docker image for release
+      uses: whoan/docker-build-with-cache-action@v4
+      if: github.event_name == 'release'
+      with:
+        image_name: ${{ env.IMAGE_NAME }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        image_tag: ${{ env.RELEASE }}
+    
+    # If action is trigged by a push (not release), push a 
+    # latest/unstable image to Dockerhub using image tag based 
+    # on the most recent Github tag and commit hash
+    - name: Get git commit hash for push to branch to use as image tag
+      if: github.event_name != 'release'
+      run: |
+        git fetch --all --tags
+        echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
+
+    - name: Build and push unstable Docker image for push to branch
+      uses: whoan/docker-build-with-cache-action@v4
+      if: github.event_name != 'release'
+      with:
+        image_name: ${{ env.IMAGE_NAME }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        image_tag: latest,${{ env.RELEASE }}

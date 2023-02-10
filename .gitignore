@@ -6,4 +6,9 @@
 !*.ipynb
 !*.sh
 !*.yaml
+!*.in
 !*.gitignore
+!*.sql
+!**.github
+!*.md
+!tests/*.png
