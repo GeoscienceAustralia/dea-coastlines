@@ -797,7 +797,14 @@ def annual_movements(
         points_gs = gpd.GeoSeries(points)
         x_vals = xr.DataArray(points_gs.x, dims="z")
         y_vals = xr.DataArray(points_gs.y, dims="z")
-        return array.interp(x=x_vals, y=y_vals, **kwargs)
+        
+        # Temporary workaround for bug in Scipy:
+        # https://github.com/pydata/xarray/issues/7414
+        # TODO: remove when scipy=>1.10.1 is available
+        try:
+            return array.interp(x=x_vals, y=y_vals, **kwargs)
+        except TypeError:
+            return array.astype(np.float64).interp(x=x_vals, y=y_vals, **kwargs)
 
     # Get array of water index values for baseline time period
     baseline_array = yearly_ds[water_index].sel(year=int(baseline_year))
@@ -834,7 +841,7 @@ def annual_movements(
 
         # Sample water index values for baseline and comparison points
         points_gdf["index_comp_p1"] = _point_interp(
-            points_gdf["p_baseline"], comp_array
+            points_gdf.geometry, comp_array
         )
         points_gdf["index_baseline_p2"] = _point_interp(
             points_gdf[f"p_{comp_year}"], baseline_array

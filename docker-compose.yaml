@@ -26,6 +26,7 @@ services:
       DB_PASSWORD: odcpass
       DB_DATABASE: odc
       AWS_NO_SIGN_REQUEST: "yes"
+      GDAL_HTTP_MAX_RETRY: 5
     depends_on:
       - postgres
     volumes:
