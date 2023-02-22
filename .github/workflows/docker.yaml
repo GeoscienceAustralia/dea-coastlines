@@ -14,6 +14,10 @@ on:
   release:
     types: [created, edited, published]
 
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
 env:
   IMAGE_NAME: geoscienceaustralia/dea-coastlines
 
@@ -26,36 +30,38 @@ jobs:
       with:
         fetch-depth: 0
 
-    # If action is triggered by a release, push image to 
-    # Dockerhub using custom image tag extracted from the release
-    - name: Get current version tag from release to use as image tag
-      if: github.event_name == 'release'
-      run: |
-        echo "RELEASE=${GITHUB_REF/refs\/tags\/}" >> $GITHUB_ENV
+  push_ecr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Build and push tagged Docker image for release
-      uses: whoan/docker-build-with-cache-action@v4
-      if: github.event_name == 'release'
-      with:
-        image_name: ${{ env.IMAGE_NAME }}
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        image_tag: ${{ env.RELEASE }}
-    
-    # If action is trigged by a push (not release), push a 
-    # latest/unstable image to Dockerhub using image tag based 
-    # on the most recent Github tag and commit hash
-    - name: Get git commit hash for push to branch to use as image tag
-      if: github.event_name != 'release'
-      run: |
-        git fetch --all --tags
-        echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
+      # If action is triggered by a release, push image to
+      # Dockerhub using custom image tag extracted from the release
+      - name: Get current version tag from release to use as image tag
+        if: github.event_name == 'release'
+        run: |
+          echo "RELEASE=${GITHUB_REF/refs\/tags\/}" >> $GITHUB_ENV
 
-    - name: Build and push unstable Docker image for push to branch
-      uses: whoan/docker-build-with-cache-action@v4
-      if: github.event_name != 'release'
-      with:
-        image_name: ${{ env.IMAGE_NAME }}
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        image_tag: latest,${{ env.RELEASE }}
+      # If action is trigged by a push (not release), push a
+      # latest/unstable image to Dockerhub using image tag based
+      # on the most recent Github tag and commit hash
+      - name: Get git commit hash for push to branch to use as image tag
+        if: github.event_name != 'release'
+        run: |
+          git fetch --all --tags
+          echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::538673716275:role/github-actions-role
+          aws-region: ap-southeast-2
+
+      - name: Push image to ECR
+        uses: whoan/docker-build-with-cache-action@master
+        with:
+          context: ./
+          registry: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: latest,${{ env.RELEASE }}
