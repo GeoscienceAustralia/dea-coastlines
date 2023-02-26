@@ -49,6 +49,7 @@ def wms_fields(gdf):
             wms_grew=gdf.rate_time < 0,
             wms_retr=gdf.rate_time > 0,
             wms_sig=gdf.sig_time <= 0.01,
+            wms_good=gdf.certainty == "good",
         )
     )
 
