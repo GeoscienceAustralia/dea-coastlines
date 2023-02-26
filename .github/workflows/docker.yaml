@@ -22,14 +22,6 @@ env:
   IMAGE_NAME: geoscienceaustralia/dea-coastlines
 
 jobs:
-  push:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
   push_ecr:
     runs-on: ubuntu-latest
     steps:
