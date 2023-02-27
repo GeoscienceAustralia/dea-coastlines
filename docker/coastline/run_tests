@@ -11,6 +11,7 @@ pytest --cov=coastlines --cov-report=xml tests/
 # outside the docker container via the mounted volume
 cp coverage.xml /mnt/artifacts/
 cp data/processed/tests/coastlines_tests.gpkg /mnt/artifacts/coastlines_tests.gpkg
+cp data/processed/tests/coastlines_tests.shp.zip /mnt/artifacts/coastlines_tests.shp.zip
 cp data/validation/processed/stats_tests.png /mnt/artifacts/stats_tests.png
 cp data/validation/processed/stats_tests.csv /mnt/artifacts/stats_tests.csv
 cp tests/README.md /mnt/artifacts/README.md

@@ -65,11 +65,17 @@ jobs:
           commit_message: Automatically update integration test validation results
           file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
 
-      # Add output vector GeoPackage data to Actions artifact so it can be downloaded 
+      # Add output GeoPackage data to Actions artifact so it can be downloaded 
       - uses: actions/upload-artifact@v3
         with:
           name: output_geopackage
           path: ./artifacts/coastlines_tests.gpkg
+
+      # Add output ESRI Shapefile data to Actions artifact so it can be downloaded 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: output_shps
+          path: ./artifacts/coastlines_tests.shp.zip
 
       # Update code coverage
       - name: Upload coverage to Codecov
