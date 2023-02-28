@@ -58,7 +58,7 @@
         },
         {
             "rel": "self",
-            "href": "s3://deafrica-services/coastlines/v0.4.0/",
+            "href": "https://deafrica-services.s3.af-south-1.amazonaws.com/coastlines/v0.4.0/coastlines_stac_item.json",
             "type": "application/json"
         }
     ],
