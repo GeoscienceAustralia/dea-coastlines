@@ -30,7 +30,11 @@
     "links": [
         {
             "rel": "self",
-            "href": "https://raw.githubusercontent.com/digitalearthafrica/deafrica-coastlines/main/metadata/coastlines_stac_item.json"
+            "href": "https://deafrica-services.s3.af-south-1.amazonaws.com/coastlines/v0.4.0/coastlines_stac_collection.json"
+        },
+        {
+            "rel": "items",
+            "href": "https://deafrica-services.s3.af-south-1.amazonaws.com/coastlines/v0.4.0/coastlines_stac_item.json"
         },
         {
             "rel": "root",
