@@ -1,7 +1,7 @@
 {
     "stac_version": "1.0.0",
-    "id": "dea_coastlines",
-    "title": "dea_coastlines",
+    "id": "deafrica_coastlines",
+    "title": "deafrica_coastlines",
     "type": "Collection",
     "license": "CC-BY-4.0",
     "description": "Coastlines for Africa produced by Digital Earth Africa.",
@@ -29,12 +29,12 @@
     },
     "links": [
         {
-            "rel": "items",
+            "rel": "self",
             "href": "https://raw.githubusercontent.com/digitalearthafrica/deafrica-coastlines/main/metadata/coastlines_stac_item.json"
         },
         {
             "rel": "root",
-            "href": "https://explorer.dev.digitalearth.africa/stac"
+            "href": "https://github.com/digitalearthafrica/deafrica-coastlines/tree/main/metadata"
         }
     ]
 }

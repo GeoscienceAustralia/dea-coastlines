@@ -1,7 +1,7 @@
 {
     "type": "Feature",
     "stac_version": "1.0.0",
-    "id": "deafricacoastlines_v0.4.0.shp.zip",
+    "id": "deafrica_coastlines",
     "properties": {
         "format": "shapefile",
         "proj:epsg": 4326,
@@ -21,7 +21,7 @@
             1.0
         ],
         "datetime": "2023-01-19T17:43:19.930727Z",
-        "provider": "AWS"
+        "provider": "Digital Earth Africa"
     },
     "geometry": {
         "type": "Polygon",
@@ -58,13 +58,13 @@
         },
         {
             "rel": "self",
-            "href": "s3://deafrica-services/coastlines/v0.4.0/deafricacoastlines_v0.4.0.shp.zip",
+            "href": "s3://deafrica-services/coastlines/v0.4.0/",
             "type": "application/json"
         }
     ],
     "assets": {
         "coastlines": {
-            "href": "https://deafrica-services.s3.af-south-1.amazonaws.com/coastlines/v0.4.0/deafricacoastlines_v0.4.0.shp.zip",
+            "href": "https://deafrica-services.s3.af-south-1.amazonaws.com/coastlines/v0.4.0/",
             "type": "application/zip",
             "title": "coastlines",
             "roles": [
