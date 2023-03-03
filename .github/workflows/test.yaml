@@ -38,16 +38,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::538673716275:role/github-actions-role
+          aws-region: ap-southeast-2
+
+      - name: Copy files to the test website with the AWS CLI
+        run: |
+          aws s3 sync s3://dea-non-public-data/tide_models tide_models
+
       - name: Run dockerized integration tests and copy outputs
         run: |
           # Set up artifacts directory to house outputs from integration tests,
           # giving all users read and write permissions
           mkdir artifacts
           chmod a+rw artifacts
-
-          # Download tide modelling files and unzip
-          wget --no-verbose https://www.dropbox.com/s/vj2rqkwy9al144w/tide_models.zip?dl=1 -O tide_models.zip
-          unzip -q tide_models.zip
 
           # Run integration tests using Docker
           docker-compose up -d
