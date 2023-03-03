@@ -25,6 +25,10 @@ on:
       - '!*.rst'
       - '!*.md'
 
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
@@ -32,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0          
+          fetch-depth: 0
 
       - name: Run dockerized integration tests and copy outputs
         run: |
@@ -45,13 +49,13 @@ jobs:
           wget --no-verbose https://www.dropbox.com/s/vj2rqkwy9al144w/tide_models.zip?dl=1 -O tide_models.zip
           unzip -q tide_models.zip
 
-          # Run integration tests using Docker  
+          # Run integration tests using Docker
           docker-compose up -d
           docker-compose exec -T coastline /bin/sh -c "sh ./docker/coastline/run_tests"
           docker-compose down
 
-          # Copy out validation outputs produced by the integration tests and place them 
-          # in correct output locations so they can be committed back into the repository  
+          # Copy out validation outputs produced by the integration tests and place them
+          # in correct output locations so they can be committed back into the repository
           cp ./artifacts/stats_tests.png ./tests/stats_tests.png
           cp ./artifacts/stats_tests.csv ./data/validation/processed/stats_tests.csv
           cp ./artifacts/README.md ./tests/README.md
@@ -65,13 +69,13 @@ jobs:
           commit_message: Automatically update integration test validation results
           file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
 
-      # Add output GeoPackage data to Actions artifact so it can be downloaded 
+      # Add output GeoPackage data to Actions artifact so it can be downloaded
       - uses: actions/upload-artifact@v3
         with:
           name: output_geopackage
           path: ./artifacts/coastlines_tests.gpkg
 
-      # Add output ESRI Shapefile data to Actions artifact so it can be downloaded 
+      # Add output ESRI Shapefile data to Actions artifact so it can be downloaded
       - uses: actions/upload-artifact@v3
         with:
           name: output_shps
@@ -83,4 +87,3 @@ jobs:
         with:
           directory: ./artifacts/
           fail_ci_if_error: false
-
