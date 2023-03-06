@@ -46,7 +46,7 @@ jobs:
 
       - name: Copy files to the test website with the AWS CLI
         run: |
-          aws s3 sync s3://dea-non-public-data/tide_models tide_models
+          aws s3 sync s3://dea-non-public-data/tide_models/tide_models tide_models
 
       - name: Run dockerized integration tests and copy outputs
         run: |
