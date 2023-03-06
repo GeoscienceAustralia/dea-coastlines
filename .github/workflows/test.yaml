@@ -41,7 +41,7 @@ jobs:
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::538673716275:role/github-actions-role
+          role-to-assume: arn:aws:iam::538673716275:role/github-actions-dea-coastlines-s3-role
           aws-region: ap-southeast-2
 
       - name: Copy files to the test website with the AWS CLI
