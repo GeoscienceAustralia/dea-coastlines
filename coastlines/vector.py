@@ -350,7 +350,7 @@ def _create_mask(raster_mask, sieve_size, crs):
         {0: "good", 1: "unstable data", 2: "insufficient data"}
     )
 
-    return (str(raster_mask.year.item()), vector_mask)
+    return (raster_mask.year.item(), vector_mask)
 
 
 def certainty_masking(yearly_ds, obs_threshold=5, stdev_threshold=0.3, sieve_size=128):
@@ -471,7 +471,7 @@ def contour_certainty(contours_gdf, certainty_masks):
     # Finally, set all 1991 and 1992 coastlines north of -23 degrees
     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
     pinatubo_lat = (contours_gdf.centroid.to_crs("EPSG:4326").y > -23) & (
-        contours_gdf.index.isin(["1991", "1992"])
+        contours_gdf.index.isin([1991, 1992])
     )
     contours_gdf.loc[pinatubo_lat, "certainty"] = "aerosol issues"
 
@@ -798,13 +798,7 @@ def annual_movements(
         x_vals = xr.DataArray(points_gs.x, dims="z")
         y_vals = xr.DataArray(points_gs.y, dims="z")
         
-        # Temporary workaround for bug in Scipy:
-        # https://github.com/pydata/xarray/issues/7414
-        # TODO: remove when scipy=>1.10.1 is available
-        try:
-            return array.interp(x=x_vals, y=y_vals, **kwargs)
-        except TypeError:
-            return array.astype(np.float64).interp(x=x_vals, y=y_vals, **kwargs)
+        return array.interp(x=x_vals, y=y_vals, **kwargs)
 
     # Get array of water index values for baseline time period
     baseline_array = yearly_ds[water_index].sel(year=int(baseline_year))
@@ -1467,6 +1461,7 @@ def generate_vectors(
         da=masked_ds,
         z_values=index_threshold,
         min_vertices=10,
+        time_format='%Y',
         dim="year",
     ).set_index("year")
 
@@ -1484,7 +1479,7 @@ def generate_vectors(
     # Extract statistics modelling points along baseline shoreline
     try:
 
-        points_gdf = points_on_line(contours_gdf, str(baseline_year), distance=30)
+        points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
         log.info(f"Study area {study_area}: Extracted rates of change points")
 
     except KeyError:
@@ -1503,7 +1498,7 @@ def generate_vectors(
             points_gdf,
             contours_gdf,
             yearly_ds,
-            str(baseline_year),
+            baseline_year,
             water_index,
             max_valid_dist=1200,
         )
