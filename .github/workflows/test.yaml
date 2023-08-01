@@ -28,7 +28,7 @@ on:
 
 permissions:
   id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
+  contents: write    # This is required for actions/checkout
 
 jobs:
   integration-tests:
@@ -70,11 +70,11 @@ jobs:
 #      - name: Setup upterm session
 #        uses: lhotari/action-upterm@v1
 
-#       # Commit validation results produced by integration tests back into repo
-#       - uses: stefanzweifel/git-auto-commit-action@v4
-#         with:
-#           commit_message: Automatically update integration test validation results
-#           file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
+      # Commit validation results produced by integration tests back into repo
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Automatically update integration test validation results
+          file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
 
       # Add output GeoPackage data to Actions artifact so it can be downloaded
       - uses: actions/upload-artifact@v3
