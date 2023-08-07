@@ -28,7 +28,7 @@ on:
 
 permissions:
   id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
+  contents: write    # This is required for actions/checkout
 
 jobs:
   integration-tests:
@@ -87,6 +87,18 @@ jobs:
         with:
           name: output_shps
           path: ./artifacts/coastlines_tests.shp.zip
+          
+      # Add output test results 1
+      - uses: actions/upload-artifact@v3
+        with:
+          name: test_results
+          path: ./artifacts/stats_tests.png
+
+      # Add output test results 2
+      - uses: actions/upload-artifact@v3
+        with:
+          name: test_results
+          path: ./artifacts/stats_tests.csv
 
       # Update code coverage
       - name: Upload coverage to Codecov

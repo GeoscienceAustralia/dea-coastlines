@@ -547,6 +547,7 @@ def generate_rasters(
         "geopolygon": geopoly.buffer(buffer),
         "time": (str(start_year - 1), str(end_year + 1)),
         "dask_chunks": {"time": 1, "x": 2048, "y": 2048},
+        "dataset_maturity": "final",
     }
 
     # Load virtual product
