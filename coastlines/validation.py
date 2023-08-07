@@ -30,7 +30,6 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
 def standardise_source(df):
-
     # Dictionary containing method values to rename
     remap_dict = {
         "emery": "emery/levelling",
@@ -58,7 +57,6 @@ def standardise_source(df):
 def to_vector(
     df, fname="test.shp", x="x", y="y", crs="EPSG:3577", output_crs="EPSG:3577"
 ):
-
     # Convert datetimes to strings
     df = df.copy()
     is_datetime = df.dtypes == "datetime64[ns]"
@@ -79,7 +77,6 @@ def to_vector(
 
 
 def export_eval(df, output_name, output_crs="EPSG:3577"):
-
     from shapely.geometry import box, Point, LineString
 
     # Extract geometries
@@ -110,7 +107,6 @@ def export_eval(df, output_name, output_crs="EPSG:3577"):
 
 
 def deacl_val_stats(val_dist, deacl_dist, n=None, remove_bias=False):
-
     np.seterr(all="ignore")
 
     # Compute difference and bias
@@ -151,7 +147,6 @@ def deacl_val_stats(val_dist, deacl_dist, n=None, remove_bias=False):
 
 
 def rse_tableformat(not_bias_corrected, bias_corrected, groupby="source"):
-
     # Fix rounding and total observations
     not_bias_corrected["n"] = not_bias_corrected["n"].astype(int)
     not_bias_corrected[["bias", "stdev", "mae", "rmse"]] = not_bias_corrected[
@@ -186,14 +181,12 @@ def rse_tableformat(not_bias_corrected, bias_corrected, groupby="source"):
 
 
 def val_slope(profiles_df, intercept_df, datum=0, buffer=25, method="distance"):
-
     # Join datum dist to full profile dataframe
     profiles_datum_dist = profiles_df.set_index(["id", "date"])[["distance", "z"]].join(
         intercept_df[f"{datum}_dist"]
     )
 
     if method == "distance":
-
         # Filter to measurements within distance of datum distance
         beach_data = profiles_datum_dist[
             profiles_datum_dist.distance.between(
@@ -203,7 +196,6 @@ def val_slope(profiles_df, intercept_df, datum=0, buffer=25, method="distance"):
         ]
 
     elif method == "height":
-
         # Filter measurements within height of datum
         beach_data = profiles_datum_dist.loc[
             profiles_datum_dist.z.between(-buffer, buffer)
@@ -277,13 +269,10 @@ def interp_intercept(x, y1, y2, reverse=False):
         return R
 
     try:
-
         if isinstance(y2, (int, float)):
-
             y2 = np.array([y2] * len(x))
 
         if reverse:
-
             x = x[::-1]
             y1 = y1[::-1]
             y2 = y2[::-1]
@@ -299,12 +288,10 @@ def interp_intercept(x, y1, y2, reverse=False):
         return xc[0][0]
 
     except:
-
         return np.nan
 
 
 def dist_along_transect(dist, start_x, start_y, end_x, end_y):
-
     transect_line = LineString([(start_x, start_y), (end_x, end_y)])
     distance_coords = transect_line.interpolate(dist).coords.xy
     return [coord[0] for coord in distance_coords]
@@ -313,7 +300,6 @@ def dist_along_transect(dist, start_x, start_y, end_x, end_y):
 def waterline_intercept(
     x, dist_col="distance", x_col="x", y_col="y", z_col="z", z_val=0, debug=False
 ):
-
     # Extract distance and coordinates of where the z_val first
     # intersects with the profile line
     dist_int = interp_intercept(x[dist_col].values, x[z_col].values, z_val)
@@ -340,7 +326,6 @@ def waterline_intercept(
 
 
 def reproj_crs(in_data, in_crs, x="x", y="y", out_crs="EPSG:3577"):
-
     # Reset index to allow merging new data with original data
     in_data = in_data.reset_index(drop=True)
 
@@ -355,7 +340,6 @@ def reproj_crs(in_data, in_crs, x="x", y="y", out_crs="EPSG:3577"):
 def profiles_from_dist(
     profiles_df, id_col="id", dist_col="distance", x_col="x", y_col="y"
 ):
-
     # Compute origin points for each profile
     min_ids = profiles_df.groupby(id_col)[dist_col].idxmin()
     start_xy = profiles_df.loc[min_ids, [id_col, x_col, y_col]]
@@ -376,7 +360,6 @@ def profiles_from_dist(
 
 
 def perpendicular_line(input_line, length):
-
     # Generate parallel lines either side of input line
     left = input_line.parallel_offset(length / 2.0, "left")
     right = input_line.parallel_offset(length / 2.0, "right")
@@ -387,7 +370,6 @@ def perpendicular_line(input_line, length):
 
 
 def generate_transects(line_geom, length=400, interval=200, buffer=20):
-
     # Create tangent line at equal intervals along line geom
     interval_dists = np.arange(buffer, line_geom.length, interval)
     tangent_geom = [
@@ -416,7 +398,6 @@ def coastal_transects(
     coastline="../input_data/Smartline.gdb",
     land_poly="/g/data/r78/rt1527/shapefiles/australia/australia/cstauscd_r.shp",
 ):
-
     # Load smartline
     coastline_gdf = gpd.read_file(coastline, bbox=bbox).to_crs(output_crs)
     coastline_geom = coastline_gdf.geometry.unary_union.simplify(simplify_length)
@@ -471,9 +452,7 @@ def coastal_transects_parallel(
     overwrite=False,
     output_path="input_data/combined_transects_wadot.geojson",
 ):
-
     if not os.path.exists(output_path) or overwrite:
-
         if os.path.exists(output_path):
             print("Removing existing file")
             os.remove(output_path)
@@ -516,14 +495,12 @@ def preprocess_wadot(
     overwrite=True,
     fname="input_data/wadot/Coastline_Movements_20190819.gdb",
 ):
-
     beach = str(compartment.index.item())
     fname_out = f"output_data/wadot_{beach}.csv"
     print(f"Processing {beach:<80}", end="\r")
 
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         # Read file and filter to AHD 0 shorelines
         val_gdf = gpd.read_file(fname, bbox=compartment).to_crs("EPSG:3577")
         val_gdf = gpd.clip(gdf=val_gdf, mask=compartment, keep_geom_type=True)
@@ -555,7 +532,6 @@ def preprocess_wadot(
 
         # Select one year
         for year in val_gdf.index.unique().sort_values():
-
             # Extract validation contour
             print(f"Processing {beach} {year:<80}", end="\r")
             val_contour = val_gdf.loc[[year]].geometry.unary_union
@@ -639,7 +615,6 @@ def preprocess_wadot(
 def preprocess_dasilva2021(
     fname="input_data/dasilva2021/dasilva_etal_2021_shorelines.shp",
 ):
-
     beach = "dasilva2021"
     print(f"Processing {beach:<80}", end="\r")
 
@@ -674,7 +649,6 @@ def preprocess_dasilva2021(
 
     # Select one year
     for year in val_gdf.index.unique().sort_values():
-
         # Extract validation contour
         print(f"Processing {beach} {year:<80}", end="\r")
         val_contour = val_gdf.loc[[year]].geometry.unary_union
@@ -752,7 +726,6 @@ def preprocess_dasilva2021(
 
 
 def preprocess_stirling(fname_out, datum=0):
-
     # List containing files to import and all params to extract data
     survey_xl = [
         {
@@ -807,7 +780,6 @@ def preprocess_stirling(fname_out, datum=0):
 
     # For each survey excel file in the list above:
     for survey in survey_xl:
-
         # Load profile start metadata
         all_meta = pd.read_excel(
             survey["fname"],
@@ -831,7 +803,6 @@ def preprocess_stirling(fname_out, datum=0):
 
         # Iterate through each profile in survey data
         for profile_id in np.arange(1, 20).astype("str"):
-
             # Extract profile start metadata and profile data
             start_x, start_y = all_meta[profile_id].values[0]
             sheet = all_sheets[profile_id].iloc[:, survey["skipcols"] :]
@@ -944,7 +915,6 @@ def preprocess_stirling(fname_out, datum=0):
 
 
 def preprocess_vicdeakin(fname, datum=0):
-
     # Dictionary to map correct CRSs to locations
     crs_dict = {
         "apo": "epsg:32754",
@@ -1012,7 +982,6 @@ def preprocess_vicdeakin(fname, datum=0):
 
     # Export each beach
     for beach_name, beach in profiles_df.groupby("beach"):
-
         # Create output file name
         fname_out = f"output_data/vicdeakin_{beach_name}.csv"
         print(f"Processing {fname_out:<80}", end="\r")
@@ -1026,7 +995,6 @@ def preprocess_vicdeakin(fname, datum=0):
 
         # If the output contains data
         if len(intercept_df.index) > 0:
-
             # Join into dataframe
             shoreline_dist = intercept_df.join(beach.groupby(["id", "date"]).first())
 
@@ -1058,14 +1026,12 @@ def preprocess_vicdeakin(fname, datum=0):
 
 
 def preprocess_nswbpd(fname, datum=0, overwrite=False):
-
     # Get output filename
     name = Path(fname).stem.split("_")[-1].lower().replace(" ", "")
     fname_out = f"output_data/nswbpd_{name}.csv"
 
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         # Read in data
         print(f"Processing {fname_out:<80}", end="\r")
         profiles_df = pd.read_csv(
@@ -1126,7 +1092,6 @@ def preprocess_nswbpd(fname, datum=0, overwrite=False):
 
         # If profile data remains
         if len(profiles_df.index) > 0:
-
             # Restrict profiles to data that falls ocean-ward of the top of
             # the foredune (the highest point in the profile) to remove
             # spurious validation points, e.g. due to a non-shoreline lagoon
@@ -1150,7 +1115,6 @@ def preprocess_nswbpd(fname, datum=0, overwrite=False):
 
             # If any datum intercepts are found
             if len(intercept_df.index) > 0:
-
                 # Join into dataframe
                 shoreline_dist = intercept_df.join(
                     profiles_df.groupby(["id", "date"]).agg(
@@ -1195,10 +1159,8 @@ def preprocess_nswbpd(fname, datum=0, overwrite=False):
 def preprocess_narrabeen(
     fname, fname_out="output_data/wrl_narrabeen.csv", datum=0, overwrite=False
 ):
-
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         #################
         # Location data #
         #################
@@ -1280,7 +1242,6 @@ def preprocess_narrabeen(
 
         # If the output contains data
         if len(intercept_df.index) > 0:
-
             # Join into dataframe
             shoreline_dist = intercept_df.join(
                 profiles_df.groupby(["id", "date"]).agg(
@@ -1322,7 +1283,6 @@ def preprocess_narrabeen(
 
 
 def preprocess_cgc(site, datum=0, overwrite=True):
-
     # Standardise beach name from site name
     beach = site.replace("NO*TH KIRRA", "NORTH KIRRA").lower()
     beach = beach.replace(" ", "").lower()
@@ -1331,7 +1291,6 @@ def preprocess_cgc(site, datum=0, overwrite=True):
 
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         # List of profile datasets to iterate through
         profile_list = glob.glob(f"input_data/cityofgoldcoast/{site}*.txt")
 
@@ -1340,7 +1299,6 @@ def preprocess_cgc(site, datum=0, overwrite=True):
 
         # For each profile, import and standardise data then add to list
         for profile_i in profile_list:
-
             # Identify unique field values from file string
             profile_string = os.path.basename(profile_i)
             date = profile_string.split(" - (")[1][-14:-4]
@@ -1380,7 +1338,6 @@ def preprocess_cgc(site, datum=0, overwrite=True):
 
         # If list of profiles contain valid data
         if len(site_profiles) > 0:
-
             # Combine individual profiles into a single dataframe
             profiles_df = pd.concat(site_profiles)
 
@@ -1444,7 +1401,6 @@ def preprocess_cgc(site, datum=0, overwrite=True):
 
             # If the output contains data
             if len(intercept_df.index) > 0:
-
                 # Join into dataframe
                 shoreline_dist = intercept_df.join(
                     profiles_df.groupby(["id", "date"]).first()
@@ -1482,7 +1438,6 @@ def preprocess_cgc(site, datum=0, overwrite=True):
 
 
 def preprocess_sadew(fname, datum=0, overwrite=False):
-
     # Get output filename
     name = Path(fname).stem.split("_")[-1].lower().replace(" ", "")
     fname_out = f"output_data/sadew_{name}.csv"
@@ -1490,7 +1445,6 @@ def preprocess_sadew(fname, datum=0, overwrite=False):
 
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         # Load data and set nodata values to NaN
         wide_df = pd.read_csv(fname).replace(-9999, np.nan)
         wide_df = wide_df.loc[:, ~wide_df.columns.str.contains("\.")]
@@ -1695,7 +1649,6 @@ def preprocess_sadew(fname, datum=0, overwrite=False):
 
         # If the output contains data
         if len(intercept_df.index) > 0:
-
             # Join into dataframe
             shoreline_dist = intercept_df.join(
                 profile_df.groupby(["id", "date"]).first()
@@ -1732,7 +1685,6 @@ def preprocess_sadew(fname, datum=0, overwrite=False):
 
 
 def preprocess_sunshinecoast(site, datum=0, overwrite=False):
-
     # Standardise beach name from site name
     beach = site[2:].replace(" ", "").lower()
     fname_out = f"output_data/sunshinecoast_{beach}.csv"
@@ -1740,7 +1692,6 @@ def preprocess_sunshinecoast(site, datum=0, overwrite=False):
 
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         # Obtain list of files
         file_list = glob.glob(
             f"input_data/sunshinecoast/Survey Database correct data/*{site}/**/*.xlsx",
@@ -1751,7 +1702,6 @@ def preprocess_sunshinecoast(site, datum=0, overwrite=False):
         site_profiles = []
 
         for i, survey_fname in enumerate(file_list):
-
             # Load data
             survey_data = pd.read_excel(survey_fname)
             profile_df = survey_data.iloc[3:, :2].astype("float32")
@@ -1811,7 +1761,6 @@ def preprocess_sunshinecoast(site, datum=0, overwrite=False):
 
         # If list of profiles contain valid data
         if len(site_profiles) > 0:
-
             # Combine into a single dataframe
             profiles_df = pd.concat(site_profiles)
 
@@ -1852,7 +1801,6 @@ def preprocess_sunshinecoast(site, datum=0, overwrite=False):
 
             # If the output contains data
             if len(intercept_df.index) > 0:
-
                 # Join into dataframe
                 shoreline_dist = intercept_df.join(
                     profiles_df.groupby(["id", "date"]).agg(
@@ -1892,10 +1840,8 @@ def preprocess_sunshinecoast(site, datum=0, overwrite=False):
 
 def preprocess_tasmarc(site, datum=0, overwrite=True):
     def _tasmarc_metadata(profile):
-
         # Open file
         with open(profile, "r") as profile_data:
-
             # Load header data (first 20 rows starting with "#")
             header = takewhile(lambda x: x.startswith(("#", "&", " ")), profile_data)
             header = list(header)[0:19]
@@ -1938,7 +1884,6 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
 
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         # List of profile datasets to iterate through
         profile_list = glob.glob(f"input_data/tasmarc/{site}/*.txt")
 
@@ -1953,7 +1898,6 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
         site_profiles = []
 
         for profile in profile_list:
-
             # Load data and remove invalid data
             profile_df = pd.read_csv(
                 profile,
@@ -2001,7 +1945,6 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
 
         # If list of profiles contain valid data
         if len(site_profiles) > 0:
-
             # Combine into a single dataframe
             profiles_df = pd.concat(site_profiles)
 
@@ -2046,7 +1989,6 @@ def preprocess_tasmarc(site, datum=0, overwrite=True):
 
             # If the output contains data
             if len(intercept_df.index) > 0:
-
                 # Join into dataframe
                 shoreline_dist = intercept_df.join(
                     profiles_df.groupby(["id", "date"]).agg(
@@ -2095,7 +2037,6 @@ def preprocess_moruya(fname_out, datum=0, overwrite=False):
 
     # Test if file exists
     if not os.path.exists(fname_out) or overwrite:
-
         # Import data
         profiles_wide = pd.read_csv("input_data/moruya/moruya_processed.csv")
 
@@ -2168,7 +2109,6 @@ def preprocess_moruya(fname_out, datum=0, overwrite=False):
 
         # If the output contains data
         if len(intercept_df.index) > 0:
-
             # Join into dataframe
             shoreline_dist = intercept_df.join(
                 profiles_df.groupby(["id", "date"]).agg(
@@ -2258,7 +2198,6 @@ def waterbody_mask(input_data, modification_data, bbox):
 
 def smartline_attrs(val_gdf, bbox, advanced=True):
     def nearest_features(input_gdf, comp_gdf, cols="erode_v"):
-
         # Verify that both datasets are in the same CRS
         assert input_gdf.crs == comp_gdf.crs
 
@@ -2319,14 +2258,12 @@ def deacl_validation(
     val_label="val",
     layer_name="shorelines_annual",
 ):
-
     # Set up output file name
     out_name = val_path.split("/")[-1]
     out_name = f"data/validation/processed/outputs_{prefix}_{out_name}"
 
     # Run analysis if file doesn't exist and overwrite is True
     if not os.path.exists(out_name) or overwrite:
-
         # Load validation data and set section/beach
         print(f"{val_path:<80}", end="\r")
         val_df = pd.read_csv(val_path, parse_dates=["date"])
@@ -2348,7 +2285,6 @@ def deacl_validation(
 
         # This will fail if no DEA Coastlines data exists for the area
         if (len(deacl_gdf.index) > 0) & (len(val_df.index) > 0):
-
             # Add year columns and set dtype to allow merging
             deacl_gdf["year"] = deacl_gdf.year.astype("int64")
             val_df["year"] = val_df.date.dt.year
@@ -2417,7 +2353,6 @@ def deacl_validation(
 
             # If enough data is returned:
             if len(results_df.index) > 0:
-
                 # Rename for consistency
                 results_df = results_df.rename(
                     {
@@ -2542,7 +2477,6 @@ def validation_cli(
     parallelised,
     markdown_report,
 ):
-
     # Simplify smartline categories
     rename_dict = {
         "Beachrock undiff": "rocky",
@@ -2589,7 +2523,6 @@ def validation_cli(
     val_paths = glob.glob(f"{inputs_path}*.csv")
 
     if parallelised:
-
         from concurrent.futures import ProcessPoolExecutor
         from tqdm import tqdm
         from itertools import repeat
@@ -2597,17 +2530,14 @@ def validation_cli(
         args = [deacl_path, datum, prefix, overwrite, "deacl", "val", layer_name]
 
         with ProcessPoolExecutor() as executor:
-
             # Apply func in parallel
             groups = val_paths
             to_iterate = (groups, *(repeat(i, len(groups)) for i in args))
             tqdm(executor.map(deacl_validation, *to_iterate), total=len(groups))
 
     else:
-
         # Run validation for each input dataset
         for val_path in val_paths:
-
             deacl_validation(
                 val_path=val_path,
                 deacl_path=deacl_path,
@@ -2638,7 +2568,6 @@ def validation_cli(
     filename = f"data/validation/processed/stats_{prefix}.csv"
 
     if append_stats:
-
         stats_df.to_csv(
             filename,
             mode="a",
@@ -2649,7 +2578,6 @@ def validation_cli(
         stats_df = pd.read_csv(filename, index_col=0, parse_dates=True)
 
     else:
-
         stats_df.to_csv(filename)
 
     # Print output
@@ -2694,7 +2622,6 @@ def validation_cli(
 
     # Populate second column of plot if markdown report is requested
     if markdown_report:
-
         # Plot all integration test accuracies and biases over time
         stats_df.rmse.rename("RMSE").plot(ax=ax2, style=".-", legend=True)
         min_q, max_q = stats_df.rmse.quantile((0.1, 0.9)).values
@@ -2724,7 +2651,6 @@ def validation_cli(
 
     # Create markdown file containing report on latest integration test run
     if markdown_report:
-
         # Create markdown report
         from mdutils.mdutils import MdUtils
         from mdutils import Html
