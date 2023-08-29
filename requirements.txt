@@ -6,7 +6,7 @@
 #
 --extra-index-url https://packages.dea.ga.gov.au/
 
-affine==2.3.0
+affine==2.4.0
     # via
     #   -r requirements.in
     #   datacube
@@ -14,73 +14,74 @@ affine==2.3.0
     #   odc-geo
     #   rasterio
     #   rasterstats
-aiohttp==3.8.1
-    # via -r requirements.in
-aiosignal==1.2.0
+aiohttp==3.8.4
+    # via
+    #   -r requirements.in
+    #   dea-tools
+aiosignal==1.3.1
     # via aiohttp
-argon2-cffi==21.3.0
-    # via notebook
-argon2-cffi-bindings==21.2.0
-    # via argon2-cffi
-asttokens==2.0.5
+asttokens==2.2.1
     # via stack-data
 async-timeout==4.0.2
     # via aiohttp
-attrs==21.4.0
+attrs==22.2.0
     # via
     #   aiohttp
+    #   datacube
     #   fiona
     #   jsonschema
     #   rasterio
 backcall==0.2.0
     # via ipython
-bleach==4.1.0
-    # via nbconvert
-boto3==1.21.16
-    # via datacube
-botocore==1.24.16
+boto3==1.26.73
+    # via
+    #   datacube
+    #   dea-tools
+botocore==1.29.73
     # via
     #   -r requirements.in
     #   boto3
     #   datacube
+    #   dea-tools
     #   s3transfer
-bottleneck==1.3.4
+bottleneck==1.3.6
     # via datacube
-branca==0.4.2
+branca==0.6.0
     # via
     #   dea-tools
     #   folium
-cachetools==5.0.0
+    #   ipyleaflet
+cachetools==5.3.0
     # via
     #   datacube
     #   odc-geo
-certifi==2021.10.8
+certifi==2022.12.7
     # via
     #   fiona
     #   pyproj
     #   rasterio
     #   requests
-cffi==1.15.0
-    # via argon2-cffi-bindings
-cftime==1.6.0
+cftime==1.6.2
     # via netcdf4
-charset-normalizer==2.0.12
+charset-normalizer==3.0.1
     # via
     #   aiohttp
     #   requests
-ciso8601==2.2.0
+ciso8601==2.3.0
     # via
     #   datacube
     #   dea-tools
-click==8.0.4
+click==8.1.3
     # via
     #   -r requirements.in
     #   click-plugins
     #   cligj
+    #   dask
     #   datacube
     #   distributed
     #   fiona
     #   rasterio
+    #   rasterstats
 click-plugins==1.1.1
     # via
     #   fiona
@@ -90,215 +91,209 @@ cligj==0.7.2
     #   fiona
     #   rasterio
     #   rasterstats
-cloudpickle==2.0.0
+cloudpickle==2.2.1
     # via
     #   dask
+    #   dask-glm
     #   datacube
     #   distributed
+comm==0.1.2
+    # via ipykernel
+contourpy==1.0.7
+    # via matplotlib
 cycler==0.11.0
     # via matplotlib
-dask[array]==2022.2.1
+dask[array,dataframe]==2023.2.0
     # via
+    #   -r requirements.in
+    #   dask-glm
     #   dask-image
+    #   dask-ml
     #   datacube
-    #   dea-tools
     #   distributed
     #   odc-algo
-dask-image==2021.12.0
+dask-glm==0.2.0
+    # via dask-ml
+dask-image==2022.9.0
     # via odc-algo
-datacube[performance,s3]==1.8.6
+dask-ml==2022.5.27
+    # via dea-tools
+datacube[performance,s3]==1.8.13
     # via
     #   -r requirements.in
     #   dea-tools
     #   odc-algo
     #   odc-ui
-dea-tools==0.2.8.dev26
+dea-tools==0.2.8.dev117
     # via -r requirements.in
-debugpy==1.5.1
+debugpy==1.6.6
     # via ipykernel
 decorator==5.1.1
     # via ipython
-defusedxml==0.7.1
-    # via nbconvert
-distributed==2022.2.1
+distributed==2023.2.0
     # via
+    #   dask-ml
     #   datacube
     #   odc-algo
-entrypoints==0.4
-    # via
-    #   jupyter-client
-    #   nbconvert
-executing==0.8.3
+executing==1.2.0
     # via stack-data
-fiona==1.8.21
+fiona==1.8.22
     # via
     #   -r requirements.in
     #   dea-tools
     #   geopandas
     #   rasterstats
-folium==0.12.1.post1
+folium==0.14.0
     # via dea-tools
-fonttools==4.29.1
+fonttools==4.38.0
     # via matplotlib
-frozenlist==1.3.0
+frozenlist==1.3.3
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2022.2.0
+fsspec==2023.1.0
     # via dask
-gdal==3.4.1
-    # via dea-tools
-geographiclib==1.52
+geoalchemy2==0.13.1
+    # via datacube
+geographiclib==2.0
     # via geopy
-geopandas==0.10.2
+geopandas==0.13.2
     # via
     #   -r requirements.in
     #   dea-tools
-geopy==2.2.0
+geopy==2.3.0
     # via dea-tools
-greenlet==1.1.2
+greenlet==2.0.2
     # via sqlalchemy
+hdstats==0.2.1
+    # via dea-tools
 heapdict==1.0.1
     # via zict
-idna==3.3
+idna==3.4
     # via
     #   requests
     #   yarl
-imageio==2.16.1
-    # via scikit-image
-importlib-resources==5.4.0
-    # via jsonschema
-ipykernel==6.9.1
+imageio==2.25.1
     # via
-    #   ipywidgets
-    #   notebook
-ipyleaflet==0.15.0
+    #   pims
+    #   scikit-image
+importlib-metadata==6.0.0
+    # via
+    #   jupyter-client
+    #   numba
+importlib-resources==5.10.2
+    # via
+    #   jsonschema
+    #   matplotlib
+ipykernel==6.21.2
+    # via ipywidgets
+ipyleaflet==0.17.2
     # via odc-ui
-ipython==8.1.1
+ipython==8.10.0
     # via
     #   ipykernel
     #   ipywidgets
     #   jupyter-ui-poll
     #   odc-ui
-ipython-genutils==0.2.0
-    # via
-    #   ipywidgets
-    #   nbformat
-    #   notebook
-ipywidgets==7.6.5
+ipywidgets==8.0.4
     # via
     #   ipyleaflet
     #   odc-ui
-jedi==0.18.1
+jedi==0.18.2
     # via ipython
-jinja2==3.0.3
+jinja2==3.1.2
     # via
     #   branca
     #   distributed
     #   folium
-    #   nbconvert
-    #   notebook
-jmespath==0.10.0
+jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-joblib==1.1.0
-    # via scikit-learn
-jsonschema==4.4.0
+joblib==1.2.0
     # via
-    #   datacube
-    #   nbformat
-jupyter-client==7.1.2
+    #   dea-tools
+    #   scikit-learn
+jsonschema==4.17.3
+    # via datacube
+jupyter-client==8.0.3
+    # via ipykernel
+jupyter-core==5.2.0
     # via
     #   ipykernel
-    #   nbclient
-    #   notebook
-jupyter-core==4.9.2
-    # via
     #   jupyter-client
-    #   nbconvert
-    #   nbformat
-    #   notebook
-jupyter-ui-poll==0.2.1
+jupyter-ui-poll==0.2.2
     # via odc-ui
-jupyterlab-pygments==0.1.2
-    # via nbconvert
-jupyterlab-widgets==1.0.2
+jupyterlab-widgets==3.0.5
     # via ipywidgets
-kiwisolver==1.3.2
+kiwisolver==1.4.4
     # via matplotlib
-lark-parser==0.12.0
+lark==1.1.5
     # via datacube
-locket==0.2.1
-    # via partd
-lxml==4.8.0
+llvmlite==0.39.1
+    # via numba
+locket==1.0.0
+    # via
+    #   distributed
+    #   partd
+lxml==4.9.2
     # via
     #   dea-tools
     #   pytmd
-markupsafe==2.1.0
+markupsafe==2.1.2
     # via jinja2
-matplotlib==3.5.1
+matplotlib==3.7.1
     # via
     #   -r requirements.in
     #   dea-tools
     #   odc-ui
-matplotlib-inline==0.1.3
+matplotlib-inline==0.1.6
     # via
     #   ipykernel
     #   ipython
-mdutils==1.4.0
+mdutils==1.5.0
     # via -r requirements.in
-mistune==0.8.4
-    # via nbconvert
-msgpack==1.0.3
+msgpack==1.0.4
     # via distributed
-multidict==6.0.2
+multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
+multipledispatch==0.6.0
+    # via
+    #   dask-glm
+    #   dask-ml
 munch==2.5.0
     # via fiona
-nbclient==0.5.12
-    # via nbconvert
-nbconvert==6.4.2
-    # via notebook
-nbformat==5.1.3
-    # via
-    #   ipywidgets
-    #   nbclient
-    #   nbconvert
-    #   notebook
-nest-asyncio==1.5.4
-    # via
-    #   ipykernel
-    #   jupyter-client
-    #   nbclient
-    #   notebook
-netcdf4==1.5.8
+nest-asyncio==1.5.6
+    # via ipykernel
+netcdf4==1.6.2
     # via
     #   datacube
     #   pytmd
-networkx==2.7.1
+networkx==3.0
     # via scikit-image
-notebook==6.4.8
-    # via widgetsnbextension
-numexpr==2.8.1
-    # via
-    #   dea-tools
-    #   odc-algo
-numpy==1.21.4
+numba==0.56.4
+    # via dask-ml
+numexpr==2.8.4
+    # via odc-algo
+numpy==1.23.5
     # via
     #   -r requirements.in
     #   bottleneck
     #   cftime
+    #   contourpy
     #   dask
     #   dask-image
+    #   dask-ml
     #   datacube
     #   dea-tools
     #   folium
+    #   hdstats
     #   imageio
     #   matplotlib
     #   netcdf4
+    #   numba
     #   numexpr
     #   odc-algo
     #   odc-geo
@@ -313,92 +308,92 @@ numpy==1.21.4
     #   scikit-image
     #   scikit-learn
     #   scipy
+    #   shapely
     #   snuggs
     #   tifffile
     #   xarray
-odc-algo==0.2.2
+odc-algo==0.2.3
     # via odc-ui
-odc-geo==0.2.2
+odc-geo==0.4.0
     # via -r requirements.in
-odc-ui==0.2.1.dev3247
+odc-ui==0.2.1.dev3676
     # via
     #   -r requirements.in
     #   dea-tools
-owslib==0.25.0
+owslib==0.27.2
     # via dea-tools
-packaging==21.3
+packaging==23.0
     # via
-    #   bleach
     #   dask
+    #   dask-ml
+    #   datacube
+    #   dea-tools
     #   distributed
+    #   geoalchemy2
+    #   geopandas
+    #   ipykernel
     #   matplotlib
-    #   numexpr
     #   scikit-image
     #   setuptools-scm
     #   xarray
-pandas==1.4.1
+pandas==1.5.3
     # via
     #   -r requirements.in
+    #   dask
+    #   dask-ml
     #   datacube
     #   dea-tools
     #   geopandas
     #   odc-ui
     #   xarray
-pandocfilters==1.5.0
-    # via nbconvert
 parso==0.8.3
     # via jedi
-partd==1.2.0
+partd==1.3.0
     # via dask
 pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==9.0.1
+pillow==9.4.0
     # via
     #   imageio
     #   matplotlib
     #   scikit-image
-pims==0.5
+pims==0.6.1
     # via dask-image
-prometheus-client==0.13.1
-    # via notebook
-prompt-toolkit==3.0.28
+pkgutil-resolve-name==1.3.10
+    # via jsonschema
+platformdirs==3.0.0
+    # via jupyter-core
+prompt-toolkit==3.0.36
     # via ipython
-psutil==5.9.0
-    # via distributed
-psycopg2==2.9.3
+psutil==5.9.4
+    # via
+    #   distributed
+    #   ipykernel
+psycopg2==2.9.5
     # via datacube
 ptyprocess==0.7.0
-    # via
-    #   pexpect
-    #   terminado
+    # via pexpect
 pure-eval==0.2.2
     # via stack-data
-pycparser==2.21
-    # via cffi
-pygeos==0.13
+pygeos==0.14
     # via -r requirements.in
-pygments==2.11.2
-    # via
-    #   ipython
-    #   jupyterlab-pygments
-    #   nbconvert
-pyparsing==3.0.7
+pygments==2.14.0
+    # via ipython
+pyparsing==3.0.9
     # via
     #   matplotlib
-    #   packaging
     #   snuggs
-pyproj==3.3.0
+pyproj==3.4.1
     # via
     #   -r requirements.in
     #   datacube
     #   dea-tools
     #   geopandas
     #   odc-geo
-    #   owslib
     #   pytmd
-pyrsistent==0.18.1
+pyrsistent==0.19.3
     # via jsonschema
 python-dateutil==2.8.2
     # via
@@ -412,15 +407,17 @@ python-dateutil==2.8.2
     #   pytmd
 python-geohash==0.8.5
     # via -r requirements.in
-pytmd==1.0.9
-    # via -r requirements.in
-pytz==2021.3
+pytmd==2.0.6
+    # via
+    #   -r requirements.in
+    #   dea-tools
+pytz==2023.3
     # via
     #   -r requirements.in
     #   dea-tools
     #   owslib
     #   pandas
-pywavelets==1.2.0
+pywavelets==1.4.1
     # via scikit-image
 pyyaml==5.4.1
     # via
@@ -430,12 +427,11 @@ pyyaml==5.4.1
     #   distributed
     #   owslib
     #   pytmd
-pyzmq==22.3.0
+pyzmq==25.0.0
     # via
+    #   ipykernel
     #   jupyter-client
-    #   jupyter-ui-poll
-    #   notebook
-rasterio==1.2.10
+rasterio==1.3.4
     # via
     #   -r requirements.in
     #   datacube
@@ -443,37 +439,44 @@ rasterio==1.2.10
     #   odc-algo
     #   odc-ui
     #   rasterstats
-rasterstats==0.16.0
+rasterstats==0.18.0
     # via dea-tools
-requests==2.27.1
+requests==2.28.2
     # via
     #   dea-tools
     #   folium
     #   owslib
-s3transfer==0.5.2
+ruamel-yaml==0.17.21
+    # via datacube
+ruamel-yaml-clib==0.2.7
+    # via ruamel-yaml
+s3transfer==0.6.0
     # via boto3
-scikit-image==0.19.2
+scikit-image==0.19.3
     # via
     #   -r requirements.in
     #   dea-tools
     #   odc-algo
-scikit-learn==1.1.2
+scikit-learn==1.2.2
     # via
     #   -r requirements.in
+    #   dask-glm
+    #   dask-ml
     #   dea-tools
-scipy==1.7.1
+scipy==1.10.1
     # via
     #   -r requirements.in
+    #   dask-glm
     #   dask-image
+    #   dask-ml
     #   dea-tools
+    #   hdstats
     #   pytmd
     #   scikit-image
     #   scikit-learn
-send2trash==1.8.0
-    # via notebook
-setuptools-scm==7.0.5
+setuptools-scm==7.1.0
     # via pytmd
-shapely==1.8.4
+shapely==2.0.1
     # via
     #   -r requirements.in
     #   datacube
@@ -481,100 +484,91 @@ shapely==1.8.4
     #   geopandas
     #   odc-geo
     #   rasterstats
-simplejson==3.17.6
+simplejson==3.18.3
     # via rasterstats
 six==1.16.0
     # via
     #   asttokens
-    #   bleach
     #   fiona
+    #   multipledispatch
     #   munch
-    #   pims
     #   python-dateutil
-    #   slicerator
-slicerator==1.0.0
+slicerator==1.1.0
     # via pims
 snuggs==1.4.7
     # via rasterio
 sortedcontainers==2.4.0
     # via distributed
-sqlalchemy==1.4.32
-    # via datacube
-stack-data==0.2.0
+sqlalchemy==1.4.46
+    # via
+    #   datacube
+    #   geoalchemy2
+stack-data==0.6.2
     # via ipython
 tblib==1.7.0
     # via distributed
-terminado==0.13.3
-    # via notebook
-testpath==0.6.0
-    # via nbconvert
 threadpoolctl==3.1.0
     # via scikit-learn
-tifffile==2022.2.9
+tifffile==2023.2.3
     # via scikit-image
 tomli==2.0.1
     # via setuptools-scm
-toolz==0.11.2
+toolz==0.12.0
     # via
     #   dask
     #   datacube
     #   distributed
     #   odc-algo
     #   partd
-tornado==6.1
+tornado==6.2
     # via
     #   distributed
     #   ipykernel
     #   jupyter-client
-    #   jupyter-ui-poll
-    #   notebook
-    #   terminado
-tqdm==4.63.0
+tqdm==4.65.0
     # via
     #   -r requirements.in
     #   dea-tools
-traitlets==5.1.1
+traitlets==5.9.0
     # via
+    #   comm
     #   ipykernel
     #   ipython
     #   ipywidgets
     #   jupyter-client
     #   jupyter-core
     #   matplotlib-inline
-    #   nbclient
-    #   nbconvert
-    #   nbformat
-    #   notebook
     #   traittypes
 traittypes==0.2.1
     # via ipyleaflet
-typing-extensions==4.3.0
+typing-extensions==4.5.0
     # via setuptools-scm
-urllib3==1.26.8
+urllib3==1.26.14
     # via
     #   botocore
+    #   distributed
     #   requests
-wcwidth==0.2.5
+wcwidth==0.2.6
     # via prompt-toolkit
-webencodings==0.5.1
-    # via bleach
-widgetsnbextension==3.5.2
+widgetsnbextension==4.0.5
     # via ipywidgets
-xarray==2022.3.0
+xarray==2023.1.0
     # via
     #   -r requirements.in
     #   datacube
     #   dea-tools
     #   odc-algo
     #   odc-ui
-xyzservices==2022.3.0
+xyzservices==2022.9.0
     # via ipyleaflet
-yarl==1.7.2
+yarl==1.8.2
     # via aiohttp
-zict==2.1.0
+zict==2.2.0
     # via distributed
-zipp==3.7.0
-    # via importlib-resources
+zipp==3.13.0
+    # via
+    #   importlib-metadata
+    #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

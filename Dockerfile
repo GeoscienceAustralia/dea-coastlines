@@ -14,6 +14,8 @@ RUN apt-get update \
     ca-certificates \
     # for pg_isready
     postgresql-client \
+    # Try adding libgeos-dev
+    libgeos-dev \
     # Tidy up
     && apt-get autoclean && \
     apt-get autoremove && \

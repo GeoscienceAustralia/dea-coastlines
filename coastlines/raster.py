@@ -442,9 +442,7 @@ def export_annual_gapfill(
 
     # Iterate through each year in the dataset, starting at one year before
     for year in np.arange(start_year - 2, end_year + 1):
-
         try:
-
             # Load data for the subsequent year; drop tide variable as
             # we do not need to create annual composites from this data
             future_ds = load_tidal_subset(
@@ -454,7 +452,6 @@ def export_annual_gapfill(
             ).drop_vars("tide_m")
 
         except KeyError:
-
             # Create empty array if error is raised due to no data being
             # available for time period
             future_ds = xr.DataArray(
@@ -464,10 +461,13 @@ def export_annual_gapfill(
                 name="mndwi",
             ).to_dataset()
 
+            # Ensure that time uses the correct datetime dtype so we
+            # can combine this empty array with our data data
+            future_ds["time"] = future_ds.time.astype(np.dtype("datetime64[ms]"))
+
         # If the current year var contains data, combine these observations
         # into annual median composites and export GeoTIFFs
         if current_ds:
-
             # Generate composite
             tidal_composite(
                 current_ds,
@@ -481,7 +481,6 @@ def export_annual_gapfill(
         # combine these three years of observations into a single median
         # 3-year gapfill composite
         if previous_ds and current_ds and future_ds:
-
             # Concatenate the three years into one xarray.Dataset
             gapfill_ds = xr.concat([previous_ds, current_ds, future_ds], dim="time")
 
@@ -503,7 +502,15 @@ def export_annual_gapfill(
 
 
 def generate_rasters(
-    dc, config, study_area, raster_version, start_year, end_year, tide_centre, buffer, log=None
+    dc,
+    config,
+    study_area,
+    raster_version,
+    start_year,
+    end_year,
+    tide_centre,
+    buffer,
+    log=None,
 ):
     #####################################
     # Connect to datacube, Dask cluster #
@@ -540,6 +547,7 @@ def generate_rasters(
         "geopolygon": geopoly.buffer(buffer),
         "time": (str(start_year - 1), str(end_year + 1)),
         "dask_chunks": {"time": 1, "x": 2048, "y": 2048},
+        "dataset_maturity": "final",
     }
 
     # Load virtual product
@@ -565,12 +573,11 @@ def generate_rasters(
     # Add  this new data as a new variable in our satellite dataset to allow
     # each satellite pixel to be analysed and filtered/masked based on the
     # tide height at the exact moment of satellite image acquisition.
-    try: 
+    try:
         ds["tide_m"], tides_lowres = pixel_tides(ds, resample=True)
         log.info(f"Study area {study_area}: Finished modelling tide heights")
-        
+
     except FileNotFoundError:
-    
         log.exception(f"Study area {study_area}: Unable to access tide modelling files")
         sys.exit(2)
 
@@ -704,7 +711,6 @@ def generate_rasters_cli(
     aws_unsigned,
     overwrite,
 ):
-
     log = configure_logging(f"Coastlines raster generation for study area {study_area}")
 
     # Test if study area has already been run by checking if run status file exists

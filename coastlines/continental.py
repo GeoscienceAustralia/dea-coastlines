@@ -49,6 +49,7 @@ def wms_fields(gdf):
             wms_grew=gdf.rate_time < 0,
             wms_retr=gdf.rate_time > 0,
             wms_sig=gdf.sig_time <= 0.01,
+            wms_good=gdf.certainty == "good",
         )
     )
 
@@ -177,7 +178,6 @@ def continental_cli(
 
     # Combine annual shorelines into a single continental layer
     if shorelines:
-
         os.system(
             f"ogrmerge.py -o "
             f"{OUTPUT_GPKG} {shoreline_paths} "
@@ -191,7 +191,6 @@ def continental_cli(
 
     # Combine rates of change stats points into single continental layer
     if ratesofchange:
-
         os.system(
             f"ogrmerge.py "
             f"-o {OUTPUT_GPKG} {ratesofchange_paths} "
@@ -205,7 +204,6 @@ def continental_cli(
 
     # If shapefiles are requested, set up file paths
     if shapefiles:
-
         # Output path for zipped shapefiles
         OUTPUT_SHPS = output_dir / f"coastlines_{continental_version}.shp.zip"
 
@@ -223,10 +221,8 @@ def continental_cli(
     # Load merged continental data into memory if either hotspot
     # generation or zipped shapefile exports are required
     if hotspots or shapefiles:
-
         # Load continental shoreline and rates of change data
         try:
-
             # Load continental rates of change data
             ratesofchange_gdf = gpd.read_file(
                 OUTPUT_GPKG, layer="rates_of_change"
@@ -243,7 +239,6 @@ def continental_cli(
             )
 
         except (fiona.errors.DriverError, ValueError):
-
             raise FileNotFoundError(
                 "Continental-scale annual shoreline and rates of "
                 "change layers are required for hotspot generation or "
@@ -258,7 +253,6 @@ def continental_cli(
     # Generate hotspot points that provide regional/continental summary
     # of hotspots of coastal erosion and growth
     if hotspots:
-
         log.info("Generating coastal change hotspots")
 
         ######################
@@ -266,7 +260,6 @@ def continental_cli(
         ######################
 
         for i, radius in enumerate(hotspots_radius):
-
             # Extract hotspot points
             log.info(f"Calculating {radius} m hotspots")
             hotspots_gdf = points_on_line(
@@ -339,7 +332,6 @@ def continental_cli(
 
             # Export hotspots to file, incrementing name for each layer
             try:
-
                 # Export to geopackage
                 layer_name = f"hotspots_zoom_{range(0, 10)[i + 1]}"
                 hotspots_gdf.to_file(
@@ -352,7 +344,6 @@ def continental_cli(
                 )
 
                 if shapefiles:
-
                     # Add additional WMS fields and add to shapefile
                     hotspots_gdf = pd.concat(
                         [hotspots_gdf, wms_fields(gdf=hotspots_gdf)], axis=1
@@ -367,14 +358,12 @@ def continental_cli(
                     )
 
             except ValueError as e:
-
                 log.exception(f"Failed to generate hotspots with error: {e}")
                 sys.exit(1)
 
         log.info("Writing coastal change hotspots complete")
 
     else:
-
         log.info("Not generating coastal change hotspots")
 
     ############################
@@ -382,11 +371,9 @@ def continental_cli(
     ############################
 
     if shapefiles:
-
         log.info("Started writing outputs as zipped ESRI Shapefiles")
 
         if ratesofchange:
-
             # Add rates of change points to shapefile zip
             # Add additional WMS fields and add to shapefile
             ratesofchange_gdf = pd.concat(
@@ -407,7 +394,6 @@ def continental_cli(
             )
 
         if shorelines:
-
             # Add annual shorelines to shapefile zip
             shorelines_gdf.to_file(
                 OUTPUT_SHPS,
@@ -425,13 +411,11 @@ def continental_cli(
     #########################
 
     if include_styles:
-
         styles = gpd.read_file(STYLES_FILE)
         styles.to_file(OUTPUT_GPKG, layer="layer_styles")
         log.info("Writing styles to OGC GeoPackage file complete")
 
     else:
-
         log.info("Not writing styles to OGC GeoPackage")
 
 

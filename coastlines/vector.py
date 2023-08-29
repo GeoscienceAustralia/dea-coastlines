@@ -105,12 +105,10 @@ def load_rasters(
     ds_list = []
 
     for layer_type in [".tif", "_gapfill.tif"]:
-
         # List to hold output DataArrays
         da_list = []
 
         for layer_name in [f"{water_index}", "count", "stdev"]:
-
             # Get paths of files that match pattern
             paths = glob.glob(
                 f"{path}/{raster_version}/"
@@ -282,7 +280,6 @@ def temporal_masking(ds):
     """
 
     def _noncontiguous(labels, intensity):
-
         # For each blob of land, obtain whether it intersected with land in
         # any neighbouring timestep
         region_props = regionprops(labels.values, intensity_image=intensity.values)
@@ -350,7 +347,7 @@ def _create_mask(raster_mask, sieve_size, crs):
         {0: "good", 1: "unstable data", 2: "insufficient data"}
     )
 
-    return (str(raster_mask.year.item()), vector_mask)
+    return (raster_mask.year.item(), vector_mask)
 
 
 def certainty_masking(yearly_ds, obs_threshold=5, stdev_threshold=0.3, sieve_size=128):
@@ -411,7 +408,6 @@ def certainty_masking(yearly_ds, obs_threshold=5, stdev_threshold=0.3, sieve_siz
 
     # Process in parallel
     with ProcessPoolExecutor() as executor:
-
         # Apply func in parallel, repeating params for each iteration
         groups = [group for (i, group) in raster_mask.groupby("year")]
         to_iterate = (
@@ -451,7 +447,6 @@ def contour_certainty(contours_gdf, certainty_masks):
     # Loop through each annual shoreline and attribute data with certainty
     out_list = []
     for year, _ in contours_gdf.iterrows():
-
         # Extract year
         contour_gdf = contours_gdf.loc[[year]]
 
@@ -471,7 +466,7 @@ def contour_certainty(contours_gdf, certainty_masks):
     # Finally, set all 1991 and 1992 coastlines north of -23 degrees
     # latitude to 'uncertain' due to Mt Pinatubo aerosol issue
     pinatubo_lat = (contours_gdf.centroid.to_crs("EPSG:4326").y > -23) & (
-        contours_gdf.index.isin(["1991", "1992"])
+        contours_gdf.index.isin([1991, 1992])
     )
     contours_gdf.loc[pinatubo_lat, "certainty"] = "aerosol issues"
 
@@ -623,7 +618,7 @@ def contours_preprocess(
     except AttributeError:
         ocean_da = odc.geo.xr.xr_zeros(combined_ds.odc.geobox) == 0
     except ValueError:  # Temporary workaround for no geodata access for tests
-        ocean_da = xr.apply_ufunc(binary_erosion, all_time_20==0, disk(20))
+        ocean_da = xr.apply_ufunc(binary_erosion, all_time_20 == 0, disk(20))
 
     # Use all time and Geodata 100K data to produce the buffered coastal
     # study area. The output has values of 0 representing non-coastal
@@ -640,10 +635,8 @@ def contours_preprocess(
     # polygons to add missing areas of shoreline, or remove unwanted
     # areas from the mask.
     if mask_modifications is not None:
-
         # Only proceed if there are polygons available
         if len(mask_modifications.index) > 0:
-
             # Convert type column to integer, with 1 representing pixels
             # to add to the coastal mask (by setting them as "coastal"
             # pixels, and 2 representing pixels to remove from the mask
@@ -797,6 +790,7 @@ def annual_movements(
         points_gs = gpd.GeoSeries(points)
         x_vals = xr.DataArray(points_gs.x, dims="z")
         y_vals = xr.DataArray(points_gs.y, dims="z")
+
         return array.interp(x=x_vals, y=y_vals, **kwargs)
 
     # Get array of water index values for baseline time period
@@ -810,7 +804,6 @@ def annual_movements(
 
     # Iterate through all comparison years in contour gdf
     for comp_year in years:
-
         # Set comparison contour
         comp_contour = contours_gdf.loc[[comp_year]].geometry.iloc[0]
 
@@ -833,9 +826,7 @@ def annual_movements(
         comp_array = yearly_ds[water_index].sel(year=int(comp_year))
 
         # Sample water index values for baseline and comparison points
-        points_gdf["index_comp_p1"] = _point_interp(
-            points_gdf["p_baseline"], comp_array
-        )
+        points_gdf["index_comp_p1"] = _point_interp(points_gdf.geometry, comp_array)
         points_gdf["index_baseline_p2"] = _point_interp(
             points_gdf[f"p_{comp_year}"], baseline_array
         )
@@ -1460,6 +1451,7 @@ def generate_vectors(
         da=masked_ds,
         z_values=index_threshold,
         min_vertices=10,
+        time_format="%Y",
         dim="year",
     ).set_index("year")
 
@@ -1476,12 +1468,10 @@ def generate_vectors(
 
     # Extract statistics modelling points along baseline shoreline
     try:
-
-        points_gdf = points_on_line(contours_gdf, str(baseline_year), distance=30)
+        points_gdf = points_on_line(contours_gdf, baseline_year, distance=30)
         log.info(f"Study area {study_area}: Extracted rates of change points")
 
     except KeyError:
-
         log.warning(
             f"Study area {study_area}: Baseline year {baseline_year} missing from annual shorelines; unable to extract rates of change points"
         )
@@ -1489,14 +1479,13 @@ def generate_vectors(
 
     # If any points exist in the dataset
     if points_gdf is not None and len(points_gdf) > 0:
-
         # Calculate annual coastline movements and residual tide heights
         # for every contour compared to the baseline year
         points_gdf = annual_movements(
             points_gdf,
             contours_gdf,
             yearly_ds,
-            str(baseline_year),
+            baseline_year,
             water_index,
             max_valid_dist=1200,
         )
@@ -1621,7 +1610,6 @@ def generate_vectors(
         )
 
         try:
-
             # Export to GeoJSON
             points_gdf_clipped.to_crs("EPSG:4326").to_file(
                 f"{stats_path}.geojson",
@@ -1638,7 +1626,8 @@ def generate_vectors(
             )
 
         except ValueError:
-            log.warning(f"Study area {study_area}: No vector points data to export after clipping to study area extent"
+            log.warning(
+                f"Study area {study_area}: No vector points data to export after clipping to study area extent"
             )
 
     else:
@@ -1669,7 +1658,6 @@ def generate_vectors(
     contours_gdf_clipped = contours_gdf.clip(gridcell_gdf)
 
     try:
-
         # Export to GeoJSON
         contours_gdf_clipped.to_crs("EPSG:4326").to_file(
             f"{contour_path}.geojson", driver="GeoJSON"
@@ -1794,7 +1782,6 @@ def generate_vectors_cli(
     aws_unsigned,
     overwrite,
 ):
-
     log = configure_logging(f"Coastlines vector generation for study area {study_area}")
 
     # If no vector version is provided, copy raster version
