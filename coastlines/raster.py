@@ -463,7 +463,7 @@ def export_annual_gapfill(
 
             # Ensure that time uses the correct datetime dtype so we
             # can combine this empty array with our data data
-            future_ds["time"] = future_ds.time.astype(np.dtype("datetime64[ms]"))
+            future_ds["time"] = future_ds.time.astype(np.dtype("datetime64[ns]"))
 
         # If the current year var contains data, combine these observations
         # into annual median composites and export GeoTIFFs

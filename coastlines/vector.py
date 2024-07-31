@@ -129,7 +129,7 @@ def load_rasters(
             time_var = xr.Variable("year", [int(i.split("/")[-1][0:4]) for i in paths])
 
             # Import data
-            layer_da = xr.concat([xr.open_rasterio(i) for i in paths], dim=time_var)
+            layer_da = xr.concat([xr.open_dataset(i, engine="rasterio").band_data for i in paths], dim=time_var)
             layer_da.name = f"{layer_name}"
 
             # Append to file
