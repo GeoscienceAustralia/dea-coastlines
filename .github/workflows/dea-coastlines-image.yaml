@@ -109,7 +109,7 @@ jobs:
         continue-on-error: true
         with:
           commit_message: Automatically update integration test validation results
-          file_pattern: 'tests/validation.jpg tests/validation.csv tests/README.md'
+          file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
 
       # Post validation tesults as comment on PR
       - name: Post validation results as comment
@@ -117,9 +117,9 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           message: |
-            ![](https://github.com/GeoscienceAustralia/dea-intertidal/blob/${{ github.head_ref }}/tests/validation.jpg?raw=true")
+            ![](https://github.com/GeoscienceAustralia/dea-coastlines/blob/${{ github.head_ref }}/tests/stats_tests.png?raw=true")
             
-            For full integration test results, refer to the [Tests directory README](https://github.com/GeoscienceAustralia/dea-intertidal/tree/${{ github.head_ref }}/tests).
+            For full integration test results, refer to the [Tests directory README](https://github.com/GeoscienceAustralia/dea-coastlines/tree/${{ github.head_ref }}/tests).
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
