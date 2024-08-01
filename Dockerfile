@@ -1,57 +1,48 @@
-FROM osgeo/gdal:ubuntu-small-3.4.1 as base
+# Base image with:
+# - Ubuntu 22.04
+# - Python 3.10.12
+# - GDAL 3.7.3, released 2023/10/30
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.7.3
 
-ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ENV DEBIAN_FRONTEND=noninteractive \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
 
-RUN apt-get update \
-    && apt-get install -y \
-    # Build tools
-    build-essential \
-    git \
-    python3-pip \
-    # For Psycopg2
-    libpq-dev python3-dev \
-    # For SSL
-    ca-certificates \
-    # for pg_isready
-    postgresql-client \
-    # Try adding libgeos-dev
-    libgeos-dev \
-    # Tidy up
+# Apt installation
+RUN apt-get update && \
+    apt-get install -y \
+      build-essential \
+      fish \
+      git \
+      vim \
+      htop \
+      wget \
+      unzip \
+      python3-pip \
+      libpq-dev \
     && apt-get autoclean && \
     apt-get autoremove && \
     rm -rf /var/lib/{apt,dpkg,cache,log}
 
+# Install pip-tools
+RUN pip install pip-tools
 
-# Environment can be whatever is supported by setup.py
-# so, either deployment, test
-ARG ENVIRONMENT=deployment
-# ARG ENVIRONMENT=test
+# Pip installation
+RUN mkdir -p /conf
+COPY requirements.txt /conf/
+RUN pip install -r /conf/requirements.txt \
+    && pip install --no-cache-dir awscli
 
-RUN echo "Environment is: $ENVIRONMENT"
+# Copy source code and install it
+RUN mkdir -p /code
+WORKDIR /code
+ADD . /code
 
-COPY requirements.txt /tmp/
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r /tmp/requirements.txt \
-    --no-binary rasterio \
-    --no-binary shapely \
-    --no-binary fiona \
-    # Extras
-    && pip install --no-cache-dir awscli requests
+RUN echo "Installing dea-coastlines through the Dockerfile."
+RUN pip install --extra-index-url="https://packages.dea.ga.gov.au" .
 
-# Set up a nice workdir and add the live code
-ENV APPDIR=/code
-RUN mkdir -p $APPDIR
-WORKDIR $APPDIR
-ADD . $APPDIR
+RUN pip freeze && pip check
 
-RUN if [ "$ENVIRONMENT" = "deployment" ] ; then\
-        pip install .[$ENVIRONMENT] ; \
-    else \
-        pip install --editable .[$ENVIRONMENT] ; \
-    fi
-
-
-CMD ["python", "--version"]
-
-RUN  deacoastlines-raster --help \
+# Make sure it's working
+RUN deacoastlines-raster --help \
   && deacoastlines-vector --help
