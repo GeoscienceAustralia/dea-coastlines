@@ -6,6 +6,7 @@ from coastlines.continental import continental_cli
 from coastlines.validation import validation_cli
 
 import os
+import json
 os.environ['CLICK_DEBUG'] = '1'
 
 @pytest.mark.dependency()
