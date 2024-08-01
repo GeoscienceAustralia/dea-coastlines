@@ -5,6 +5,9 @@ from coastlines.vector import generate_vectors_cli
 from coastlines.continental import continental_cli
 from coastlines.validation import validation_cli
 
+import os
+os.environ['CLICK_DEBUG'] = '1'
+
 @pytest.mark.dependency()
 def test_generate_rasters_cli():
     runner = CliRunner()
@@ -73,7 +76,7 @@ def test_generate_continental_cli():
     assert result.exit_code == 0
 
 @pytest.mark.dependency(depends=["test_generate_continental_cli"])
-def test_validation_cli():
+def test_validation_cli(capsys):
     runner = CliRunner()
     result = runner.invoke(
         validation_cli,
@@ -90,5 +93,12 @@ def test_validation_cli():
             "True",
         ],
     )
-    # assert result.output == '' # for debugging
-    assert result.exit_code == 0  
+
+    print("CLI Output:")
+    print(result.output)
+
+    captured = capsys.readouterr()
+    print("Stdout:", captured.out)
+    print("Stderr:", captured.err)
+
+    assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Exception:\n{result.exception}"  
