@@ -94,11 +94,15 @@ def test_validation_cli(capsys):
         ],
     )
 
-    print("CLI Output:")
-    print(result.output)
-
-    captured = capsys.readouterr()
-    print("Stdout:", captured.out)
-    print("Stderr:", captured.err)
-
-    assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Exception:\n{result.exception}"  
+    # Prepare detailed error information
+    error_info = {
+        "exit_code": result.exit_code,
+        "output": result.output,
+        "exception": str(result.exception) if result.exception else None,
+    }
+    
+    # Convert error_info to a formatted string
+    error_details = json.dumps(error_info, indent=2)
+    
+    # Use the detailed error information in the assertion message
+    assert result.exit_code == 0, f"Command failed. Error details:\n{error_details}"  
