@@ -12,3 +12,4 @@
 !**.github
 !*.md
 !tests/*.png
+!tests/*.csv
