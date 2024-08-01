@@ -100,7 +100,7 @@ jobs:
 
           ls -l .
           ls -l ./data/validation/processed/
-          ls -l .tests/
+          ls -l ./tests/
           git status
 
       # Commit validation results produced by integration tests back into repo
