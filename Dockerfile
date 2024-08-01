@@ -61,8 +61,6 @@ RUN mkdir -p /code
 WORKDIR /code
 ADD . /code
 
-ARG ENVIRONMENT=test
-
 RUN echo "Installing dea-coastlines through the Dockerfile."
 RUN pip install --extra-index-url="https://packages.dea.ga.gov.au" .
 
