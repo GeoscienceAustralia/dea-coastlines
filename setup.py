@@ -6,16 +6,6 @@ from setuptools import find_packages, setup
 # Where are we?
 IS_SANDBOX = "sandbox" in os.getenv("JUPYTER_IMAGE", default="")
 
-tests_require = [
-    "pytest",
-    "pytest-dependency",
-    "pytest-cov",
-]
-
-extras = {
-    'test': tests_require,
-}
-
 # What packages are required for this module to be executed?
 REQUIRED = [
     "aiohttp",
@@ -35,6 +25,9 @@ REQUIRED = [
     "pandas",
     "pygeos",
     "pyproj",
+    "pytest",
+    "pytest-dependency",
+    "pytest-cov",
     "pyTMD",
     "python_geohash",
     "pytz",
@@ -68,8 +61,6 @@ setup_kwargs = {
     "python_requires": REQUIRES_PYTHON,
     "url": URL,
     "install_requires": REQUIRED if not IS_SANDBOX else [],
-    "tests_require": tests_require,
-    "extras_require": extras,
     "packages": find_packages(),
     "include_package_data": True,
     "license": "Apache License 2.0",

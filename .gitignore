@@ -11,4 +11,6 @@
 !*.sql
 !**.github
 !*.md
+!requirements.txt
 !tests/*.png
+!tests/*.csv
