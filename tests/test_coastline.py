@@ -76,7 +76,7 @@ def test_generate_continental_cli():
     assert result.exit_code == 0
 
 @pytest.mark.dependency(depends=["test_generate_continental_cli"])
-def test_validation_cli():
+def test_validation_cli(capsys):
     runner = CliRunner()
     result = runner.invoke(
         validation_cli,
