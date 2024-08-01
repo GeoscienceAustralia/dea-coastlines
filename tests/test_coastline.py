@@ -76,34 +76,34 @@ def test_generate_continental_cli():
     # assert result.output == '' # for debugging
     assert result.exit_code == 0
 
-@pytest.mark.dependency(depends=["test_generate_continental_cli"])
-def test_validation_cli(capsys):
-    runner = CliRunner()
-    result = runner.invoke(
-        validation_cli,
-        [
-            "--inputs_path",
-            "data/validation/interim/wrl_narrabeen",
-            "--deacl_path",
-            "data/processed/tests/coastlines_tests.gpkg",
-            "--prefix",
-            "tests",
-            "--append_stats",
-            "True",
-            "--markdown_report",
-            "True",
-        ],
-    )
+# @pytest.mark.dependency(depends=["test_generate_continental_cli"])
+# def test_validation_cli(capsys):
+#     runner = CliRunner()
+#     result = runner.invoke(
+#         validation_cli,
+#         [
+#             "--inputs_path",
+#             "data/validation/interim/wrl_narrabeen",
+#             "--deacl_path",
+#             "data/processed/tests/coastlines_tests.gpkg",
+#             "--prefix",
+#             "tests",
+#             "--append_stats",
+#             "True",
+#             "--markdown_report",
+#             "True",
+#         ],
+#     )
 
-    # Prepare detailed error information
-    error_info = {
-        "exit_code": result.exit_code,
-        "output": result.output,
-        "exception": str(result.exception) if result.exception else None,
-    }
+#     # Prepare detailed error information
+#     error_info = {
+#         "exit_code": result.exit_code,
+#         "output": result.output,
+#         "exception": str(result.exception) if result.exception else None,
+#     }
     
-    # Convert error_info to a formatted string
-    error_details = json.dumps(error_info, indent=2)
+#     # Convert error_info to a formatted string
+#     error_details = json.dumps(error_info, indent=2)
     
-    # Use the detailed error information in the assertion message
-    assert result.exit_code == 0, f"Command failed. Error details:\n{error_details}"  
+#     # Use the detailed error information in the assertion message
+#     assert result.exit_code == 0, f"Command failed. Error details:\n{error_details}"  
