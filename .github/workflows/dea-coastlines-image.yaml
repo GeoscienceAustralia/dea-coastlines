@@ -72,3 +72,32 @@ jobs:
           npx wait-on --timeout 120000 --interval 1000 tcp:127.0.0.1:5432
           echo "PGPORT=5432" >> $GITHUB_ENV
           echo "PGHOST=localhost" >> $GITHUB_ENV
+
+      # - name: Build DEA Coastlines docker image 
+      #   timeout-minutes: 30
+      #   shell: bash
+      #   run: |
+      #     docker build -t dea_coastlines .
+
+      # - name: Run integration tests
+      #   run: |
+      #     # Download tide modelling files and unzip
+      #     # TODO: Replace with S3 sync from dea-non-public-data
+      #     wget --no-verbose https://www.dropbox.com/s/uemd8ib2vfw5nad/tide_models.zip?dl=1 -O tide_models.zip
+      #     unzip -q tide_models.zip
+
+      #     # Run integration tests using Docker, setting up datacube access, AWS configuration and
+      #     # adding volumes that provide access to tide model data and allow us to export artifacts
+      #     # from the run
+      #     docker run \
+      #       --net=host \
+      #       --env DATACUBE_DB_URL \
+      #       --env AWS_SESSION_TOKEN \
+      #       --env AWS_REGION \
+      #       --env AWS_ACCESS_KEY_ID \
+      #       --env AWS_SECRET_ACCESS_KEY \
+      #       --env AWS_SESSION_TOKEN \
+      #       --volume ${GITHUB_WORKSPACE}:/code \
+      #       --volume ${GITHUB_WORKSPACE}/tide_models:/var/share/tide_models \
+      #       --volume ${GITHUB_WORKSPACE}/artifacts:/mnt/artifacts \
+      #       dea_coastlines pytest -v --cov=coastlines --cov-report=xml tests
