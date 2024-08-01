@@ -98,41 +98,30 @@ jobs:
             --volume ${GITHUB_WORKSPACE}/tide_models:/var/share/tide_models \
             dea_coastlines pytest -v --cov=coastlines --cov-report=xml tests
 
+          ls -l .
           ls -l ./data/validation/processed/
+          git status
 
-      # - name: Run integration tests
-      #   run: |
-      #     # Download tide modelling files and unzip
-      #     # TODO: Replace with S3 sync from dea-non-public-data
-      #     wget --no-verbose https://www.dropbox.com/s/uemd8ib2vfw5nad/tide_models.zip?dl=1 -O tide_models.zip
-      #     unzip -q tide_models.zip
+      # Commit validation results produced by integration tests back into repo
+      - name: Commit validation results into repository
+        uses: stefanzweifel/git-auto-commit-action@v4
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        with:
+          commit_message: Automatically update integration test validation results
+          file_pattern: 'tests/validation.jpg tests/validation.csv tests/README.md'
 
-      #     # Run integration tests using Docker, setting up datacube access, AWS configuration and
-      #     # adding volumes that provide access to tide model data and allow us to export artifacts
-      #     # from the run
-      #     docker run \
-      #       --net=host \
-      #       --env DATACUBE_DB_URL \
-      #       --env AWS_SESSION_TOKEN \
-      #       --env AWS_REGION \
-      #       --env AWS_ACCESS_KEY_ID \
-      #       --env AWS_SECRET_ACCESS_KEY \
-      #       --env AWS_SESSION_TOKEN \
-      #       --volume ${GITHUB_WORKSPACE}:/code \
-      #       --volume ${GITHUB_WORKSPACE}/tide_models:/var/share/tide_models \
-      #       --volume ${GITHUB_WORKSPACE}/artifacts:/mnt/artifacts \
-      #       dea_coastlines sh -c "
-      #         pytest -v --cov=coastlines --cov-report=xml tests &&
-      #         cp coverage.xml /mnt/artifacts/ &&
-      #         cp data/processed/tests/coastlines_tests.gpkg /mnt/artifacts/coastlines_tests.gpkg &&
-      #         cp data/processed/tests/coastlines_tests.shp.zip /mnt/artifacts/coastlines_tests.shp.zip &&
-      #         cp data/validation/processed/stats_tests.png /mnt/artifacts/stats_tests.png &&
-      #         cp data/validation/processed/stats_tests.csv /mnt/artifacts/stats_tests.csv &&
-      #         cp tests/README.md /mnt/artifacts/README.md
-      #       "
+      # Post validation tesults as comment on PR
+      - name: Post validation results as comment
+        uses: mshick/add-pr-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          message: |
+            ![](https://github.com/GeoscienceAustralia/dea-intertidal/blob/${{ github.head_ref }}/tests/validation.jpg?raw=true")
+            
+            For full integration test results, refer to the [Tests directory README](https://github.com/GeoscienceAustralia/dea-intertidal/tree/${{ github.head_ref }}/tests).
 
-      #     # # Copy out validation outputs produced by integration tests and place them in
-      #     # # correct locations on the Github runner so they can be committed back into repo
-      #     # cp ./artifacts/stats_tests.png ./data/validation/processed/stats_tests.png
-      #     # cp ./artifacts/stats_tests.csv ./data/validation/processed/stats_tests.csv
-      #     # cp ./artifacts/README.md ./tests/README.md
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
