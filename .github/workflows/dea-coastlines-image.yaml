@@ -110,8 +110,8 @@ jobs:
               cp tests/README.md /mnt/artifacts/README.md
             "
 
-          # Copy out validation outputs produced by the integration tests and place them
-          # in correct output locations so they can be committed back into the repository
-          cp ./artifacts/validation.jpg ./tests/validation.jpg
-          cp ./artifacts/validation.csv ./tests/validation.csv
+          # Copy out validation outputs produced by integration tests and place them in
+          # correct locations on the Github runner so they can be committed back into repo
+          cp ./artifacts/stats_tests.png ./data/validation/processed/stats_tests.png
+          cp ./artifacts/stats_tests.csv ./data/validation/processed/stats_tests.csv
           cp ./artifacts/README.md ./tests/README.md
