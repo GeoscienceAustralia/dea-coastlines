@@ -14,12 +14,13 @@ on:
       - '.github/workflows/dea-coastlines-image.yml'
       - 'Dockerfile'
       - 'requirements.in'
+      - 'requirements.txt'
       - 'setup.py'
       - 'codecov.yaml'
 
   pull_request:
     branches:
-      - main
+      - develop
     paths:
       - 'coastlines/**'
       - 'data/**'
@@ -27,6 +28,7 @@ on:
       - '.github/workflows/dea-coastlines-image.yml'
       - 'Dockerfile'
       - 'requirements.in'
+      - 'requirements.txt'
       - 'setup.py'
       - 'codecov.yaml'
 
