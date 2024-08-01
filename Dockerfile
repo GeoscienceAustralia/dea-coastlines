@@ -1,25 +1,49 @@
-# Base image with:
-# - Ubuntu 22.04
-# - Python 3.10.12
-# - GDAL 3.7.3, released 2023/10/30
-FROM ghcr.io/osgeo/gdal:ubuntu-small-3.7.3
+# # Base image with:
+# # - Ubuntu 22.04
+# # - Python 3.10.12
+# # - GDAL 3.7.3, released 2023/10/30
+# FROM ghcr.io/osgeo/gdal:ubuntu-small-3.7.3
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    LC_ALL=C.UTF-8 \
-    LANG=C.UTF-8
+# ENV DEBIAN_FRONTEND=noninteractive \
+#     LC_ALL=C.UTF-8 \
+#     LANG=C.UTF-8
 
-# Apt installation
-RUN apt-get update && \
-    apt-get install -y \
-      build-essential \
-      fish \
-      git \
-      vim \
-      htop \
-      wget \
-      unzip \
-      python3-pip \
-      libpq-dev \
+# # Apt installation
+# RUN apt-get update && \
+#     apt-get install -y \
+#       build-essential \
+#       fish \
+#       git \
+#       vim \
+#       htop \
+#       wget \
+#       unzip \
+#       python3-pip \
+#       libpq-dev \
+#     && apt-get autoclean && \
+#     apt-get autoremove && \
+#     rm -rf /var/lib/{apt,dpkg,cache,log}
+
+
+FROM osgeo/gdal:ubuntu-small-3.4.1 as base
+
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+RUN apt-get update \
+    && apt-get install -y \
+    # Build tools
+    build-essential \
+    git \
+    python3-pip \
+    # For Psycopg2
+    libpq-dev python3-dev \
+    # For SSL
+    ca-certificates \
+    # for pg_isready
+    postgresql-client \
+    # Try adding libgeos-dev
+    libgeos-dev \
+    # Tidy up
     && apt-get autoclean && \
     apt-get autoremove && \
     rm -rf /var/lib/{apt,dpkg,cache,log}
