@@ -100,6 +100,7 @@ jobs:
 
           ls -l .
           ls -l ./data/validation/processed/
+          ls -l .tests/
           git status
 
       # Commit validation results produced by integration tests back into repo
@@ -109,7 +110,7 @@ jobs:
         continue-on-error: true
         with:
           commit_message: Automatically update integration test validation results
-          file_pattern: 'tests/stats_tests.png data/validation/processed/stats_tests.csv tests/README.md'
+          file_pattern: 'tests/stats_tests.png tests/stats_tests.csv tests/README.md'
 
       # Post validation tesults as comment on PR
       - name: Post validation results as comment

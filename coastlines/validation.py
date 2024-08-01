@@ -2565,7 +2565,7 @@ def validation_cli(
     # Transpose and add index time and prefix name
     stats_df = pd.DataFrame({pd.to_datetime("now"): stats_df}).T.assign(name=prefix)
     stats_df.index.name = "time"
-    filename = f"data/validation/processed/stats_{prefix}.csv"
+    filename = f"tests/stats_{prefix}.csv"
 
     if append_stats:
         stats_df.to_csv(
@@ -2647,7 +2647,8 @@ def validation_cli(
         )
 
     # Export plot to file
-    plt.savefig(f"data/validation/processed/stats_{prefix}.png", bbox_inches="tight")
+    # plt.savefig(f"data/validation/processed/stats_{prefix}.png", bbox_inches="tight")
+    plt.savefig(f"tests/stats_{prefix}.png", bbox_inches="tight")
 
     # Create markdown file containing report on latest integration test run
     if markdown_report:
