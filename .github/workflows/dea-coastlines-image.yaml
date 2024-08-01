@@ -100,12 +100,6 @@ jobs:
 
           ls -l ./data/validation/processed/
 
-          # # Copy files directly from the container to the correct locations
-          # docker cp $(docker ps -lq):/code/data/validation/processed/stats_tests.png ./data/validation/processed/stats_tests.png
-          # docker cp $(docker ps -lq):/code/data/validation/processed/stats_tests.csv ./data/validation/processed/stats_tests.csv
-          # docker cp $(docker ps -lq):/code/tests/README.md ./tests/README.md
-
-
       # - name: Run integration tests
       #   run: |
       #     # Download tide modelling files and unzip
