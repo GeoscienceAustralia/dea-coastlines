@@ -139,9 +139,6 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
 
-    # Only run on a push to the develop branch OR a release
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'release')
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -168,8 +165,8 @@ jobs:
       - name: Get git commit hash to name unstable image
         if: github.event_name != 'release'
         run: |
-          echo "TAG=dev$(git rev-parse --short HEAD)" \
-          >> $GITHUB_ENV
+          git fetch --all --tags
+          echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
 
       - name: Push unstable image to ECR
         uses: whoan/docker-build-with-cache-action@master
@@ -177,4 +174,4 @@ jobs:
         with:
           registry: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
           image_name: ${{ env.IMAGE_NAME }}
-          image_tag: latest,${{ env.TAG }}
+          image_tag: latest,${{ env.RELEASE }}
