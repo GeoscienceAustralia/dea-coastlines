@@ -431,9 +431,11 @@ def coastal_transects(
 
     # Reverse transects so all point away from land
     transect_gdf["geometry"] = transect_gdf.apply(
-        lambda i: LineString([i.geometry.coords[1], i.geometry.coords[0]])
-        if i.p1 < i.p2
-        else i.geometry,
+        lambda i: (
+            LineString([i.geometry.coords[1], i.geometry.coords[0]])
+            if i.p1 < i.p2
+            else i.geometry
+        ),
         axis=1,
     )
 
@@ -2663,15 +2665,15 @@ def validation_cli(
         recent_diff.loc["corr"] = -recent_diff.loc[
             "corr"
         ]  # Invert as higher corrs are good
-        recent_diff.loc[
-            recent_diff["diff"] < 0, "prefix"
-        ] = ":heavy_check_mark: improved by "
-        recent_diff.loc[
-            recent_diff["diff"] == 0, "prefix"
-        ] = ":heavy_minus_sign: no change"
-        recent_diff.loc[
-            recent_diff["diff"] > 0, "prefix"
-        ] = ":heavy_exclamation_mark: worsened by "
+        recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = (
+            ":heavy_check_mark: improved by "
+        )
+        recent_diff.loc[recent_diff["diff"] == 0, "prefix"] = (
+            ":heavy_minus_sign: no change"
+        )
+        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = (
+            ":heavy_exclamation_mark: worsened by "
+        )
         recent_diff["suffix"] = recent_diff["diff"].abs().round(3).replace({0: ""})
         recent_diff = (
             recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str).str[0:5]
