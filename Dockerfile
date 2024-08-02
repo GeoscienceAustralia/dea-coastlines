@@ -30,7 +30,8 @@ RUN pip install pip-tools
 # Pip installation
 RUN mkdir -p /conf
 COPY requirements.txt /conf/
-RUN pip install -r /conf/requirements.txt
+RUN pip install -r /conf/requirements.txt \
+    && pip install --no-cache-dir awscli
 
 # Copy source code and install it
 RUN mkdir -p /code
