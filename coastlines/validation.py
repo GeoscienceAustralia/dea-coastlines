@@ -431,9 +431,11 @@ def coastal_transects(
 
     # Reverse transects so all point away from land
     transect_gdf["geometry"] = transect_gdf.apply(
-        lambda i: LineString([i.geometry.coords[1], i.geometry.coords[0]])
-        if i.p1 < i.p2
-        else i.geometry,
+        lambda i: (
+            LineString([i.geometry.coords[1], i.geometry.coords[0]])
+            if i.p1 < i.p2
+            else i.geometry
+        ),
         axis=1,
     )
 
@@ -2295,7 +2297,7 @@ def deacl_validation(
                 lambda x: pd.Series.mode(x).iloc[0]
             )
             count_vals = val_df.groupby(["year", "id"]).year.count().rename("n")
-            median_vals = val_df.groupby(["year", "id"]).median()
+            median_vals = val_df.groupby(["year", "id"]).median(numeric_only=True)
 
             # Combine all aggregated stats into one dataframe
             val_df = pd.concat(
@@ -2565,7 +2567,7 @@ def validation_cli(
     # Transpose and add index time and prefix name
     stats_df = pd.DataFrame({pd.to_datetime("now"): stats_df}).T.assign(name=prefix)
     stats_df.index.name = "time"
-    filename = f"data/validation/processed/stats_{prefix}.csv"
+    filename = f"tests/stats_{prefix}.csv"
 
     if append_stats:
         stats_df.to_csv(
@@ -2647,7 +2649,8 @@ def validation_cli(
         )
 
     # Export plot to file
-    plt.savefig(f"data/validation/processed/stats_{prefix}.png", bbox_inches="tight")
+    # plt.savefig(f"data/validation/processed/stats_{prefix}.png", bbox_inches="tight")
+    plt.savefig(f"tests/stats_{prefix}.png", bbox_inches="tight")
 
     # Create markdown file containing report on latest integration test run
     if markdown_report:
@@ -2662,15 +2665,15 @@ def validation_cli(
         recent_diff.loc["corr"] = -recent_diff.loc[
             "corr"
         ]  # Invert as higher corrs are good
-        recent_diff.loc[
-            recent_diff["diff"] < 0, "prefix"
-        ] = ":heavy_check_mark: improved by "
-        recent_diff.loc[
-            recent_diff["diff"] == 0, "prefix"
-        ] = ":heavy_minus_sign: no change"
-        recent_diff.loc[
-            recent_diff["diff"] > 0, "prefix"
-        ] = ":heavy_exclamation_mark: worsened by "
+        recent_diff.loc[recent_diff["diff"] < 0, "prefix"] = (
+            ":heavy_check_mark: improved by "
+        )
+        recent_diff.loc[recent_diff["diff"] == 0, "prefix"] = (
+            ":heavy_minus_sign: no change"
+        )
+        recent_diff.loc[recent_diff["diff"] > 0, "prefix"] = (
+            ":heavy_exclamation_mark: worsened by "
+        )
         recent_diff["suffix"] = recent_diff["diff"].abs().round(3).replace({0: ""})
         recent_diff = (
             recent_diff.prefix.astype(str) + recent_diff.suffix.astype(str).str[0:5]
@@ -2698,10 +2701,10 @@ def validation_cli(
             f"Compared to the previous run, it had an:"
         )
         items = [
-            f"RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ({recent_diff.rmse})**",
-            f"MAE accuracy of **{stats_df.mae[-1]:.2f} m ({recent_diff.mae})**",
-            f"Bias of **{stats_df['bias'][-1]:.2f} m ({recent_diff['bias']})**",
-            f"Pearson correlation of **{stats_df['corr'][-1]:.3f} ({recent_diff['corr']})**",
+            f"RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ( {recent_diff.rmse})**",
+            f"MAE accuracy of **{stats_df.mae[-1]:.2f} m ( {recent_diff.mae})**",
+            f"Bias of **{stats_df['bias'][-1]:.2f} m ( {recent_diff['bias']})**",
+            f"Pearson correlation of **{stats_df['corr'][-1]:.3f} ( {recent_diff['corr']})**",
         ]
         mdFile.new_list(items=items)
         mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="950"))

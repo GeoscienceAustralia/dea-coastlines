@@ -129,7 +129,10 @@ def load_rasters(
             time_var = xr.Variable("year", [int(i.split("/")[-1][0:4]) for i in paths])
 
             # Import data
-            layer_da = xr.concat([xr.open_rasterio(i) for i in paths], dim=time_var)
+            layer_da = xr.concat(
+                [xr.open_dataset(i, engine="rasterio").band_data for i in paths],
+                dim=time_var,
+            )
             layer_da.name = f"{layer_name}"
 
             # Append to file
@@ -1096,9 +1099,9 @@ def calculate_regressions(points_gdf):
         ),
         axis=1,
     )
-    points_gdf[
-        ["rate_time", "incpt_time", "sig_time", "se_time", "outl_time"]
-    ] = rate_out
+    points_gdf[["rate_time", "incpt_time", "sig_time", "se_time", "outl_time"]] = (
+        rate_out
+    )
 
     # Copy slope and intercept into points_subset so they can be
     # used to temporally de-trend annual distances
@@ -1564,20 +1567,20 @@ def generate_vectors(
         ] = "likely rocky coastline"
 
         # Flag extreme rates of change
-        points_gdf.loc[
-            points_gdf.rate_time.abs() > 50, "certainty"
-        ] = "extreme value (> 50 m)"
+        points_gdf.loc[points_gdf.rate_time.abs() > 50, "certainty"] = (
+            "extreme value (> 50 m)"
+        )
 
         # Flag points where change does not fall on a line
-        points_gdf.loc[
-            points_gdf.angle_std > 30, "certainty"
-        ] = "high angular variability"
+        points_gdf.loc[points_gdf.angle_std > 30, "certainty"] = (
+            "high angular variability"
+        )
 
         # Flag shorelines with less than X valid shorelines
         valid_obs_thresh = int(points_gdf.columns.str.contains("dist_").sum() * 0.75)
-        points_gdf.loc[
-            points_gdf.valid_obs < valid_obs_thresh, "certainty"
-        ] = "insufficient observations"
+        points_gdf.loc[points_gdf.valid_obs < valid_obs_thresh, "certainty"] = (
+            "insufficient observations"
+        )
 
         log.info(f"Study area {study_area}: Calculated rate of change certainty flags")
 
