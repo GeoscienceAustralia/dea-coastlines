@@ -2699,10 +2699,10 @@ def validation_cli(
             f"Compared to the previous run, it had an:"
         )
         items = [
-            f"RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ({recent_diff.rmse})**",
-            f"MAE accuracy of **{stats_df.mae[-1]:.2f} m ({recent_diff.mae})**",
-            f"Bias of **{stats_df['bias'][-1]:.2f} m ({recent_diff['bias']})**",
-            f"Pearson correlation of **{stats_df['corr'][-1]:.3f} ({recent_diff['corr']})**",
+            f"RMSE accuracy of **{stats_df.rmse[-1]:.2f} m ( {recent_diff.rmse})**",
+            f"MAE accuracy of **{stats_df.mae[-1]:.2f} m ( {recent_diff.mae})**",
+            f"Bias of **{stats_df['bias'][-1]:.2f} m ( {recent_diff['bias']})**",
+            f"Pearson correlation of **{stats_df['corr'][-1]:.3f} ( {recent_diff['corr']})**",
         ]
         mdFile.new_list(items=items)
         mdFile.new_paragraph(Html.image(path=f"stats_tests.png", size="950"))
