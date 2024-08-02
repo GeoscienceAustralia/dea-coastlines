@@ -2295,7 +2295,7 @@ def deacl_validation(
                 lambda x: pd.Series.mode(x).iloc[0]
             )
             count_vals = val_df.groupby(["year", "id"]).year.count().rename("n")
-            median_vals = val_df.groupby(["year", "id"]).median()
+            median_vals = val_df.groupby(["year", "id"]).median(numeric_only=True)
 
             # Combine all aggregated stats into one dataframe
             val_df = pd.concat(

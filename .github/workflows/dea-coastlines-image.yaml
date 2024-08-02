@@ -98,31 +98,26 @@ jobs:
             --volume ${GITHUB_WORKSPACE}/tide_models:/var/share/tide_models \
             dea_coastlines pytest -v --cov=coastlines --cov-report=xml tests
 
-          ls -l .
-          ls -l ./data/validation/processed/
-          ls -l ./tests/
-          git status
+      # Commit validation results produced by integration tests back into repo
+      - name: Commit validation results into repository
+        uses: stefanzweifel/git-auto-commit-action@v4
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        with:
+          commit_message: Automatically update integration test validation results
+          file_pattern: 'tests/stats_tests.png tests/stats_tests.csv tests/README.md'
 
-      # # Commit validation results produced by integration tests back into repo
-      # - name: Commit validation results into repository
-      #   uses: stefanzweifel/git-auto-commit-action@v4
-      #   if: github.event_name == 'pull_request'
-      #   continue-on-error: true
-      #   with:
-      #     commit_message: Automatically update integration test validation results
-      #     file_pattern: 'tests/stats_tests.png tests/stats_tests.csv tests/README.md'
-
-      # # Post validation tesults as comment on PR
-      # - name: Post validation results as comment
-      #   uses: mshick/add-pr-comment@v2
-      #   if: github.event_name == 'pull_request'
-      #   with:
-      #     message: |
-      #       ![](https://github.com/GeoscienceAustralia/dea-coastlines/blob/${{ github.head_ref }}/tests/stats_tests.png?raw=true")
+      # Post validation tesults as comment on PR
+      - name: Post validation results as comment
+        uses: mshick/add-pr-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          message: |
+            ![](https://github.com/GeoscienceAustralia/dea-coastlines/blob/${{ github.head_ref }}/tests/stats_tests.png?raw=true")
             
-      #       For full integration test results, refer to the [Tests directory README](https://github.com/GeoscienceAustralia/dea-coastlines/tree/${{ github.head_ref }}/tests).
+            For full integration test results, refer to the [Tests directory README](https://github.com/GeoscienceAustralia/dea-coastlines/tree/${{ github.head_ref }}/tests).
 
-      # - name: Upload coverage reports to Codecov
-      #   uses: codecov/codecov-action@v3
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
