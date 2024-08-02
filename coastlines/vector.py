@@ -11,8 +11,6 @@
 #     * Compute rates of coastal change at every 30 m of coastline
 #       using linear regression
 
-# Test tests
-
 import glob
 import os
 import sys
