@@ -139,8 +139,8 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
 
-    # Only run on a push to the main branch OR a release
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'release')
+    # Only run on a push to the develop branch OR a release
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'release')
 
     steps:
       - name: Checkout code
@@ -165,7 +165,7 @@ jobs:
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: ${{ env.RELEASE }}
 
-      - name: Get git commit hash for push to main
+      - name: Get git commit hash to name unstable image
         if: github.event_name != 'release'
         run: |
           echo "TAG=dev$(git rev-parse --short HEAD)" \
