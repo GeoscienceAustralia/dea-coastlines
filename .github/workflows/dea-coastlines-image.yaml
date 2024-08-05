@@ -146,35 +146,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # If action is triggered by a release, push image to
+      # Dockerhub using custom image tag extracted from the release
+      - name: Get current version tag from release to use as image tag
+        if: github.event_name == 'release'
+        run: |
+          echo "RELEASE=${GITHUB_REF/refs\/tags\/}" >> $GITHUB_ENV
+
+      # If action is trigged by a push (not release), push a
+      # latest/unstable image to Dockerhub using image tag based
+      # on the most recent Github tag and commit hash
+      - name: Get git commit hash for push to branch to use as image tag
+        if: github.event_name != 'release'
+        run: |
+          git fetch --all --tags
+          echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::538673716275:role/github-actions-role
           aws-region: ap-southeast-2
 
-      - name: Get tag for this build if it exists
-        if: github.event_name == 'release'
-        run: |
-          echo "RELEASE=${GITHUB_REF/refs\/tags\/}" >> $GITHUB_ENV
-
-      - name: Push release image to ECR
+      - name: Push image to ECR
         uses: whoan/docker-build-with-cache-action@master
-        if: github.event_name == 'release'
         with:
-          registry: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
-          image_name: ${{ env.IMAGE_NAME }}
-          image_tag: ${{ env.RELEASE }}
-
-      - name: Get git commit hash to name unstable image
-        if: github.event_name != 'release'
-        run: |
-          git fetch --all --tags
-          echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
-
-      - name: Push unstable image to ECR
-        uses: whoan/docker-build-with-cache-action@master
-        if: github.event_name != 'release'
-        with:
+          context: ./
           registry: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: latest,${{ env.RELEASE }}
