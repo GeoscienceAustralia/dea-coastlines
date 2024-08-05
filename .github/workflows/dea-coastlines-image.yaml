@@ -139,6 +139,9 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
 
+    # Only run on a push to the develop branch OR a release
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'release')
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
