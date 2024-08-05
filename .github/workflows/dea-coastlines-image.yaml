@@ -145,32 +145,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
-      # If action is triggered by a release, push image to
-      # Dockerhub using custom image tag extracted from the release
+      # If action is triggered by a release, tag image
+      # using a custom image tag extracted from the release
       - name: Get current version tag from release to use as image tag
         if: github.event_name == 'release'
         run: |
           echo "RELEASE=${GITHUB_REF/refs\/tags\/}" >> $GITHUB_ENV
 
-      # If action is trigged by a push (not release), push a
-      # latest/unstable image to Dockerhub using image tag based
-      # on the most recent Github tag and commit hash
+      # If action is trigged by a push (not release), tag image
+      # using a tag based on the most recent commit hash
       - name: Get git commit hash for push to branch to use as image tag
         if: github.event_name != 'release'
         run: |
-          git fetch --all --tags
-          echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
-
-      - name: Debug RELEASE variable
-        run: echo "RELEASE=${{ env.RELEASE }}"
-
-      - name: Debug
-        run: |
-          echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
-          echo "RELEASE: ${{ env.RELEASE }}"
+          echo "TAG=dev$(git rev-parse --short HEAD)" \
+          >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
