@@ -145,6 +145,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # If action is triggered by a release, push image to
       # Dockerhub using custom image tag extracted from the release
@@ -161,6 +163,14 @@ jobs:
         run: |
           git fetch --all --tags
           echo "RELEASE=$(git describe --tags)" >> $GITHUB_ENV
+
+      - name: Debug RELEASE variable
+        run: echo "RELEASE=${{ env.RELEASE }}"
+
+      - name: Debug
+        run: |
+          echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
+          echo "RELEASE: ${{ env.RELEASE }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
