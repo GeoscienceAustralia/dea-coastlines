@@ -12,37 +12,29 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && \
     apt-get install -y \
       build-essential \
-      fish \
       git \
-      vim \
-      htop \
-      wget \
-      unzip \
       python3-pip \
       libpq-dev \
     && apt-get autoclean && \
     apt-get autoremove && \
     rm -rf /var/lib/{apt,dpkg,cache,log}
 
-# Install pip-tools
-RUN pip install pip-tools
+# Set up working directory
+WORKDIR /app
 
-# Pip installation
-RUN mkdir -p /conf
-COPY requirements.txt /conf/
-RUN pip install -r /conf/requirements.txt \
-    && pip install --no-cache-dir awscli
+# Copy requirements file first
+COPY requirements.in /app/requirements.in
 
-# Copy source code and install it
-RUN mkdir -p /code
-WORKDIR /code
-ADD . /code
+# Install uv and requirements
+RUN pip install uv && \
+    uv pip compile /app/requirements.in -o /app/requirements.txt && \
+    uv pip install -r /app/requirements.txt --system
 
-RUN echo "Installing dea-coastlines through the Dockerfile."
-RUN pip install --extra-index-url="https://packages.dea.ga.gov.au" .
+# Now copy the rest of the files
+COPY . /app
 
-RUN pip freeze && pip check
-
-# Make sure it's working
-RUN deacoastlines-raster --help \
-  && deacoastlines-vector --help
+# Install DEA Intertidal and verify installation
+RUN uv pip install . --system && \
+    uv pip check && \
+    deacoastlines-raster --help && \
+    && deacoastlines-vector --help
