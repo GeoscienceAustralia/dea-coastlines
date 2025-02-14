@@ -37,4 +37,4 @@ COPY . /app
 RUN uv pip install . --system && \
     uv pip check && \
     deacoastlines-raster --help && \
-    && deacoastlines-vector --help
+    deacoastlines-vector --help
