@@ -1,4 +1,3 @@
---extra-index-url=https://packages.dea.ga.gov.au/
 aiohttp
 affine==2.4.0
 botocore
