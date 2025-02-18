@@ -82,10 +82,13 @@ jobs:
       - name: Run integration tests
         run: |
           # Download tide modelling files and unzip
+          # TODO: Replace with S3 sync from dea-non-public-data
           wget --no-verbose https://www.dropbox.com/s/uemd8ib2vfw5nad/tide_models.zip?dl=1 -O tide_models.zip
           unzip -q tide_models.zip
 
-          # Run integration tests using Docker
+          # Run integration tests using Docker. The command sets up datacube access, AWS configuration,
+          # and adds volumes to allow access to model outputs outside the container (used to commit outputs
+          # using git). It also provides access to tide model data for the tests.
           docker run \
             --net=host \
             --env DATACUBE_DB_URL \
@@ -94,7 +97,7 @@ jobs:
             --env AWS_ACCESS_KEY_ID \
             --env AWS_SECRET_ACCESS_KEY \
             --env AWS_SESSION_TOKEN \
-            --volume ${GITHUB_WORKSPACE}:/code \
+            --volume ${GITHUB_WORKSPACE}:/app \
             --volume ${GITHUB_WORKSPACE}/tide_models:/var/share/tide_models \
             dea_coastlines pytest -v --cov=coastlines --cov-report=xml tests
 
