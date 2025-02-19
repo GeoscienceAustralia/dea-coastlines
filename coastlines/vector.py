@@ -183,6 +183,9 @@ def ocean_masking(ds, ocean_da, connectivity=1, dilation=None):
         pixels as True.
     """
 
+    # Squeeze out dimension as required
+    ds = ds.squeeze()
+
     # Update `ocean_da` to mask out any pixels that are land in `ds` too
     ocean_da = ocean_da & (ds != 1)
 
@@ -412,7 +415,7 @@ def certainty_masking(yearly_ds, obs_threshold=5, stdev_threshold=0.3, sieve_siz
     # Process in parallel
     with ProcessPoolExecutor() as executor:
         # Apply func in parallel, repeating params for each iteration
-        groups = [group for (i, group) in raster_mask.groupby("year")]
+        groups = [group.squeeze() for (i, group) in raster_mask.groupby("year")]
         to_iterate = (
             groups,
             *(repeat(i, len(groups)) for i in [sieve_size, yearly_ds.odc.crs]),
