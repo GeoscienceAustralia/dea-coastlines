@@ -12,7 +12,7 @@ geopandas==0.14.4
 matplotlib==3.9.2
 mdutils==1.5.0
 numpy==1.26.4
-odc-geo==0.4.8
+git+https://github.com/opendatacube/odc-geo.git@3f53c9295ff6a05e990819fd2253c60eba3f429b
 odc-ui==0.2.1
 pandas==2.2.3
 pyproj==3.7.0
