@@ -503,9 +503,9 @@ def export_annual_gapfill(
         current_ds = future_ds
         future_ds = []
 
-        # Restart dask client
-        if client is not None:
-            client.restart(wait_for_workers=False)
+        # # Restart dask client
+        # if client is not None:
+        #     client.restart(wait_for_workers=False)
 
 
 def generate_rasters(
