@@ -3,7 +3,7 @@ affine==2.4.0
 awscli
 botocore==1.35.23
 click==8.1.7
-dask==2024.9.1
+dask[distributed]==2024.9.1
 datacube[s3,performance]==1.8.19
 dea-tools==0.3.6.dev25
 eo-tides==0.6.0

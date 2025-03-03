@@ -25,7 +25,6 @@ from functools import partial
 from collections import Counter
 
 import pytz
-import dask
 import click
 import numpy as np
 import pandas as pd
@@ -33,6 +32,7 @@ import xarray as xr
 import geopandas as gpd
 from affine import Affine
 from shapely.geometry import shape
+from dask.distributed import LocalCluster, Client
 
 import datacube
 import odc.algo
@@ -44,7 +44,6 @@ from odc.geo.geobox import GeoBox
 from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file
 
-from dea_tools.dask import create_local_dask_cluster
 from dea_tools.spatial import hillshade, sun_angles
 from dea_tools.datahandling import parallel_apply
 from eo_tides.eo import pixel_tides
@@ -506,7 +505,7 @@ def export_annual_gapfill(
 
         # Restart dask client
         if client is not None:
-            client.restart()
+            client.restart(wait_for_workers=False)
 
 
 def generate_rasters(
@@ -530,7 +529,9 @@ def generate_rasters(
         log = configure_logging()
 
     # Create local dask client for parallelisation
-    client = create_local_dask_cluster(return_client=True)
+    # This can be highly customised, so can likely be improved later on
+    cluster = LocalCluster()  
+    client = Client(cluster)
 
     ###########################
     # Load supplementary data #
