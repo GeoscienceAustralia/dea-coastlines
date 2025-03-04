@@ -15,11 +15,11 @@ In addition to testing whether the code runs without errors, we also run a small
 ## Latest integration test validation results
 
 
-The latest integration test completed at **2025-02-19 13:19**. Compared to the previous run, it had an:
-- RMSE accuracy of **6.19 m ( :heavy_exclamation_mark: worsened by 0.04)**
-- MAE accuracy of **4.84 m ( :heavy_check_mark: improved by 0.01)**
-- Bias of **-2.78 m ( :heavy_exclamation_mark: worsened by 0.13)**
-- Pearson correlation of **0.976 ( :heavy_check_mark: improved by 0.001)**
+The latest integration test completed at **2025-03-04 13:49**. Compared to the previous run, it had an:
+- RMSE accuracy of **6.19 m ( :heavy_minus_sign: no change)**
+- MAE accuracy of **4.84 m ( :heavy_minus_sign: no change)**
+- Bias of **-2.78 m ( :heavy_minus_sign: no change)**
+- Pearson correlation of **0.976 ( :heavy_minus_sign: no change)**
 
 
 <img src="stats_tests.png" width="950"/>
