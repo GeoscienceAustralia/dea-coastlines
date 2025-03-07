@@ -533,6 +533,12 @@ def generate_rasters(
     cluster = LocalCluster()  
     client = Client(cluster)
 
+    # Configure GDAL for s3 access
+    # TODO: This isn't optimal, as we already run this at the CLI level.
+    # But for now, this mimics the approach previously used by
+    # `dea_tools.dask.create_local_dask_cluster`
+    configure_s3_access(aws_unsigned=True, client=client)
+
     ###########################
     # Load supplementary data #
     ###########################
