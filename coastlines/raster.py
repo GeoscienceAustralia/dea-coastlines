@@ -25,7 +25,6 @@ from functools import partial
 from collections import Counter
 
 import pytz
-import dask
 import click
 import numpy as np
 import pandas as pd
@@ -33,6 +32,7 @@ import xarray as xr
 import geopandas as gpd
 from affine import Affine
 from shapely.geometry import shape
+from dask.distributed import LocalCluster, Client
 
 import datacube
 import odc.algo
@@ -44,15 +44,16 @@ from odc.geo.geobox import GeoBox
 from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file
 
-from dea_tools.dask import create_local_dask_cluster
 from dea_tools.spatial import hillshade, sun_angles
 from dea_tools.datahandling import parallel_apply
 from eo_tides.eo import pixel_tides
 
 from coastlines.utils import configure_logging, load_config
 
-# Hide warnings
+# Hide noisy future warnings and Dask, rasterio warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", message="Sending large graph of size")
+warnings.filterwarnings("ignore", category=UserWarning, module="rasterio")
 
 
 def terrain_shadow(ds, dem, threshold=0.5, radius=1):
@@ -394,7 +395,14 @@ def tidal_composite(
 
 
 def export_annual_gapfill(
-    ds, output_dir, tide_cutoff_min, tide_cutoff_max, start_year, end_year
+    ds,
+    output_dir,
+    tide_cutoff_min,
+    tide_cutoff_max,
+    start_year,
+    end_year,
+    client=None,
+    log=None,
 ):
     """
     To calculate both annual median composites and three-year gapfill
@@ -419,6 +427,8 @@ def export_annual_gapfill(
     start_year, end year : int
         The first and last years you wish to export annual median
         composites and three-year gapfill composites for.
+    client : optional
+        Dask client used for loading data in parallel.
     """
 
     # Create empty vars containing un-composited data from the previous,
@@ -430,6 +440,11 @@ def export_annual_gapfill(
 
     # Iterate through each year in the dataset, starting at one year before
     for year in np.arange(start_year - 2, end_year + 1):
+
+        # Log year of data
+        if log is not None:        
+            log.info(f"Exporting {year}")
+
         try:
             # Load data for the subsequent year; drop tide variable as
             # we do not need to create annual composites from this data
@@ -488,6 +503,10 @@ def export_annual_gapfill(
         current_ds = future_ds
         future_ds = []
 
+        # # Restart dask client
+        # if client is not None:
+        #     client.restart(wait_for_workers=False)
+
 
 def generate_rasters(
     dc,
@@ -510,7 +529,9 @@ def generate_rasters(
         log = configure_logging()
 
     # Create local dask client for parallelisation
-    client = create_local_dask_cluster(return_client=True)
+    # This can be highly customised, so can likely be improved later on
+    cluster = LocalCluster()  
+    client = Client(cluster)
 
     ###########################
     # Load supplementary data #
@@ -524,7 +545,7 @@ def generate_rasters(
     )
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
-    log.info(f"Study area {study_area}: Loaded study area grid")
+    log.info(f"Loaded study area grid")
 
     ################
     # Loading data #
@@ -551,7 +572,7 @@ def generate_rasters(
         )
     except (ValueError, IndexError):
         raise ValueError(f"Study area {study_area}: No valid data found")
-    log.info(f"Study area {study_area}: Loaded virtual product")
+    log.info("Loaded virtual product")
 
     ###################
     # Tidal modelling #
@@ -565,10 +586,10 @@ def generate_rasters(
     # tide height at the exact moment of satellite image acquisition.
     try:
         ds["tide_m"] = pixel_tides(data=ds, model=tide_model, directory=tide_model_dir)
-        log.info(f"Study area {study_area}: Finished modelling tide heights")
+        log.info("Finished modelling tide heights")
 
     except FileNotFoundError:
-        log.exception(f"Study area {study_area}: Unable to access tide modelling files")
+        log.exception("Unable to access tide modelling files")
         sys.exit(2)
 
     # Based on the entire time-series of tide heights, compute the max
@@ -578,9 +599,7 @@ def generate_rasters(
     tide_cutoff_min, tide_cutoff_max = tide_cutoffs(
         ds, ds["tide_m"], tide_centre=tide_centre
     )
-    log.info(
-        f"Study area {study_area}: Calculating low and high tide cutoffs for each pixel"
-    )
+    log.info("Calculating low and high tide cutoffs for each pixel")
 
     ##############################
     # Generate yearly composites #
@@ -594,11 +613,18 @@ def generate_rasters(
 
     # Iterate through each year and export annual and 3-year
     # gapfill composites
-    log.info(f"Study area {study_area}: Started exporting raster data")
+    log.info("Started exporting raster data")
     export_annual_gapfill(
-        ds, output_dir, tide_cutoff_min, tide_cutoff_max, start_year, end_year
+        ds,
+        output_dir,
+        tide_cutoff_min,
+        tide_cutoff_max,
+        start_year,
+        end_year,
+        client=client,
+        log=log,
     )
-    log.info(f"Study area {study_area}: Completed exporting raster data")
+    log.info("Completed exporting raster data")
 
     # Close dask client
     client.close()
@@ -719,7 +745,7 @@ def generate_rasters_cli(
     aws_unsigned,
     overwrite,
 ):
-    log = configure_logging(f"Coastlines raster generation for study area {study_area}")
+    log = configure_logging(f"Coastlines raster generation, study area {study_area}")
 
     # Test if study area has already been run by checking if run status file exists
     run_status_file = f"data/interim/raster/{raster_version}/{study_area}_{raster_version}/run_completed"
@@ -727,9 +753,7 @@ def generate_rasters_cli(
 
     # Skip if outputs exist but overwrite is False
     if output_exists and not overwrite:
-        log.info(
-            f"Study area {study_area}: Data exists but overwrite set to False; skipping."
-        )
+        log.info("Data exists but overwrite set to False; skipping.")
         sys.exit(0)
 
     # Connect to datacube
@@ -764,7 +788,7 @@ def generate_rasters_cli(
             pass
 
     except Exception as e:
-        log.exception(f"Study area {study_area}: Failed to run process with error {e}")
+        log.exception(f"Failed to run process with error {e}")
         sys.exit(1)
 
 
