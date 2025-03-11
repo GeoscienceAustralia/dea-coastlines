@@ -42,7 +42,7 @@ The ability to map shoreline positions for each year provides valuable insights 
   - [Table of contents](#table-of-contents)
   - [Repository code](#repository-code)
       - [Getting started](#getting-started)
-        - [FES2014 tidal model](#fes2014-tidal-model)
+        - [Setting up global ocean tide models](#setting-up-global-ocean-tide-models)
       - [Python modules](#python-modules)
       - [Jupyter notebooks](#jupyter-notebooks)
     - [Running a DEA Coastlines analysis using the command-line interface (CLI)](#running-a-dea-coastlines-analysis-using-the-command-line-interface-cli)
@@ -70,9 +70,17 @@ git clone https://github.com/GeoscienceAustralia/dea-coastlines.git
 git checkout --track origin/develop
 ```
 
-##### FES2014 tidal model
-DEA Coastlines uses the FES2014 tidal model to account for the influence of tide on shoreline positions.
-To install this tidal model, follow the [Setting up tidal models for DEA Coastlines guide on the Wiki](https://github.com/GeoscienceAustralia/dea-coastlines/wiki/Setting-up-tidal-models-for-DEA-Coastlines).
+##### Setting up global ocean tide models
+Tide modelling is a core part of the DEA Coastlines workflow. DEA Coastlines can be run using any global ocean tide model supported by the `eo-tides` and `pyTMD` Python packages, including:
+
+- [Empirical Ocean Tide model](https://doi.org/10.5194/essd-13-3869-2021) (EOT20)
+- [Finite Element Solution tide models](https://doi.org/10.5194/os-2020-96) (FES2022, FES2014, FES2012)
+- [TOPEX/POSEIDON global tide models](https://www.tpxo.net/global) (TPXO10, TPXO9, TPXO8)
+- [Global Ocean Tide models](https://doi.org/10.1002/2016RG000546) (GOT5.6, GOT5.5, GOT4.10, GOT4.8, GOT4.7)
+- [Hamburg direct data Assimilation Methods for Tides models](https://doi.org/10.1002/2013JC009766) (HAMTIDE11)
+- [Technical University of Denmark tide models](https://doi.org/10.11583/DTU.23828874) (DTU23)
+
+For detailed instructions on setting up tide models, follow the [Setting up tidal models guide]([https://github.com/GeoscienceAustralia/dea-coastlines/wiki/Setting-up-tidal-models-for-DEA-Coastlines](https://geoscienceaustralia.github.io/eo-tides/setup/).
 
 #### Python modules
 
@@ -80,7 +88,7 @@ Code in this repository is included in the `coastlines` Python package which con
 
 1. [`coastlines.raster`](coastlines/raster.py): This module conducts raster generation for DEA Coastlines. This analysis is processed on individual study area tiles to minimise peak memory usage.
 
-    * Load stack of all available Landsat 5, 7 and 8 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
+    * Load stack of all available Landsat 5, 7, 8 and 9 satellite imagery for a location using [ODC Virtual Products](https://docs.dea.ga.gov.au/notebooks/Frequently_used_code/Virtual_products.html)
     * Convert each satellite image into a remote sensing water index (e.g. MNDWI)
     * For each satellite image, model ocean tides into a tidal modelling grid based on exact time of image acquisition
     * Interpolate tide heights into spatial extent of image stack
@@ -221,8 +229,7 @@ An [Introduction to DEA Coastlines](https://docs.dea.ga.gov.au/notebooks/DEA_dat
 
 ---
 ## Credits
-Tidal modelling is provided by the [FES2014 global tidal model](https://www.aviso.altimetry.fr/es/data/products/auxiliary-products/global-tide-fes/description-fes2014.html), implemented using the [pyTMD Python package](). FES2014 was produced by NOVELTIS, LEGOS, CLS Space Oceanography Division and CNES. It is distributed by AVISO, with support from CNES (http://www.aviso.altimetry.fr/).
-
+The [FES2014 global tidal model](https://www.aviso.altimetry.fr/es/data/products/auxiliary-products/global-tide-fes/description-fes2014.html) was produced by NOVELTIS, LEGOS, CLS Space Oceanography Division and CNES. It is distributed by AVISO, with support from CNES (http://www.aviso.altimetry.fr/).
 
 ## References
 > Bishop-Taylor, R., Nanson, R., Sagar, S., Lymburner, L. (2021). Mapping Australia's dynamic coastline at mean sea level using three decades of Landsat imagery. _Remote Sensing of Environment_, 267, 112734. Available: https://doi.org/10.1016/j.rse.2021.112734

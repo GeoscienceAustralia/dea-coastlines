@@ -25,7 +25,6 @@ from functools import partial
 from collections import Counter
 
 import pytz
-import dask
 import click
 import numpy as np
 import pandas as pd
@@ -33,25 +32,28 @@ import xarray as xr
 import geopandas as gpd
 from affine import Affine
 from shapely.geometry import shape
+from dask.distributed import LocalCluster, Client
 
 import datacube
 import odc.algo
 import odc.geo.xr
 from datacube.utils.aws import configure_s3_access
-from datacube.utils.cog import write_cog
-from datacube.utils.geometry import CRS, GeoBox, Geometry
+from odc.geo.geom import CRS, Geometry
+from odc.geo.geobox import GeoBox
+
 from datacube.utils.masking import make_mask
 from datacube.virtual import catalog_from_file
 
-from dea_tools.dask import create_local_dask_cluster
 from dea_tools.spatial import hillshade, sun_angles
-from dea_tools.coastal import model_tides, pixel_tides
 from dea_tools.datahandling import parallel_apply
+from eo_tides.eo import pixel_tides
 
 from coastlines.utils import configure_logging, load_config
 
-# Hide warnings
+# Hide noisy future warnings and Dask, rasterio warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", message="Sending large graph of size")
+warnings.filterwarnings("ignore", category=UserWarning, module="rasterio")
 
 
 def terrain_shadow(ds, dem, threshold=0.5, radius=1):
@@ -241,16 +243,12 @@ def load_water_index(
     return ds[["mndwi"]]
 
 
-def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
+def tide_cutoffs(ds, tides_da, tide_centre=0.0, resampling="bilinear"):
     """
     Based on the entire time-series of tide heights, compute the max
     and min satellite-observed tide height for each pixel, then
     calculate tide cutoffs used to restrict our data to satellite
     observations centred over mid-tide (0 m Above Mean Sea Level).
-
-    These tide cutoffs are spatially interpolated into the extent of
-    the input satellite imagery so they can be used to mask out low
-    and high tide satellite pixels.
 
     Parameters:
     -----------
@@ -259,8 +257,8 @@ def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
         data (e.g. MNDWI) for the provided datacube query. This is
         used to define the spatial extents into which tide height
         cutoffs will be interpolated.
-    tides_lowres : xarray.Dataset
-        A low-res `xarray.Dataset` containing tide heights for each
+    tides_da : xarray.Dataset
+        A `xarray.DataArray` containing tide heights for each
         timestep in `ds`, as produced by the `pixel_tides` function.
     tide_centre : float, optional
         The central tide height used to compute the min and max
@@ -275,26 +273,18 @@ def tide_cutoffs(ds, tides_lowres, tide_centre=0.0, resampling="bilinear"):
     Returns:
     --------
     tide_cutoff_min, tide_cutoff_max : xarray.DataArray
-        2D arrays containing tide height cutoff values interpolated
-        into the extent of `ds`.
+        2D arrays containing tide height cutoff values matching the
+        extent of `ds`.
     """
 
     # Calculate min and max tides
-    tide_min = tides_lowres.min(dim="time")
-    tide_max = tides_lowres.max(dim="time")
+    tide_min = tides_da.min(dim="time")
+    tide_max = tides_da.max(dim="time")
 
     # Identify cutoffs
     tide_cutoff_buffer = (tide_max - tide_min) * 0.25
     tide_cutoff_min = tide_centre - tide_cutoff_buffer
     tide_cutoff_max = tide_centre + tide_cutoff_buffer
-
-    # Reproject into original geobox
-    tide_cutoff_min = tide_cutoff_min.odc.reproject(
-        ds.odc.geobox, resampling=resampling
-    )
-    tide_cutoff_max = tide_cutoff_max.odc.reproject(
-        ds.odc.geobox, resampling=resampling
-    )
 
     return tide_cutoff_min, tide_cutoff_max
 
@@ -393,8 +383,7 @@ def tidal_composite(
     # Write each variable to file
     if export_geotiff:
         for i in median_ds:
-            write_cog(
-                geo_im=median_ds[i],
+            median_ds[i].odc.write_cog(
                 fname=f"{output_dir}/{str(label)}_{i}{output_suffix}.tif",
                 overwrite=True,
             )
@@ -406,7 +395,14 @@ def tidal_composite(
 
 
 def export_annual_gapfill(
-    ds, output_dir, tide_cutoff_min, tide_cutoff_max, start_year, end_year
+    ds,
+    output_dir,
+    tide_cutoff_min,
+    tide_cutoff_max,
+    start_year,
+    end_year,
+    client=None,
+    log=None,
 ):
     """
     To calculate both annual median composites and three-year gapfill
@@ -431,6 +427,8 @@ def export_annual_gapfill(
     start_year, end year : int
         The first and last years you wish to export annual median
         composites and three-year gapfill composites for.
+    client : optional
+        Dask client used for loading data in parallel.
     """
 
     # Create empty vars containing un-composited data from the previous,
@@ -442,6 +440,11 @@ def export_annual_gapfill(
 
     # Iterate through each year in the dataset, starting at one year before
     for year in np.arange(start_year - 2, end_year + 1):
+
+        # Log year of data
+        if log is not None:        
+            log.info(f"Exporting {year}")
+
         try:
             # Load data for the subsequent year; drop tide variable as
             # we do not need to create annual composites from this data
@@ -500,6 +503,10 @@ def export_annual_gapfill(
         current_ds = future_ds
         future_ds = []
 
+        # # Restart dask client
+        # if client is not None:
+        #     client.restart(wait_for_workers=False)
+
 
 def generate_rasters(
     dc,
@@ -510,6 +517,8 @@ def generate_rasters(
     end_year,
     tide_centre,
     buffer,
+    tide_model="EOT20",
+    tide_model_dir="/var/share/tide_models/",
     log=None,
 ):
     #####################################
@@ -520,7 +529,15 @@ def generate_rasters(
         log = configure_logging()
 
     # Create local dask client for parallelisation
-    client = create_local_dask_cluster(return_client=True)
+    # This can be highly customised, so can likely be improved later on
+    cluster = LocalCluster()  
+    client = Client(cluster)
+
+    # Configure GDAL for s3 access
+    # TODO: This isn't optimal, as we already run this at the CLI level.
+    # But for now, this mimics the approach previously used by
+    # `dea_tools.dask.create_local_dask_cluster`
+    configure_s3_access(aws_unsigned=True, client=client)
 
     ###########################
     # Load supplementary data #
@@ -534,7 +551,7 @@ def generate_rasters(
     )
     gridcell_gdf.index = gridcell_gdf.index.astype(int).astype(str)
     gridcell_gdf = gridcell_gdf.loc[[str(study_area)]]
-    log.info(f"Study area {study_area}: Loaded study area grid")
+    log.info(f"Loaded study area grid")
 
     ################
     # Loading data #
@@ -561,7 +578,7 @@ def generate_rasters(
         )
     except (ValueError, IndexError):
         raise ValueError(f"Study area {study_area}: No valid data found")
-    log.info(f"Study area {study_area}: Loaded virtual product")
+    log.info("Loaded virtual product")
 
     ###################
     # Tidal modelling #
@@ -574,11 +591,11 @@ def generate_rasters(
     # each satellite pixel to be analysed and filtered/masked based on the
     # tide height at the exact moment of satellite image acquisition.
     try:
-        ds["tide_m"], tides_lowres = pixel_tides(ds, resample=True)
-        log.info(f"Study area {study_area}: Finished modelling tide heights")
+        ds["tide_m"] = pixel_tides(data=ds, model=tide_model, directory=tide_model_dir)
+        log.info("Finished modelling tide heights")
 
     except FileNotFoundError:
-        log.exception(f"Study area {study_area}: Unable to access tide modelling files")
+        log.exception("Unable to access tide modelling files")
         sys.exit(2)
 
     # Based on the entire time-series of tide heights, compute the max
@@ -586,11 +603,9 @@ def generate_rasters(
     # calculate tide cutoffs used to restrict our data to satellite
     # observations centred over mid-tide (0 m Above Mean Sea Level).
     tide_cutoff_min, tide_cutoff_max = tide_cutoffs(
-        ds, tides_lowres, tide_centre=tide_centre
+        ds, ds["tide_m"], tide_centre=tide_centre
     )
-    log.info(
-        f"Study area {study_area}: Calculating low and high tide cutoffs for each pixel"
-    )
+    log.info("Calculating low and high tide cutoffs for each pixel")
 
     ##############################
     # Generate yearly composites #
@@ -604,11 +619,18 @@ def generate_rasters(
 
     # Iterate through each year and export annual and 3-year
     # gapfill composites
-    log.info(f"Study area {study_area}: Started exporting raster data")
+    log.info("Started exporting raster data")
     export_annual_gapfill(
-        ds, output_dir, tide_cutoff_min, tide_cutoff_max, start_year, end_year
+        ds,
+        output_dir,
+        tide_cutoff_min,
+        tide_cutoff_max,
+        start_year,
+        end_year,
+        client=client,
+        log=log,
     )
-    log.info(f"Study area {study_area}: Completed exporting raster data")
+    log.info("Completed exporting raster data")
 
     # Close dask client
     client.close()
@@ -643,13 +665,13 @@ def generate_rasters(
 @click.option(
     "--start_year",
     type=int,
-    default=2000,
+    default=1988,
     help="The first annual shoreline you wish to be included "
     "in the final outputs. To allow low data pixels to be "
     "gapfilled with additional satellite data from neighbouring "
     "years, the full timeseries of satellite data loaded in this "
     "step will include one additional year of preceding satellite data "
-    "(i.e. if `--start_year 2000`, satellite data from 1999 onward "
+    "(i.e. if `--start_year 1988`, satellite data from 1987 onward "
     "will be loaded for gapfilling purposes). Because of this, we "
     "recommend that at least one year of satellite data exists in "
     "your datacube prior to `--start_year`.",
@@ -688,6 +710,22 @@ def generate_rasters(
     "0.05 degrees, or roughly 5 km at the equator.",
 )
 @click.option(
+    "--tide_model",
+    type=str,
+    default="EOT20",
+    help="The model used for tide modelling, as supported by the "
+    "`eo-tides` Python package. Options include 'EOT20' (default), "
+    "'TPXO10-atlas-v2-nc', 'FES2022', 'FES2014', 'GOT5.6', 'ensemble'.",
+)
+@click.option(
+    "--tide_model_dir",
+    type=str,
+    default="/var/share/tide_models",
+    help="The directory containing tide model data files. Defaults to "
+    "'/var/share/tide_models'; for more information about the required "
+    "directory structure, refer to `eo-tides.utils.list_models`.",
+)
+@click.option(
     "--aws_unsigned/--no-aws_unsigned",
     type=bool,
     default=True,
@@ -708,10 +746,12 @@ def generate_rasters_cli(
     end_year,
     tide_centre,
     buffer,
+    tide_model,
+    tide_model_dir,
     aws_unsigned,
     overwrite,
 ):
-    log = configure_logging(f"Coastlines raster generation for study area {study_area}")
+    log = configure_logging(f"Coastlines raster generation, study area {study_area}")
 
     # Test if study area has already been run by checking if run status file exists
     run_status_file = f"data/interim/raster/{raster_version}/{study_area}_{raster_version}/run_completed"
@@ -719,9 +759,7 @@ def generate_rasters_cli(
 
     # Skip if outputs exist but overwrite is False
     if output_exists and not overwrite:
-        log.info(
-            f"Study area {study_area}: Data exists but overwrite set to False; skipping."
-        )
+        log.info("Data exists but overwrite set to False; skipping.")
         sys.exit(0)
 
     # Connect to datacube
@@ -743,6 +781,8 @@ def generate_rasters_cli(
             end_year,
             tide_centre,
             buffer,
+            tide_model,
+            tide_model_dir,
             log=log,
         )
 
@@ -754,7 +794,7 @@ def generate_rasters_cli(
             pass
 
     except Exception as e:
-        log.exception(f"Study area {study_area}: Failed to run process with error {e}")
+        log.exception(f"Failed to run process with error {e}")
         sys.exit(1)
 
 

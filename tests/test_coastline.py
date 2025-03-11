@@ -25,6 +25,8 @@ def test_generate_rasters_cli():
             "2021",
             "--buffer",
             "0.0",
+            "--tide_model",
+            "FES2014",
         ],
     )
     assert result.exit_code == 0
