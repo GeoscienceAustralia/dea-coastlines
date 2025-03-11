@@ -15008,7 +15008,7 @@ def my_form_open(dialog, layer, feature):
      <se:MaxScaleDenominator>25000</se:MaxScaleDenominator>
      <se:LineSymbolizer>
       <se:Stroke>
-       <se:SvgParameter name=""stroke"">#fcffa4</se:SvgParameter>
+       <se:SvgParameter name=""stroke"">#ffffe1</se:SvgParameter>
        <se:SvgParameter name=""stroke-width"">1</se:SvgParameter>
        <se:SvgParameter name=""stroke-linejoin"">bevel</se:SvgParameter>
        <se:SvgParameter name=""stroke-linecap"">square</se:SvgParameter>
