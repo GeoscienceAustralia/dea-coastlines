@@ -15,7 +15,7 @@ In addition to testing whether the code runs without errors, we also run a small
 ## Latest integration test validation results
 
 
-The latest integration test completed at **2025-03-11 12:43**. Compared to the previous run, it had an:
+The latest integration test completed at **2025-03-20 12:12**. Compared to the previous run, it had an:
 - RMSE accuracy of **6.19 m ( :heavy_minus_sign: no change)**
 - MAE accuracy of **4.84 m ( :heavy_minus_sign: no change)**
 - Bias of **-2.78 m ( :heavy_minus_sign: no change)**

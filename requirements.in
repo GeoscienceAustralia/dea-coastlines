@@ -6,7 +6,7 @@ click==8.1.7
 dask[distributed]==2024.9.1
 datacube[s3,performance]==1.8.19
 dea-tools==0.3.6.dev25
-eo-tides==0.6.2
+eo-tides==0.6.3
 Fiona==1.10.1
 geopandas==0.14.4
 matplotlib==3.9.2
