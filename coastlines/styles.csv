@@ -12297,7 +12297,7 @@ def my_form_open(dialog, layer, feature):
       <Option value=""MM"" name=""dash_pattern_offset_unit"" type=""QString""/>
       <Option value=""0"" name=""draw_inside_polygon"" type=""QString""/>
       <Option value=""bevel"" name=""joinstyle"" type=""QString""/>
-      <Option value=""252,255,164,255,rgb:0.9882352941176471,1,0.64313725490196083,1"" name=""line_color"" type=""QString""/>
+      <Option value=""255,255,225,255,rgb:1,1,0.88235294117647056,1"" name=""line_color"" type=""QString""/>
       <Option value=""dash"" name=""line_style"" type=""QString""/>
       <Option value=""0.4"" name=""line_width"" type=""QString""/>
       <Option value=""MM"" name=""line_width_unit"" type=""QString""/>
