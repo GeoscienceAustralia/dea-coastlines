@@ -15,10 +15,10 @@ In addition to testing whether the code runs without errors, we also run a small
 ## Latest integration test validation results
 
 
-The latest integration test completed at **2025-03-11 12:43**. Compared to the previous run, it had an:
+The latest integration test completed at **2025-03-24 16:14**. Compared to the previous run, it had an:
 - RMSE accuracy of **6.19 m ( :heavy_minus_sign: no change)**
-- MAE accuracy of **4.84 m ( :heavy_minus_sign: no change)**
-- Bias of **-2.78 m ( :heavy_minus_sign: no change)**
+- MAE accuracy of **4.83 m ( :heavy_check_mark: improved by 0.01)**
+- Bias of **-2.77 m ( :heavy_check_mark: improved by 0.01)**
 - Pearson correlation of **0.976 ( :heavy_minus_sign: no change)**
 
 
