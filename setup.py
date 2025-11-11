@@ -17,7 +17,7 @@ REQUIRED = [
     "dea_tools",
     "eo-tides>=0.6.3",
     "Fiona",
-    "geopandas",
+    "geopandas>=0.14",
     "matplotlib",
     "mdutils",
     "numpy",
@@ -37,7 +37,7 @@ REQUIRED = [
     "scikit_learn",
     "scipy",
     "setuptools",
-    "Shapely",
+    "Shapely>=2.0",
     "tqdm",
     "xarray",
 ]
