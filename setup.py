@@ -24,7 +24,6 @@ REQUIRED = [
     "odc-geo",
     "odc_ui",
     "pandas",
-    "pygeos",
     "pyproj",
     "pytest",
     "pytest-dependency",
