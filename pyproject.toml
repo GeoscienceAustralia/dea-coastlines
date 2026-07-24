@@ -1,6 +1,149 @@
-[build-system]
-requires = ["setuptools>=51.0.0", "wheel", "setuptools_scm[toml]>=3.4"]
-build-backend = "setuptools.build_meta"
+[project]
+name = "dea-coastlines"
+dynamic = ["version"]
+description = "Satellite-derived shorelines from open Earth observation data"
+authors = [
+    { name = "Robbi Bishop-Taylor" },
+    { name = "Stephen Sagar" },
+    { name = "Claire Phillips" },
+    { name = "Vanessa Newey" },
+    { email = "Robbi.BishopTaylor@ga.gov.au"}
+]
+readme = "README.md"
+keywords = [
+    "earth observation",
+    "satellite data",
+    "coastal analysis",
+    "remote sensing",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Oceanography",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "xarray>=2025.6.1",
+    "numpy>=1.26.4",
+    "odc-algo>=1.1.1",
+    "odc-geo>=0.4.8",
+    "dea-tools>=0.4.7",
+    "eo-tides>=0.10.4",
+    "rasterio>=1.4.1,<1.4.4",
+    "geopandas>=0.14.4",
+    "smoothify>=0.3.0",
+]
 
-[tool.setuptools_scm]
-write_to = "coastlines/_version.py"
+[project.urls]
+Repository = "https://github.com/GeoscienceAustralia/dea-coastlines"
+
+[project.optional-dependencies]
+notebooks = [
+    "jupyter>=1.0.0",
+    "folium>=0.16.0",
+]
+datacube = [
+    "datacube[s3,performance,postgres]>=1.9.10",
+
+[dependency-groups]
+dev = [
+    "pytest>=6.0.0",
+    # "pre-commit>=0.2.0",
+    # "deptry>=0.20.0",
+    # "mypy>=0.900",
+    "pytest-cov>=0.6",
+    "ruff>=0.1.0",
+    # "mkdocs>=1.2",
+    # "mkdocs-material>=9.5.0",
+    # "mkdocs-jupyter>=0.24.0",
+    # "mkdocstrings[python]>=0.20.0",
+    # "black>=22.1.0",
+    # "nbval>=0.10.0",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [  # only include package
+  "coastlines/**",
+  "LICENSE",
+  "pyproject.toml",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.mypy]
+files = ["coastlines"]
+python_version = "3.10"
+ignore_missing_imports = true
+allow_redefinition = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"     # Target Python 3.10 syntax
+line-length = 120            # Set max line length
+fix = true                   # Allow auto-fix when used without pre-commit
+lint.select = ["ALL"]
+lint.ignore = [
+  "E501",     # Don't enforce line length
+  "SIM105",   # contextlib.suppress
+  "RUF002",   # Ignore en-dash
+  "PLR0913",  # Allow too many arguments
+  "PLR0915",  # Allow too many statements
+  "PLR0912",  # Allow too many branches
+  "PLR2004",  # Allow magic value in comparison
+  "T201",     # Allow print
+  "DTZ005",   # Ignore timezones
+  "TRY002",   # Allow non-custom exceptions
+  "FBT002",   # Allow boolean default positional arguments
+  "FBT001",   # Allow boolean default positional arguments
+  "B006",     # Allow mutable default arguments
+  "C901",     # Ignore too complex function
+  "D211",     # Ignore mutually exclusive one-blank-line-before-class rule
+  "D213",     # Ignore mutually exclusive one-blank-line-before-class rule
+  "FIX002",   # Allow TODO
+  "TD",       # Ignore missing info in TODO
+  "ERA001",   # Ignore commented out code (to revert)
+  "ANN",      # Allow missing type annotations (to revert)
+  "COM812",   # Ignore as recommended by ruff
+  "D203",     # Ignore as recommended by ruff
+  "PD003",    # Ignore notnull (confusing xarray with pandas)
+  "PD004",    # Ignore notnull (confusing xarray with pandas)
+  "PD013",    # Ignore stack vs. melt (confusing xarray with pandas)
+]
+exclude = ["tests/testing.ipynb"]  # Don't modify testing notebook
+
+[tool.ruff.format]
+preview = true    # Enable experimental formatting improvements
+docstring-code-format = true # Reformat code in doc strings.
+
+[tool.coverage.report]
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["coastlines"]
