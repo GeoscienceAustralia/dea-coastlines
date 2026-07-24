@@ -32,15 +32,19 @@ classifiers = [
 ]
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "xarray>=2025.6.1",
+    "dea-tools>=0.4.7",
+    "eo-tides>=0.10.4",
+    "geopandas>=0.14.4",
+    "matplotlib>=3.9.2",
     "numpy>=1.26.4",
     "odc-algo>=1.1.1",
     "odc-geo>=0.4.8",
-    "dea-tools>=0.4.7",
-    "eo-tides>=0.10.4",
     "rasterio>=1.4.1,<1.4.4",
-    "geopandas>=0.14.4",
+    "scikit-image>=0.24.0",
+    "scipy>=1.14.1",
+    "shapely>=2.0.0",
     "smoothify>=0.3.0",
+    "xarray>=2025.6.1",
 ]
 
 [project.urls]
