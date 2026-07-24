@@ -53,6 +53,7 @@ notebooks = [
 ]
 datacube = [
     "datacube[s3,performance,postgres]>=1.9.10",
+]
 
 [dependency-groups]
 dev = [
