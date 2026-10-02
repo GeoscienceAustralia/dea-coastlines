@@ -45,6 +45,7 @@ dependencies = [
     "shapely>=2.0.0",
     "smoothify>=0.3.0",
     "xarray>=2025.6.1",
+    # "scikit-fmm>=2025.6.23",
 ]
 
 [project.urls]

@@ -9,8 +9,8 @@ from scipy import stats
 
 def exact_subpixel_sdf(mndwi_da, threshold=0.0, resolution=10.0, min_vertices=10):
     """
-    Calculates an exact sub-pixel Signed Distance Field by extracting 
-    marching squares contours and querying a KDTree. Optimised for speed 
+    Calculates an exact sub-pixel Signed Distance Field by extracting
+    marching squares contours and querying a KDTree. Optimised for speed
     using valid-pixel masking and multi-threading.
 
     Parameters
@@ -24,13 +24,13 @@ def exact_subpixel_sdf(mndwi_da, threshold=0.0, resolution=10.0, min_vertices=10
     min_vertices : int, optional
         The minimum number of vertices required to retain a contour string,
         used to filter out small noisey loops. Default is 10.
-        
+
     Returns
     -------
     xr.DataArray
-        A 2D DataArray containing the sub-pixel SDF in metres, or NaNs if 
+        A 2D DataArray containing the sub-pixel SDF in metres, or NaNs if
         no shoreline interface exists.
-    """   
+    """
     # Extract values
     mndwi_da = mndwi_da.squeeze()
     vals = mndwi_da.values
@@ -42,9 +42,9 @@ def exact_subpixel_sdf(mndwi_da, threshold=0.0, resolution=10.0, min_vertices=10
     # Handle scenes with no water/land interface
     if not contours:
         nan_array = xr.full_like(mndwi_da, np.nan, dtype=np.float32)
-        nan_array.name = 'sdf_exact'
+        nan_array.name = "sdf_exact"
         return nan_array
-        
+
     # Safely stack contours now that we know the list is not empty
     contour_pts = np.vstack(contours)
 
@@ -55,12 +55,12 @@ def exact_subpixel_sdf(mndwi_da, threshold=0.0, resolution=10.0, min_vertices=10
     # Build a KDTree from the shoreline points
     tree = cKDTree(contour_pts)
 
-    # Create a boolean mask of valid (non-NaN) pixels, and 
-    # extract integer grid coordinates for valid pixels only    
+    # Create a boolean mask of valid (non-NaN) pixels, and
+    # extract integer grid coordinates for valid pixels only
     valid_mask = ~np.isnan(vals)
     valid_y, valid_x = np.nonzero(valid_mask)
     valid_grid_pts = np.c_[valid_y, valid_x]
-    
+
     # Query the tree only for valid coordinates using multithreading
     distances, _ = tree.query(valid_grid_pts, workers=-1)
 
@@ -69,24 +69,72 @@ def exact_subpixel_sdf(mndwi_da, threshold=0.0, resolution=10.0, min_vertices=10
 
     # Convert to physical distances
     abs_dist_metres = distances * resolution
-    
+
     # Convert to signed distances based on original MNDWI signs
     # Positive for land (MNDWI >= threshold), negative for water (MNDWI < threshold)
     valid_signs = np.where(vals[valid_mask] >= threshold, 1.0, -1.0)
     sdf_vals[valid_mask] = abs_dist_metres * valid_signs
-    
+
     return xr.DataArray(
-        sdf_vals, 
-        coords=mndwi_da.coords, 
-        dims=mndwi_da.dims,
-        name='sdf_exact'
+        sdf_vals, coords=mndwi_da.coords, dims=mndwi_da.dims, name="sdf_exact"
+    )
+
+import numpy as np
+import xarray as xr
+import skfmm
+
+def subpixel_sdf_fmm(da, threshold=0.0, resolution=10.0):
+    """
+    Calculates an exact sub-pixel Signed Distance Field (SDF)
+    using the Fast Marching Method (scikit-fmm).
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        A 2D DataArray to convert to a sub-pixel SDF.
+    threshold : float, optional
+        The zero-crossing threshold. Default is 0.0.
+    resolution : float, optional
+        The pixel size in metres. Default is 10.0.
+
+    Returns
+    -------
+    xr.DataArray
+        A 2D DataArray containing the sub-pixel SDF in metres,
+        or NaNs if zero-crossing interface exists.
+    """
+    # Extract as numpy arrays
+    da = da.squeeze()
+    vals = da.values
+
+    # Subtract thresholds to support 0-threshold extraction
+    phi = vals - threshold
+
+    # Create valid data mask to propogate FMM around NaNs
+    valid_mask = ~np.isnan(phi)
+
+    # Return empty array if no 0 interface exists in data
+    if not (np.any(phi[valid_mask] > 0) and np.any(phi[valid_mask] <= 0)):
+        nan_array = xr.full_like(da, np.nan, dtype=np.float32)
+        nan_array.name = "sdf_exact"
+        return nan_array
+
+    # Convert to a masked array for NaN handing
+    phi_masked = np.ma.masked_where(~valid_mask, phi)
+
+    # Calculate signed distance field in physical metre units
+    sdf_masked = skfmm.distance(phi_masked, dx=resolution)
+
+    # Re-apply NaNs and cast to float32 to reduce memory
+    sdf_vals = sdf_masked.filled(np.nan).astype(np.float32)
+
+    return xr.DataArray(
+        sdf_vals, coords=da.coords, dims=da.dims, name="sdf_exact"
     )
 
 
 def _smooth_spatial_array(
-    da: xr.DataArray | xr.Dataset,
-    method: str = "median",
-    window_size: int = 3
+    da: xr.DataArray | xr.Dataset, method: str = "median", window_size: int = 3
 ) -> xr.DataArray | xr.Dataset:
     """
     Applies a spatial median filter to 2D arrys to reduce noise
@@ -190,11 +238,13 @@ def _block_theil_sen(y_chunk: np.ndarray, x_chunk: np.ndarray, alpha: float) -> 
     )
 
 
-def theilsen_beach_slope(
+def beach_slope_theilsen(
     sdf_stack: xr.DataArray,
     tide_heights: xr.DataArray,
     alpha: float = 0.75,
-    smooth_window: int = 3,
+    smooth_spatial: int = 3,
+    smooth_method: str = "mean",
+    difference: bool = False,
 ) -> xr.Dataset:
     """
     Calculates the robust beach slope, intercept, and confidence bounds.
@@ -208,9 +258,17 @@ def theilsen_beach_slope(
     alpha : float, optional
         Confidence degree between 0 and 1. Default is 0.75 for a 75%
         confidence interval.
-    smooth_window : int, optional
-        The size of the spatial median filter to apply to the outputs.
-        Must be an odd integer. Set to zero to disable smoothing. Default is 3.
+    smooth_spatial : int, optional
+        The size of the spatial filter to apply to the outputs to reduce
+        spatial noise. Set to zero to disable smoothing. Default is 3.
+    smooth_method : str, optional
+        Method to use for spatial smoothing; supports "mean" and "median".
+        Default is "mean".
+    difference : bool, optional
+        Whether to apply differencing to SDF and tide data along the
+        "time" axis prior to slope generation. This serves as a
+        high-pass filter, retaining high frequency tidal change,
+        but supressing lower frequency long-term coastal change.
 
     Returns
     -------
@@ -224,6 +282,15 @@ def theilsen_beach_slope(
         tide_heights.dropna(dim="time", how="all"),
         join="inner",
     )
+
+    # Optionally calculate differences between consecutive observations,
+    # rather than operate on absolute shoreline positions. This
+    # supresses low frequency long-term coastal change, but retains
+    # higher frequency tidal change.
+    if difference:
+        print("Differencing observations before slope estimation")
+        sdf_stack = sdf_stack.diff(dim="time")
+        tide_heights = tide_heights.diff(dim="time")
 
     # Run Theil Sen gradient estimation in parallel
     raw_m, raw_m_l, raw_m_h, intercept = xr.apply_ufunc(
@@ -254,9 +321,13 @@ def theilsen_beach_slope(
         }
     )
 
-    # Apply spatial median filtering to all dataset variables
-    if smooth_window > 0:
-        ds_out = _smooth_spatial_array(ds_out, window_size=smooth_window)
+    # Apply spatial filtering to all dataset variables if requested
+    if smooth_spatial > 0:
+        ds_out = _smooth_spatial_array(
+            ds_out,
+            method=smooth_method,
+            window_size=smooth_spatial,
+        )
 
     # Calculate final uncertainty safely using the smoothed upper and lower bounds
     ds_out["slope_uncertainty"] = np.abs(ds_out.slope_low - ds_out.slope_high)
@@ -264,16 +335,15 @@ def theilsen_beach_slope(
     return ds_out
 
 
-def slope_variance(
+def _slope_dispersion(
     sdf_stack: xr.DataArray,
     tide_heights: xr.DataArray,
     coastal_mask: xr.DataArray,
     candidate_slopes: np.ndarray = None,
 ) -> xr.DataArray:
     """
-    Calculates shoreline position variance across a range of candidate
-    beach slopes using a robust grid-search approach. Variance is measured by
-    Median Absolute Deviation (MAD).
+    Calculates shoreline position dispersion across a range of candidate
+    beach slopes. Dispersion is measured by Median Absolute Deviation (MAD).
 
     Parameters
     ----------
@@ -284,26 +354,22 @@ def slope_variance(
     coastal_mask : xr.DataArray
         Boolean mask array to restrict processing to valid coastal areas.
     candidate_slopes : np.ndarray, optional
-        Array of physical slopes to test. If none are provided, a non-linear 
+        Array of physical slopes to test. If none are provided, a non-linear
         distribution focusing on flatter slopes is used.
 
     Returns
     -------
     xr.DataArray
-        A multidimensional array containing the computed MAD variance metric 
-        for each candidate slope, masked to the coastal zone.
+        A multidimensional array containing the computed MAD dispersion
+        metric for each candidate slope, masked to the coastal zone.
     """
     if candidate_slopes is None:
-        # candidate_slopes = np.append(
-        #     np.linspace(0.005, 0.150, 30, dtype=np.float32),
-        #     np.linspace(0.160, 0.300, 15, dtype=np.float32),
-        # )
-        candidate_slopes = np.geomspace(0.005, 0.30, num=50)
-        
+        candidate_slopes = np.geomspace(0.005, 0.3, num=40)
+
     test_slopes = xr.DataArray(
-        candidate_slopes, 
+        candidate_slopes,
         dims=["candidate_slope"],
-        coords={"candidate_slope": candidate_slopes}
+        coords={"candidate_slope": candidate_slopes},
     )
 
     # Broadcast shifts across all candidate slopes simultaneously
@@ -318,66 +384,118 @@ def slope_variance(
     return dispersion.where(coastal_mask)
 
 
-def extract_optimal_slopes(
+def _extract_optimal_slopes(
     dispersion: xr.DataArray,
     confidence_band: float = 0.05,
-    smooth_window: int = 9,
-    smooth_method: str = "mean",
-    interp_density: int = 0,
-    interp_method: str = "linear",
+    optimal_method: str = "min",
+    smooth_rolling: int = 3,
 ) -> xr.Dataset:
     """
-    Extracts the optimal slope and calculates confidence intervals from a 
+    Extracts the optimal slope and calculates confidence intervals from a
     computed dispersion surface, applying spatial smoothing to the outputs.
 
     Parameters
     ----------
     dispersion : xr.DataArray
-        The pre-computed dispersion surface. This array should ideally be loaded 
+        The pre-computed dispersion surface. This array should ideally be loaded
         into memory prior to calling this function.
     confidence_band : float, optional
         Threshold used to calculate uncertainty bounds, represented as a
         percentage above the minimum (i.e. optimal) dispersion.
-    smooth_window : int, optional
-        Size of the spatial rolling window applied to the final output 
-        slope variables. Set to zero to disable spatial smoothing.
-    smooth_method : str, optional
-        Method to use for spatial smoothing; supports "mean" and "median".
-    interp_density : int, optional
-        Number of points to interpolate along the candidate slope axis to 
-        increase extraction precision. If 0, no interpolation will be done.
-    interp_method : str, optional
-        Method used to interpolate points, as implemented by Xarray (`ds.interp`).
+    optimal_method : str, optional
+        Method used to identify the optimal slope value that minimises
+        dispersion after correcting for slope. Supports "min" (the input
+        candidate slope that minimises variance), "mean" (mean of all slopes
+        within the confidence bounds), "gmean" (geometric mean of all slopes
+        within confidence bounds), and "subgrid" (a more precise version of
+        "min" that interpolates an optimal slope at better than the resolution
+        of the input candidate slopes).
+    smooth_rolling : int, optional
+        Size of the rolling mean used to smooth dispersion values along the
+        "candidate_slope" axis prior to optimal  slope extraction. Set to 0
+        to apply no smoothing. Default is 9.
 
     Returns
     -------
     xr.Dataset
-        Dataset containing the optimal slope, lower bound, upper bound, 
+        Dataset containing the optimal slope, lower bound, upper bound,
         and the absolute slope uncertainty.
     """
-    if interp_density > 0:
-        # Define interpolation range dynamically based on input array bounds
-        min_slope = float(dispersion.candidate_slope.min())
-        max_slope = float(dispersion.candidate_slope.max())
-        dense_slopes = np.linspace(min_slope, max_slope, interp_density, dtype=np.float32)
-        
-        # Interpolate to a higher density for precision extraction
-        dispersion = dispersion.interp(candidate_slope=dense_slopes, method=interp_method)
+    # Identify valid pixels to restore NaNs later
+    valid_pixels = dispersion.notnull().any(dim="candidate_slope")
 
-    # Extract the optimal slope that minimises dispersion
-    optimal_slopes = dispersion.idxmin(dim="candidate_slope")
+    # Compute rolling mean
+    if smooth_rolling > 0:
+        print("Applying rolling mean")
+        dispersion = dispersion.rolling(
+            candidate_slope=smooth_rolling, min_periods=1, center=True
+        ).mean()
 
-    # Calculate confidence bounds based on the minimum dispersion threshold
-    # min_dispersion = dispersion.min(dim="candidate_slope")
-    # threshold = min_dispersion * (1.0 + confidence_band)
-    # min_dispersion = dispersion.min(dim="candidate_slope")
-    # max_dispersion = dispersion.max(dim="candidate_slope")
-    # threshold = min_dispersion + (confidence_band * (max_dispersion - min_dispersion))
-    threshold = dispersion.quantile(dim="candidate_slope", q=confidence_band)
-    
+    # Identify minimum dispersion and condifence bounds around it
+    min_dispersion = dispersion.min(dim="candidate_slope")
+    threshold = min_dispersion * (1.0 + confidence_band)
     valid_candidate_slopes = dispersion.candidate_slope.where(dispersion <= threshold)
     slope_lower = valid_candidate_slopes.min(dim="candidate_slope")
     slope_upper = valid_candidate_slopes.max(dim="candidate_slope")
+
+    # Fill NaNs with infinity to prevent idxmin/argmin from crashing on all-NaN slices
+    safe_dispersion = dispersion.fillna(np.inf)
+
+    # Extract the optimal slope that minimises absolute dispersion
+    if optimal_method == "min":
+        optimal_slopes = safe_dispersion.idxmin(dim="candidate_slope")
+    elif optimal_method == "mean":
+        optimal_slopes = valid_candidate_slopes.mean(dim="candidate_slope")
+    elif optimal_method == "gmean":
+        optimal_slopes = np.exp(
+            np.log(valid_candidate_slopes).mean(dim="candidate_slope")
+        )
+    elif optimal_method == "subgrid":
+        # Get the discrete slopes as our safe fallback
+        discrete_slopes = safe_dispersion.idxmin(dim="candidate_slope")
+        min_idx = safe_dispersion.argmin(dim="candidate_slope")
+
+        # Clamp indices to prevent .isel() from crashing (we mask invalid pixels later)
+        max_idx = len(dispersion.candidate_slope) - 1
+        safe_idx = min_idx.clip(1, max_idx - 1)
+
+        # Extract coordinates
+        m_mid = dispersion.candidate_slope.isel(candidate_slope=safe_idx)
+        m_low = dispersion.candidate_slope.isel(candidate_slope=safe_idx - 1)
+        m_high = dispersion.candidate_slope.isel(candidate_slope=safe_idx + 1)
+
+        # Extract dispersion values (using original array so true NaNs are preserved)
+        y_mid = dispersion.isel(candidate_slope=safe_idx)
+        y_low = dispersion.isel(candidate_slope=safe_idx - 1)
+        y_high = dispersion.isel(candidate_slope=safe_idx + 1)
+
+        # Identify valid observations that are not on boundary and with three valid neighbors
+        valid_subgrid = (
+            (min_idx > 0) & (min_idx < max_idx) & y_low.notnull() & y_high.notnull()
+        )
+
+        # Calculate analytical vertex offset
+        delta_low = m_mid - m_low
+        delta_high = m_mid - m_high
+        num = (delta_low**2) * (y_mid - y_high) - (delta_high**2) * (y_mid - y_low)
+        den = delta_low * (y_mid - y_high) - delta_high * (y_mid - y_low)
+        safe_den = den.where(den != 0, np.nan)
+        vertex_offset = 0.5 * (num / safe_den).fillna(0.0)
+
+        # Bound to physical neighborhood to prevent math explosion on noise spikes
+        vertex_offset = vertex_offset.clip(min=delta_high, max=delta_low)
+        subgrid_slopes = m_mid - vertex_offset
+
+        # Merge: Use subgrid if valid, otherwise fallback to the exact discrete slope
+        optimal_slopes = xr.where(valid_subgrid, subgrid_slopes, discrete_slopes)
+
+        # Final bounds clamp
+        min_bound = float(dispersion.candidate_slope.min())
+        max_bound = float(dispersion.candidate_slope.max())
+        optimal_slopes = optimal_slopes.clip(min_bound, max_bound)
+
+    # Restore NaNs to pixels that contained only NoData
+    optimal_slopes = optimal_slopes.where(valid_pixels)
 
     # Package findings into a structured dataset
     var_prob = xr.Dataset(
@@ -388,28 +506,122 @@ def extract_optimal_slopes(
         }
     )
 
-    # Apply spatial filtering to all dataset variables if requested
-    if smooth_window > 0:
-        var_prob = _smooth_spatial_array(
-            var_prob,
-            method=smooth_method,
-            window_size=smooth_window,
-        )
-
-    # Calculate final uncertainty safely using the smoothed bounds
-    var_prob["slope_uncertainty"] = np.abs(var_prob.slope_low - var_prob.slope_high)
-
     return var_prob
 
 
-def apply_tide_correction(
+def beach_slope_dispersion(
+    sdf_stack: xr.DataArray,
+    tide_heights: xr.DataArray,
+    coastal_mask: xr.DataArray,
+    candidate_slopes: np.ndarray = None,
+    confidence_band: float = 0.05,
+    optimal_method: str = "subgrid",
+    smooth_rolling: int = 3,
+    smooth_spatial: int = 9,
+    smooth_method: str = "mean",
+    difference: bool = False,
+) -> xr.Dataset:
+    """
+    Calculates the robust beach slope and confidence bounds using a 
+    variance dispersion grid-search approach.
+
+    This function wraps `slope_dispersion` and `extract_optimal_slopes` 
+    to provide an API consistent with `beach_slope_theilsen`.
+
+    Parameters
+    ----------
+    sdf_stack : xr.DataArray
+        A 3D array (time, y, x) of signed distance fields.
+    tide_heights : xr.DataArray
+        A 1D (time) or 3D (time, y, x) array of tide heights.
+    coastal_mask : xr.DataArray
+        Boolean mask array to restrict processing to valid coastal areas.
+    candidate_slopes : np.ndarray, optional
+        Array of physical slopes to test. If none are provided, a non-linear
+        distribution focusing on flatter slopes is used.
+    confidence_band : float, optional
+        Threshold used to calculate uncertainty bounds, represented as a
+        percentage above the minimum (i.e. optimal) dispersion. Default is 0.05.
+    optimal_method : str, optional
+        Method used to identify the optimal slope value. Default is "subgrid".
+    smooth_rolling : int, optional
+        Size of the rolling mean used to smooth dispersion values along the
+        "candidate_slope" axis prior to optimal  slope extraction. Set to 0
+        to apply no smoothing. Default is 9.
+    smooth_spatial : int, optional
+        The size of the spatial filter to apply to the outputs to reduce
+        spatial noise. Set to zero to disable smoothing. Default is 3.
+    smooth_method : str, optional
+        Method to use for spatial smoothing; supports "mean" and "median".
+        Default is "mean".
+    difference : bool, optional
+        Whether to apply differencing to SDF and tide data along the
+        "time" axis prior to slope generation. Default is False.
+
+    Returns
+    -------
+    xr.Dataset
+        A dataset containing the optimal slope, lower bound, upper bound,
+        and the absolute slope uncertainty.
+    """
+    # Drop any redundant all-NaN timesteps to improve run-time
+    sdf_stack, tide_heights = xr.align(
+        sdf_stack.dropna(dim="time", how="all"),
+        tide_heights.dropna(dim="time", how="all"),
+        join="inner",
+    )
+
+    # Optionally calculate differences between consecutive observations,
+    # rather than operate on absolute shoreline positions. This
+    # supresses low frequency long-term coastal change, but retains
+    # higher frequency tidal change.
+    if difference:
+        print("Differencing observations before slope estimation")
+        sdf_stack = sdf_stack.diff(dim="time")
+        tide_heights = tide_heights.diff(dim="time")
+
+    # Generate multidimensional dispersion array
+    lazy_dispersion = _slope_dispersion(
+        sdf_stack=sdf_stack,
+        tide_heights=tide_heights,
+        coastal_mask=coastal_mask,
+        candidate_slopes=candidate_slopes,
+    )
+
+    # Load dispersion grid into memory
+    computed_dispersion = lazy_dispersion.compute()
+
+    # Extract optimal slopes and confidence bounds
+    ds_out = _extract_optimal_slopes(
+        dispersion=computed_dispersion,
+        confidence_band=confidence_band,
+        optimal_method=optimal_method,
+        smooth_rolling=smooth_rolling,
+    )
+    
+    # Apply spatial filtering to all dataset variables if requested
+    if smooth_spatial > 0:
+        ds_out = _smooth_spatial_array(
+            ds_out,
+            method=smooth_method,
+            window_size=smooth_spatial,
+        )
+
+    # Calculate final uncertainty safely using the smoothed bounds
+    ds_out["slope_uncertainty"] = np.abs(ds_out.slope_low - ds_out.slope_high)
+
+    return ds_out
+
+    
+
+def tide_correction(
     sdf_stack: xr.DataArray,
     tide_heights: xr.DataArray,
     slope_map: xr.DataArray,
-    tide_datum: float = 0.0
+    tide_datum: float = 0.0,
 ) -> xr.DataArray:
     """
-    Applies a physical beach slope to a temporal stack of Signed Distance Fields 
+    Applies a physical beach slope to a temporal stack of Signed Distance Fields
     to geometrically shift instantaneous shorelines to a specified tide datum.
 
     Parameters
@@ -421,7 +633,7 @@ def apply_tide_correction(
     slope_map : xr.DataArray
         A 2D array (y, x) of physical beach slopes (tan θ).
     tide_datum : float, optional
-        The vertical tide datum in meters to shift the shorelines toward. 
+        The vertical tide datum in meters to shift the shorelines toward.
         Default is 0.0.
 
     Returns
@@ -435,13 +647,13 @@ def apply_tide_correction(
     # Calculate the horizontal shift for every pixel at every timestep
     # Resulting dims: (time, y, x) due to xarray broadcasting
     horizontal_offsets = tide_difference / slope_map
-    
+
     # Subtract the offset from the raw distance fields
     corrected_sdf_stack = sdf_stack - horizontal_offsets
 
-    # If pixels are NaN (e.g. no valid slope could be calculated), 
+    # If pixels are NaN (e.g. no valid slope could be calculated),
     # fill them with the original uncorrected SDF stack
     # TODO: keep record of this and flag in output shoreline metadata
     corrected_sdf_stack = corrected_sdf_stack.fillna(sdf_stack)
-    
+
     return corrected_sdf_stack
