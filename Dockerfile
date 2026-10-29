@@ -72,4 +72,3 @@ RUN uv pip install \
     uv pip check && \
     deacoastlines-raster --help && \
     deacoastlines-vector --help
-`
