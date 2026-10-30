@@ -1,0 +1,2 @@
+# eMudhra/emSign CA compromise remediation
+certifi>=2026.10.19
