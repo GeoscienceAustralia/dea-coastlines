@@ -16,6 +16,7 @@ RUN apt-get update && \
       openssl \
       build-essential \
       git \
+      python3-dev \
       python3-pip \
       libpq-dev && \
     if grep -q '^mozilla/emSign_ECC_Root_CA_-_G3.crt$' /etc/ca-certificates.conf; then \
@@ -30,41 +31,39 @@ RUN apt-get update && \
       2>/dev/null && \
     rm -rf /var/lib/apt/lists/*
 
-# Set up working directory.
 WORKDIR /app
 
 # eMudhra/emSign CA compromise remediation.
-# Pin packaging tools used by this image.
 ARG PIP_VERSION=26.2.2
 ARG UV_VERSION=0.13.4
 
-# Copy dependency definitions first to preserve Docker layer caching.
 COPY requirements.in constraints.txt /app/
 
-# Install pinned packaging tools, resolve application dependencies
-# subject to the security constraints, and install them.
+# Install pinned packaging tools.
 RUN python3 -m pip install \
       --no-cache-dir \
       --upgrade \
       "pip==${PIP_VERSION}" && \
     python3 -m pip install \
       --no-cache-dir \
-      "uv==${UV_VERSION}" && \
-    uv pip compile \
+      "uv==${UV_VERSION}"
+
+# Resolve dependencies subject to the security constraints.
+RUN uv pip compile \
       --constraint /app/constraints.txt \
       /app/requirements.in \
-      -o /app/requirements.txt && \
-    uv pip install \
+      -o /app/requirements.txt
+
+# Install resolved dependencies.
+RUN uv pip install \
       --constraint /app/constraints.txt \
       -r /app/requirements.txt \
       --system
 
-# Copy application source.
 COPY . /app
 
-# Dependencies have already been resolved and installed above.
-# Install DEA Coastlines itself without re-resolving dependencies,
-# then verify the resulting environment and application.
+# Install DEA Coastlines without re-resolving dependencies and
+# verify the resulting environment and application.
 RUN uv pip install \
       . \
       --system \
