@@ -62,12 +62,16 @@ RUN uv pip install \
 
 COPY . /app
 
-# Install DEA Coastlines without re-resolving dependencies and
-# verify the resulting environment and application.
+# Install DEA Coastlines while continuing to enforce the
+# eMudhra/emSign dependency constraints.
 RUN uv pip install \
-      . \
-      --system \
-      --no-deps && \
-    uv pip check && \
-    deacoastlines-raster --help && \
-    deacoastlines-vector --help
+    . \
+    --system \
+    --constraint /app/constraints.txt
+    
+# Verify the resulting Python environment.
+RUN uv pip check
+
+# Verify DEA Coastlines entry points.
+RUN deacoastlines-raster --help
+RUN deacoastlines-vector --help
