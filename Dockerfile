@@ -68,6 +68,10 @@ RUN uv pip install \
     . \
     --system \
     --constraint /app/constraints.txt
+
+# Verify installed dependencies are consistent
+RUN python -m pip check \
+    && python -m pip freeze | grep -Ei '^(brotli|brotlicffi|certifi)=='
     
 # Verify the resulting Python environment.
 RUN uv pip check
