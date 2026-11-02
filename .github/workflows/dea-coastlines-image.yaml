@@ -79,6 +79,28 @@ jobs:
         run: |
           docker build -t dea_coastlines .
 
+      - name: Check Brotli fix for CVE-2026-111497
+        run: |
+          IMAGE="dea_coastlines"
+          REQUIRED="1.1.0-2ubuntu0.1"
+  
+          echo "Brotli packages installed in $IMAGE:"
+          docker run --rm "$IMAGE" \
+            dpkg-query -W -f='${Package} ${Version}\n' 'libbrotli*'
+  
+          INSTALLED="$(docker run --rm "$IMAGE" \
+            dpkg-query -W -f='${Version}' libbrotli1)"
+  
+          echo "Installed libbrotli1: $INSTALLED"
+          echo "Minimum required:      $REQUIRED"
+  
+          if ! dpkg --compare-versions "$INSTALLED" ge "$REQUIRED"; then
+            echo "::error::libbrotli1 $INSTALLED is vulnerable to CVE-2026-111497"
+            exit 1
+          fi
+  
+          echo "libbrotli1 is patched for CVE-2026-111497"
+          
       - name: Run integration tests
         run: |
           # Download tide modelling files and unzip

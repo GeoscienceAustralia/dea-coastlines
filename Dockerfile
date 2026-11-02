@@ -2,7 +2,7 @@
 # - Ubuntu 22.04
 # - Python 3.10.12
 # - GDAL 3.7.3, released 2023/10/30
-FROM ghcr.io/osgeo/gdal:ubuntu-small-3.7.3
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.11.4
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8 \
@@ -68,6 +68,10 @@ RUN uv pip install \
     . \
     --system \
     --constraint /app/constraints.txt
+
+# Verify installed dependencies are consistent
+RUN python -m pip check \
+    && python -m pip freeze | grep -Ei '^(brotli|brotlicffi|certifi)=='
     
 # Verify the resulting Python environment.
 RUN uv pip check

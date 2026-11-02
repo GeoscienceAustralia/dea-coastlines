@@ -1,4 +1,4 @@
 # eMudhra/emSign CA compromise remediation
 certifi>=2026.10.19
-brotli>=1.2.1
+Brotli>=1.2.1
 brotlicffi>=1.2.1.0
